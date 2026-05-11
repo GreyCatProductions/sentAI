@@ -1,24 +1,24 @@
 {
-  "name": "zotero-plugin-template",
+  "name": "sentai",
   "type": "module",
-  "version": "3.1.0",
-  "description": "Zotero Plugin Template",
+  "version": "0.0.0",
+  "description": "",
   "config": {
-    "addonName": "Zotero Plugin Template",
-    "addonID": "addontemplate@euclpts.com",
-    "addonRef": "addontemplate",
-    "addonInstance": "AddonTemplate",
-    "prefsPrefix": "extensions.zotero.addontemplate"
+    "addonName": "sentAI",
+    "addonID": "sendaiUP",
+    "addonRef": "sentai",
+    "addonInstance": "SentAI",
+    "prefsPrefix": "extensions.zotero.${addonRef}"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/windingwind/zotero-plugin-template.git"
+    "url": "https://github.com/GreyCatProductions/sentAI.git"
   },
-  "author": "windingwind",
+  "author": "TODO",
   "bugs": {
-    "url": "https://github.com/windingwind/zotero-plugin-template/issues"
+    "url": "https://github.com/GreyCatProductions/sentAI/issues"
   },
-  "homepage": "https://github.com/windingwind/zotero-plugin-template#readme",
+  "homepage": "https://github.com/GreyCatProductions/sentAI#readme",
   "license": "AGPL-3.0-or-later",
   "scripts": {
     "start": "zotero-plugin serve",
