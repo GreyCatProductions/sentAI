@@ -12,5 +12,15 @@ export default zotero({
         "@typescript-eslint/no-unused-vars": "off",
       },
     },
+    {
+      files: ["**/*.d.ts"],
+      rules: {
+        // Allow /// <reference path> in declaration files
+        "@typescript-eslint/triple-slash-reference": [
+          "error",
+          { path: "always" },
+        ],
+      },
+    },
   ],
 });
