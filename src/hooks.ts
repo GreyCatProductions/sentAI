@@ -8,6 +8,7 @@ import {
 import { getString, initLocale } from "./utils/locale";
 import { registerPrefsScripts } from "./modules/preferenceScript";
 import { createZToolkit } from "./utils/ztoolkit";
+import { embeddingStorage } from "./modules/savesystem";
 
 async function onStartup() {
   await Promise.all([
@@ -17,6 +18,10 @@ async function onStartup() {
   ]);
 
   initLocale();
+
+  embeddingStorage.ensureDir();
+
+  addon.data.initialized = true;
 
   BasicExampleFactory.registerPrefs();
 
@@ -37,10 +42,6 @@ async function onStartup() {
   await Promise.all(
     Zotero.getMainWindows().map((win) => onMainWindowLoad(win)),
   );
-
-  // Mark initialized as true to confirm plugin loading status
-  // outside of the plugin (e.g. scaffold testing process)
-  addon.data.initialized = true;
 }
 
 async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {

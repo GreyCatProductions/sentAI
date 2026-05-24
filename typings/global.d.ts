@@ -1,3 +1,5 @@
+/// <reference path="../node_modules/zotero-types/entries/sandbox/index.d.ts" />
+
 declare const _globalThis: {
   [key: string]: any;
   Zotero: _ZoteroTypes.Zotero;
