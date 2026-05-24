@@ -1,10 +1,12 @@
 import type { EmbeddingRecord } from "../types";
 
 class EmbeddingStorage {
-  private readonly dir: string;
+  private _dir: string | null = null;
 
-  constructor(dataDir: string = Zotero.DataDirectory.dir) {
-    this.dir = `${dataDir}/sentai/embeddings`;
+  private get dir(): string {
+    if (!this._dir)
+      this._dir = PathUtils.join(Zotero.DataDirectory.dir, "sentai", "embeddings");
+    return this._dir;
   }
 
   ensureDir(): void {
@@ -12,7 +14,7 @@ class EmbeddingStorage {
   }
 
   private filePath(itemId: number): string {
-    return `${this.dir}/${itemId}.json`;
+    return PathUtils.join(this.dir, `${itemId}.json`);
   }
 
   async save(itemId: number, record: EmbeddingRecord): Promise<void> {

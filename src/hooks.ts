@@ -19,6 +19,10 @@ async function onStartup() {
 
   initLocale();
 
+  embeddingStorage.ensureDir();
+
+  addon.data.initialized = true;
+
   BasicExampleFactory.registerPrefs();
 
   BasicExampleFactory.registerNotifier();
@@ -38,12 +42,6 @@ async function onStartup() {
   await Promise.all(
     Zotero.getMainWindows().map((win) => onMainWindowLoad(win)),
   );
-
-  embeddingStorage.ensureDir();
-
-  // Mark initialized as true to confirm plugin loading status
-  // outside of the plugin (e.g. scaffold testing process)
-  addon.data.initialized = true;
 }
 
 async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
