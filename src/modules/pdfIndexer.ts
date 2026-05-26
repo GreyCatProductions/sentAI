@@ -1,9 +1,6 @@
 import type { EmbeddingRecord } from "../types";
 import { embeddingStorage } from "./savesystem";
 
-// Ollama local embedding model — requires `ollama pull nomic-embed-text`
-const OLLAMA_MODEL = "nomic-embed-text";
-
 // Dev only: pretty-printed JSON files land here for inspection in VS Code
 const DEV_OUTPUT_DIR = "/Users/philipp/Documents/Repos/zotero/sentAI/src/modules/test_embeddings";
 
@@ -25,19 +22,22 @@ function chunkText(text: string, maxChunkSize = 1000): string[] {
   return chunks;
 }
 
-// Computes a djb2 hash and calls Ollama to get the embedding vector in one pass
+// Computes a djb2 hash and calls Azure text-embedding-3-small to get the embedding vector
 async function embedChunk(chunk: string): Promise<{ embedding: number[]; textHash: string }> {
   let h = 5381;
   for (let i = 0; i < chunk.length; i++) {
     h = (((h << 5) + h) ^ chunk.charCodeAt(i)) >>> 0;
   }
-  const res = await fetch("http://localhost:11434/api/embeddings", {
+  const res = await fetch(__azure_embedding_endpoint__, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model: OLLAMA_MODEL, prompt: chunk }),
+    headers: {
+      "Content-Type": "application/json",
+      "api-key": __azure_api_key__,
+    },
+    body: JSON.stringify({ input: chunk }),
   });
-  const json = (await res.json() as unknown) as { embedding: number[] };
-  return { embedding: json.embedding, textHash: h.toString(16) };
+  const json = (await res.json() as unknown) as { data: { embedding: number[] }[] };
+  return { embedding: json.data[0].embedding, textHash: h.toString(16) };
 }
 
 export class PdfIndexer {

@@ -2,26 +2,21 @@
 
 [![zotero target version](https://img.shields.io/badge/Zotero-7-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org)
 
-A Zotero 7 plugin for **semantic search over your personal research library**. Instead of keyword matching, sentAI lets you find papers by meaning — powered by local embeddings via Ollama and a vector index.
+A Zotero 7 plugin for **semantic search over your personal research library**. Instead of keyword matching, sentAI lets you find papers by meaning — powered by Azure AI embeddings and a vector index.
 
 ## What it does
 
 When you add a PDF to Zotero, sentAI automatically:
 1. Extracts the full text using Zotero's built-in PDF worker
 2. Splits it into chunks (~1000 chars, paragraph-aware)
-3. Generates embeddings via a local Ollama model (`nomic-embed-text`)
+3. Generates embeddings via Azure OpenAI (`text-embedding-3-small`)
 4. Stores the embeddings locally in your Zotero data directory
-
-This builds up a searchable index of your library — no cloud, no API keys, everything stays on your machine.
 
 ## Requirements
 
 - [Zotero 7](https://www.zotero.org/support/beta_builds)
 - [Node.js LTS](https://nodejs.org/en/)
-- [Ollama](https://ollama.ai) running locally with the embedding model pulled:
-  ```sh
-  ollama pull nomic-embed-text
-  ```
+- An **Azure AI / Cognitive Services API key** with a `text-embedding-3-small` deployment
 
 ## Setup
 
@@ -30,7 +25,18 @@ git clone <this repo>
 cd sentAI
 npm install
 cp .env.example .env
-# Edit .env: set ZOTERO_PLUGIN_ZOTERO_BIN_PATH and ZOTERO_PLUGIN_PROFILE_PATH
+```
+
+Edit `.env` and fill in:
+
+| Variable | Description |
+|----------|-------------|
+| `ZOTERO_PLUGIN_ZOTERO_BIN_PATH` | Path to your Zotero binary |
+| `ZOTERO_PLUGIN_PROFILE_PATH` | Path to your Zotero dev profile |
+| `API_KEY` | Azure Cognitive Services API key |
+| `AZURE_EMBEDDING_ENDPOINT` | Full endpoint URL incl. deployment name and api-version |
+
+```sh
 npm start
 ```
 
@@ -60,7 +66,7 @@ pdfIndexer.ts → PdfIndexer.process(item)
       │
       ├── Zotero.PDFWorker.getFullText()   — text extraction
       ├── chunkText()                       — paragraph-aware chunking
-      ├── embedChunk() → Ollama API         — local embedding
+      ├── embedChunk() → Azure OpenAI API    — cloud embedding
       └── embeddingStorage.save()           — persist to disk
 ```
 
@@ -75,7 +81,7 @@ Embeddings are stored as JSON files in `<Zotero data dir>/sentai/embeddings/<ite
 | PDF detection on upload | Done |
 | Text extraction | Done |
 | Chunking | Done |
-| Embedding via Ollama | Done |
+| Embedding via Azure (`text-embedding-3-small`) | Done |
 | Local storage | Done |
 | Similarity search | Planned |
 | RAG / LLM integration | Planned |

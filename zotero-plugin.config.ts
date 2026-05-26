@@ -31,6 +31,8 @@ export default defineConfig({
         entryPoints: ["src/index.ts"],
         define: {
           __env__: `"${process.env.NODE_ENV}"`,
+          __azure_api_key__: `"${process.env.API_KEY ?? ""}"`,
+          __azure_embedding_endpoint__: `"${process.env.AZURE_EMBEDDING_ENDPOINT ?? ""}"`,
         },
         bundle: true,
         target: "firefox115",
