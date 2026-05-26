@@ -1,6 +1,10 @@
 # dot files
 .DS_Store
 
+# Claude
+CLAUDE.md
+notes/
+
 # Node.js
 node_modules
 pnpm-lock.yaml

@@ -17,19 +17,19 @@ class EmbeddingStorage {
     return PathUtils.join(this.dir, `${itemId}.json`);
   }
 
-  async save(itemId: number, record: EmbeddingRecord): Promise<void> {
+  async save(itemId: number, records: EmbeddingRecord[]): Promise<void> {
     await Zotero.File.putContentsAsync(
       this.filePath(itemId),
-      JSON.stringify(record),
+      JSON.stringify(records),
     );
   }
 
-  async load(itemId: number): Promise<EmbeddingRecord | undefined> {
+  async load(itemId: number): Promise<EmbeddingRecord[] | undefined> {
     try {
       const text = (await Zotero.File.getContentsAsync(
         this.filePath(itemId),
       )) as string;
-      return JSON.parse(text) as EmbeddingRecord;
+      return JSON.parse(text) as EmbeddingRecord[];
     } catch (e) {
       return undefined;
     }
@@ -39,9 +39,9 @@ class EmbeddingStorage {
     await Zotero.File.removeIfExists(this.filePath(itemId));
   }
 
-  /** Load every stored record. Returns a map of itemId → EmbeddingRecord. */
-  async loadAll(): Promise<Map<number, EmbeddingRecord>> {
-    const result = new Map<number, EmbeddingRecord>();
+  /** Load every stored record. Returns a map of itemId → EmbeddingRecord[]. */
+  async loadAll(): Promise<Map<number, EmbeddingRecord[]>> {
+    const result = new Map<number, EmbeddingRecord[]>();
     try {
       await Zotero.File.iterateDirectory(this.dir, async (entry: OS.File.Entry) => {
         if (!entry.name.endsWith(".json")) return;
@@ -49,9 +49,9 @@ class EmbeddingStorage {
           const text = (await Zotero.File.getContentsAsync(
             entry.path,
           )) as string;
-          const record = JSON.parse(text) as EmbeddingRecord;
+          const records = JSON.parse(text) as EmbeddingRecord[];
           const id = Number(entry.name.replace(".json", ""));
-          if (!Number.isNaN(id)) result.set(id, record);
+          if (!Number.isNaN(id)) result.set(id, records);
         } catch {
           // Corrupt file
         }
