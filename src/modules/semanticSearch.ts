@@ -2,8 +2,6 @@ import fetch from "node-fetch";
 import type { EmbeddingRecord } from "../types";
 import fs from "fs";
 
-const __azure_embedding_endpoint__ = "";
-const __azure_api_key__ = ""; //Keine api keys in source code!
 const raw = fs.readFileSync("test_embeddings/17.json", "utf-8");
 const chunks = JSON.parse(raw);
 const queryEmbedding = await embedText(
