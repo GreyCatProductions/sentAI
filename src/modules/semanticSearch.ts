@@ -4,11 +4,17 @@ import fs from "fs";
 
 const raw = fs.readFileSync("test_embeddings/17.json", "utf-8");
 const chunks = JSON.parse(raw);
+
+// Test query that is converted into an embedding before the search starts.
 const queryEmbedding = await embedText(
   "AI in corporate governance"
 );
 
-// Calls Azure text-embedding-3-small to get the embedding vector
+/**
+  Calls the Azure embedding endpoint and returns the vector representation
+  of the given text. This vector is later compared with stored chunk vectors.
+ */
+
 async function embedText(text: string): Promise<number[]> {
   const res = await fetch(__azure_embedding_endpoint__, {
     method: "POST",
@@ -33,6 +39,11 @@ interface SearchResult {
   similarity: number;
 }
 
+/**
+  Normalizes a vector to length 1 so that vectors can be compared
+  independently of their original magnitude.
+ */
+
 
 function normalize(vec: number[]): number[] {
   const norm = Math.sqrt(
@@ -41,6 +52,11 @@ function normalize(vec: number[]): number[] {
 
   return vec.map(x => x / norm);
 }
+
+/**
+  Calculates the dot product of two vectors.
+  For normalized vectors, this represents their cosine similarity.
+ */
 
 function dotProduct(a: number[], b: number[]): number {
   let sum = 0;
@@ -51,6 +67,11 @@ function dotProduct(a: number[], b: number[]): number {
   return sum;
 }
 
+/**
+  Compares the query embedding with all stored text chunk embeddings
+  and returns the most similar chunks.
+ */
+
 function semanticSearch(
   queryEmbedding: number[],
   chunks: EmbeddingRecord[],
@@ -60,7 +81,7 @@ function semanticSearch(
   const results: SearchResult[] = [];
 
   for (const chunk of chunks) {
-
+    // The chunk embedding is normalized before comparison to calculate cosine similarity.
     const similarity = dotProduct(
       queryEmbedding,
       normalize(chunk.embedding)
@@ -73,6 +94,7 @@ function semanticSearch(
     });
   }
 
+  // Highest similarity should appear first.
   results.sort((a, b) => b.similarity - a.similarity);
 
   return results.slice(0, topK);
