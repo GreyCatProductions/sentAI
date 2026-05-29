@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>sentAI Mockup</title>
+  <style>
+
+    /* ===== GRUNDLAYOUT ===== */
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      background: #ddd;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    /* Das Zotero-Fenster */
+    .fenster {
+      width: 1000px;
+      height: 650px;
+      background: white;
+      border: 1px solid #aaa;
+      border-radius: 6px;
+      display: flex;              /* Spalten nebeneinander */
+      overflow: hidden;
+    }
+
+
+    /* ===== LINKE SPALTE: Bibliothek ===== */
+    .bibliothek {
+      width: 220px;
+      background: #f5f5f5;
+      border-right: 1px solid #ccc;
+    }
+
+    .bibliothek h3 {
+      background: #e0e0e0;
+      padding: 8px 12px;
+      margin: 0;
+      font-size: 12px;
+      border-bottom: 1px solid #ccc;
+    }
+
+    /* Ein Artikel in der Liste */
+    .artikel {
+      padding: 8px 12px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+
+    .artikel:hover {
+      background: #e8edf5;
+    }
+
+    /* Der aktuell ausgewählte Artikel */
+    .artikel.aktiv {
+      background: #d0dff0;
+    }
+
+    .artikel .titel {
+      font-size: 12px;
+    }
+
+    .artikel .autor {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+
+    /* ===== MITTLERE SPALTE: Artikel-Details ===== */
+    .details {
+      flex: 1;                    /* nimmt den restlichen Platz */
+      border-right: 1px solid #ccc;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .details h2 {
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .details .meta {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .details .abstract {
+      font-size: 12px;
+      color: #444;
+      line-height: 1.6;
+      border-top: 1px solid #eee;
+      padding-top: 10px;
+    }
+
+
+    /* ===== RECHTE SPALTE: AI Chat ===== */
+    .chat-panel {
+      width: 300px;
+      display: flex;
+      flex-direction: column;     /* Elemente untereinander */
+    }
+
+    /* Kopfzeile des Chats */
+    .chat-kopf {
+      background: #e0e0e0;
+      padding: 8px 12px;
+      border-bottom: 1px solid #ccc;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    /* Suchleiste */
+    .suche {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+      background: #fafafa;
+    }
+
+    .suche label {
+      font-size: 11px;
+      color: #888;
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .suche-zeile {
+      display: flex;
+      gap: 4px;
+    }
+
+    .suche-zeile input {
+      flex: 1;
+      padding: 4px 6px;
+      font-size: 12px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+
+    .suche-zeile button {
+      padding: 4px 8px;
+      font-size: 11px;
+      background: #4a80c4;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    /* Nachrichten-Bereich (scrollbar) */
+    .nachrichten {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* Allgemeines Nachrichten-Styling */
+    .nachricht {
+      max-width: 85%;
+      padding: 7px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    /* KI-Nachricht: links, hellgrau */
+    .von-ki {
+      background: #f0f4fa;
+      align-self: flex-start;
+    }
+
+    /* User-Nachricht: rechts, blau */
+    .von-user {
+      background: #4a80c4;
+      color: white;
+      align-self: flex-end;
+    }
+
+    /* Kleine Beschriftung über Nachrichten */
+    .absender {
+      font-size: 10px;
+      color: #aaa;
+    }
+
+    .absender.rechts {
+      text-align: right;
+    }
+
+    /* Karte für Suchergebnis */
+    .ergebnis-karte {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 8px;
+      margin-top: 6px;
+      font-size: 11px;
+    }
+
+    .ergebnis-karte .karte-titel {
+      font-weight: bold;
+      color: #1a3a6b;
+      margin-bottom: 2px;
+    }
+
+    .ergebnis-karte .karte-meta {
+      color: #888;
+      margin-bottom: 5px;
+    }
+
+    .ergebnis-karte button {
+      font-size: 10px;
+      padding: 2px 7px;
+      border: 1px solid #bbb;
+      border-radius: 3px;
+      background: #f5f5f5;
+      cursor: pointer;
+      margin-right: 4px;
+    }
+
+    /* Eingabe-Bereich unten */
+    .eingabe {
+      border-top: 1px solid #eee;
+      padding: 8px;
+      background: #fafafa;
+    }
+
+    .kontext-chip {
+      font-size: 10px;
+      background: #e8edf5;
+      color: #3a5a8a;
+      border: 1px solid #c0ccdd;
+      border-radius: 3px;
+      padding: 2px 6px;
+      display: inline-block;
+      margin-bottom: 5px;
+    }
+
+    .eingabe-zeile {
+      display: flex;
+      gap: 4px;
+    }
+
+    .eingabe-zeile textarea {
+      flex: 1;
+      padding: 5px;
+      font-size: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: none;
+      height: 50px;
+      font-family: Arial, sans-serif;
+    }
+
+    .eingabe-zeile button {
+      padding: 6px 10px;
+      background: #4a80c4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      align-self: flex-end;
+    }
+
+    .hinweis {
+      font-size: 10px;
+      color: #aaa;
+      margin-top: 3px;
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- Das simulierte Zotero-Fenster -->
+<div class="fenster">
+
+
+  <!-- LINKE SPALTE: Bibliothek -->
+  <div class="bibliothek">
+    <h3>Meine Bibliothek</h3>
+
+    <div class="artikel">
+      <div class="titel">Conceptual Modeling of UGC</div>
+      <div class="autor">Lukyanenko et al., 2017</div>
+    </div>
+
+    <div class="artikel aktiv">
+      <div class="titel">Crowd Knowledge Representation</div>
+      <div class="autor">Parsons & Wiersma, 2018</div>
+    </div>
+
+    <div class="artikel">
+      <div class="titel">AI in Literature Review</div>
+      <div class="autor">Huber et al., 2020</div>
+    </div>
+
+    <div class="artikel">
+      <div class="titel">User-Generated Content in IS</div>
+      <div class="autor">Becker et al., 2021</div>
+    </div>
+  </div>
+
+
+  <!-- MITTLERE SPALTE: Artikel-Details -->
+  <div class="details">
+    <h2>Representing Crowd Knowledge: Guidelines for Conceptual Modeling of User-generated Content</h2>
+
+    <div class="meta">
+      Lukyanenko, R., Parsons, J., Wiersma, Y. et al. (2017)<br>
+      Journal of the Association for Information Systems, 18(4), 297–339
+    </div>
+
+    <div class="abstract">
+      <strong>Abstract</strong><br><br>
+      User-generated content (UGC) has become a major source of information in many domains.
+      This paper presents guidelines for conceptual modeling of UGC, addressing challenges
+      related to quality, structure, and representation of crowd knowledge in information systems.
+    </div>
+  </div>
+
+
+  <!-- RECHTE SPALTE: AI Chat -->
+  <div class="chat-panel">
+
+    <!-- Kopf -->
+    <div class="chat-kopf">sentAI Assistent</div>
+
+    <!-- Suchleiste -->
+    <div class="suche">
+      <label>Literatur suchen</label>
+      <div class="suche-zeile">
+        <input type="text" value="crowd knowledge modeling" />
+        <button>Suchen</button>
+      </div>
+    </div>
+
+    <!-- Nachrichten -->
+    <div class="nachrichten">
+
+      <div class="absender">sentAI</div>
+      <div class="nachricht von-ki">
+        Hallo! Stell mir eine Frage zu deiner Literatur oder such nach einem neuen Thema.
+      </div>
+
+      <div class="absender rechts">Du</div>
+      <div class="nachricht von-user">
+        Was sind die Kernpunkte von Lukyanenko 2017?
+      </div>
+
+      <div class="absender">sentAI</div>
+      <div class="nachricht von-ki">
+        Die Arbeit hat drei Hauptpunkte:<br><br>
+        1. UGC braucht flexible Datenmodelle<br>
+        2. Qualitätssicherung ist wichtig<br>
+        3. Kontext verbessert die Darstellung
+      </div>
+
+      <div class="absender rechts">Du</div>
+      <div class="nachricht von-user">
+        Gibt es ähnliche Artikel?
+      </div>
+
+      <div class="absender">sentAI</div>
+      <div class="nachricht von-ki">
+        Ja, ich habe zwei gefunden:
+
+        <!-- Suchergebnis-Karte 1 -->
+        <div class="ergebnis-karte">
+          <div class="karte-titel">Ontology-based UGC Modeling</div>
+          <div class="karte-meta">Chen et al., 2019</div>
+          <button>+ Speichern</button>
+          <button>Details</button>
+        </div>
+
+        <!-- Suchergebnis-Karte 2 -->
+        <div class="ergebnis-karte">
+          <div class="karte-titel">Quality Dimensions in Crowd Data</div>
+          <div class="karte-meta">Smith & Lee, 2020</div>
+          <button>+ Speichern</button>
+          <button>Details</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Eingabe unten -->
+    <div class="eingabe">
+      <div class="kontext-chip">Aktiver Artikel: Lukyanenko et al. 2017</div>
+      <div class="eingabe-zeile">
+        <textarea placeholder="Frage eingeben…"></textarea>
+        <button>➤</button>
+      </div>
+      <div class="hinweis">Enter = Senden</div>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>
