@@ -1,7 +1,7 @@
 item-section-example1-head-text =
-    .label = Plugin Template: Item Info
+    .label = sentAI
 item-section-example1-sidenav-tooltip =
-    .tooltiptext = This is Plugin Template section (item info)
+    .tooltiptext = sentAI Chat
 item-section-example2-head-text =
     .label = Plugin Template: Reader [{$status}]
 item-section-example2-sidenav-tooltip =

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <!-- Unsere CSS-Datei einbinden -->
+  <link rel="stylesheet" href="zoteroPane.css" />
+</head>
+<body>
+
+  <!-- Das ganze Chat-Panel -->
+  <div id="sentai-panel">
+
+    <!-- BEREICH 1: Suchleiste oben -->
+    <div id="sentai-suche">
+      <label>Literatur suchen</label>
+      <div id="sentai-suche-zeile">
+        <input id="sentai-suche-input" type="text" placeholder="Thema eingeben..." />
+        <button id="sentai-suche-button">Suchen</button>
+      </div>
+    </div>
+
+    <!-- BEREICH 2: Nachrichten -->
+    <div id="sentai-nachrichten">
+
+      <!-- Beispiel: KI-Nachricht -->
+      <div class="absender">sentAI</div>
+      <div class="nachricht von-ki">
+        Hallo! Stell mir eine Frage zu deiner Literatur.
+      </div>
+
+    </div>
+
+    <!-- BEREICH 3: Eingabe unten -->
+    <div id="sentai-eingabe">
+      <div id="sentai-eingabe-zeile">
+        <textarea id="sentai-eingabe-text" placeholder="Frage eingeben..."></textarea>
+        <button id="sentai-senden-button">➤</button>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
