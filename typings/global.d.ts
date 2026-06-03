@@ -18,5 +18,4 @@ declare const rootURI: string;
 declare const addon: import("../src/addon").default;
 
 declare const __env__: "production" | "development";
-declare const __azure_api_key__: string;
-declare const __azure_embedding_endpoint__: string;
+declare const __server_url__: string;
