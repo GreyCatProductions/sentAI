@@ -1,6 +1,6 @@
 import type { EmbeddingRecord } from "../types";
 import { embeddingStorage } from "./savesystem";
-import { embedText } from "../modules/embewdder"
+import { embedText } from "../modules/embedder"
 import { hashString } from "../utils/hash";
 
 // Dev only: pretty-printed JSON files land here for inspection in VS Code
