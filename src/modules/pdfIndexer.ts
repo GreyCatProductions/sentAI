@@ -1,13 +1,13 @@
 import type { EmbeddingRecord } from "../types";
 import { embeddingStorage } from "./savesystem";
-import { embedText } from "../modules/embedder"
+import { embedText } from "../modules/embewdder"
 import { hashString } from "../utils/hash";
 
 // Dev only: pretty-printed JSON files land here for inspection in VS Code
-const DEV_OUTPUT_DIR = "/Users/philipp/Documents/Repos/zotero/sentAI/src/modules/test_embeddings";
+const DEV_OUTPUT_DIR = "~/sentAI/src/modules/test_embeddings";
 
 // Splits extracted PDF text into ~1000-char paragraphs to stay within embedding model input limits
-function chunkText(text: string, maxChunkSize = 1000): string[] {
+export function chunkText(text: string, maxChunkSize = 1000): string[] {
   const paragraphs = text.split(/\n\n+/);
   const chunks: string[] = [];
   let current = "";
