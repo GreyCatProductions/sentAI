@@ -1,14 +1,16 @@
 /// <reference lib="dom" />
 
-function onSearch() {
-  const query = (document.getElementById("sentai-suche-input") as HTMLInputElement).value;
-  console.log("Searching for %s", query);
-}
+import { addMessage } from "./ui/messages";
+import { onSearch } from "./ui/search";
 
-function onSend() {
-  const text = (document.getElementById("sentai-eingabe-text") as HTMLTextAreaElement).value;
-  console.log("Sending %s", text);
-}
-
+//Search button implementation
 document.getElementById("sentai-suche-button")!.addEventListener("click", onSearch);
-document.getElementById("sentai-senden-button")!.addEventListener("click", onSend);
+
+//Send button implementation
+document.getElementById("sentai-senden-button")!.addEventListener("click", () => {
+  const input = document.getElementById("sentai-eingabe-text") as HTMLTextAreaElement;
+  const text = input.value.trim();
+  if (!text) return;
+  addMessage("Du", text, true);
+  input.value = "";
+});

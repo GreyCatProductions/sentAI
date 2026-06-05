@@ -2,6 +2,7 @@ import { initLocale } from "./utils/locale";
 import { createZToolkit } from "./utils/ztoolkit";
 import { embeddingStorage } from "./modules/savesystem";
 import { PdfIndexer } from "./modules/pdfIndexer";
+import { search } from "./modules/searchService";
 
 let notifierID: string | undefined;
 
@@ -16,6 +17,7 @@ async function onStartup() {
 
   embeddingStorage.ensureDir();
 
+  addon.api = { search };
   addon.data.initialized = true;
 
   notifierID = Zotero.Notifier.registerObserver(
@@ -59,7 +61,7 @@ function registerChatPanelMenuItem(win: _ZoteroTypes.MainWindow) {
 
 function openChatPanel(win: Window) {
   const url = `chrome://${addon.data.config.addonRef}/content/chatPanel.xhtml`;
-  win.openDialog(url, "sentai-chat-panel", "chrome,resizable,centerscreen,width=420,height=620");
+  win.openDialog(url, "sentai-chat-panel", "chrome,resizable,centerscreen,width=420,height=620", addon.api);
 }
 
 async function onMainWindowUnload(win: Window): Promise<void> {
