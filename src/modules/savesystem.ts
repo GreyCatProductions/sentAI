@@ -18,8 +18,11 @@ class EmbeddingStorage {
   }
 
   async save(itemId: number, records: EmbeddingRecord[]): Promise<void> {
+    const path = this.filePath(itemId);
+    Zotero.log(`Saving ${path}`);
+
     await Zotero.File.putContentsAsync(
-      this.filePath(itemId),
+      path,
       JSON.stringify(records),
     );
   }

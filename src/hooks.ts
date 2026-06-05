@@ -87,13 +87,17 @@ async function onNotify(
   ids: Array<string | number>,
   extraData: { [key: string]: any },
 ) {
+  Zotero.log("Some notification fired") //TODO: Remove
   if (event === "add" && type === "item") {
     for (const id of ids as number[]) {
       const item = Zotero.Items.get(id);
+      if (!item) continue;
+      Zotero.log(`Item ${id}: isAttachment=${item.isAttachment()}, itemType=${item.itemType}, contentType=${item.attachmentContentType}`);
       if (
         item.isAttachment() &&
         item.attachmentContentType === "application/pdf"
       ) {
+        Zotero.log("Embedding paper");
         await PdfIndexer.process(item);
       }
     }
