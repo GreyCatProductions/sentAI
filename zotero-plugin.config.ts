@@ -42,6 +42,9 @@ export default defineConfig({
         entryPoints: ["src/chatPanel.ts"],
         bundle: true,
         target: "firefox115",
+        define: {
+          __server_url__: `"${process.env.SERVER_URL ?? ""}"`,
+        },
         outfile: `.scaffold/build/addon/content/scripts/chatPanel.js`,
       },
     ],

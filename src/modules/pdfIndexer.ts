@@ -28,12 +28,12 @@ export class PdfIndexer {
   // Entry point — called by hooks.ts whenever a new PDF is added to Zotero
   static async process(item: Zotero.Item) {
     const path = await item.getFilePathAsync();
-    ztoolkit.log("sentAI: New PDF uploaded:", path);
+    Zotero.debug(`sentAI: New PDF uploaded: ${path}`);
 
     // Extract full text via Zotero's built-in PDF worker (0 = no page limit)
     const { text } = await Zotero.PDFWorker.getFullText(item.id, 0);
     const chunks: string[] = chunkText(text);
-    ztoolkit.log(`sentAI: ${chunks.length} chunks to embed`);
+    Zotero.debug(`sentAI: ${chunks.length} chunks to embed`);
 
     const records: EmbeddingRecord[] = [];
     for (let i = 0; i < chunks.length; i++) {
@@ -41,7 +41,7 @@ export class PdfIndexer {
       const embedding = await embedText(text);
       const textHash = hashString(text)
       records.push({
-        paperId: item.key,
+        paperId: String(item.id),
         chunkIndex: i,
         chunkText: text,
         embedding,
@@ -51,10 +51,11 @@ export class PdfIndexer {
     }
 
     await embeddingStorage.save(item.id, records);
-    ztoolkit.log(`sentAI: saved ${records.length} embeddings for item ${item.id}`);
+    Zotero.debug(`sentAI: saved ${records.length} embeddings for item ${item.id}`);
 
     // Write a readable copy to the project folder for dev inspection
-    if (addon.data.env === "development") {
+    if (typeof addon !== "undefined" && addon.data.env === "development") {
+      Zotero.File.createDirectoryIfMissing(DEV_OUTPUT_DIR);
       await Zotero.File.putContentsAsync(
         PathUtils.join(DEV_OUTPUT_DIR, `${item.id}.json`),
         JSON.stringify(records, null, 2),

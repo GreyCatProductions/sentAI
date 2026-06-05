@@ -18,8 +18,11 @@ class EmbeddingStorage {
   }
 
   async save(itemId: number, records: EmbeddingRecord[]): Promise<void> {
+    const path = this.filePath(itemId);
+    Zotero.log(`Saving ${path}`);
+
     await Zotero.File.putContentsAsync(
-      this.filePath(itemId),
+      path,
       JSON.stringify(records),
     );
   }
@@ -43,6 +46,7 @@ class EmbeddingStorage {
   async loadAll(): Promise<Map<number, EmbeddingRecord[]>> {
     const result = new Map<number, EmbeddingRecord[]>();
     try {
+      Zotero.log(`sentAI: loadAll scanning ${this.dir}`);
       await Zotero.File.iterateDirectory(this.dir, async (entry: OS.File.Entry) => {
         if (!entry.name.endsWith(".json")) return;
         try {
@@ -52,12 +56,12 @@ class EmbeddingStorage {
           const records = JSON.parse(text) as EmbeddingRecord[];
           const id = Number(entry.name.replace(".json", ""));
           if (!Number.isNaN(id)) result.set(id, records);
-        } catch {
-          // Corrupt file
+        } catch (e) {
+          Zotero.log(`sentAI: failed to load ${entry.path}: ${e}`);
         }
       });
-    } catch {
-      // Directory doesnt exist likely
+    } catch (e) {
+      Zotero.log(`sentAI: loadAll error: ${e}`);
     }
     return result;
   }
