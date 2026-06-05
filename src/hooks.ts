@@ -36,6 +36,30 @@ async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
     `${addon.data.config.addonRef}-mainWindow.ftl`,
   );
 
+  registerChatPanelMenuItem(win);
+}
+
+function registerChatPanelMenuItem(win: _ZoteroTypes.MainWindow) {
+  const doc = win.document;
+  if (doc.getElementById("sentai-open-chat")) return;
+
+  const toolsPopup = doc.getElementById("menu_ToolsPopup");
+  if (!toolsPopup) return;
+
+  const separator = doc.createXULElement("menuseparator");
+  separator.setAttribute("id", "sentai-menu-separator");
+  toolsPopup.appendChild(separator);
+
+  const menuItem = doc.createXULElement("menuitem");
+  menuItem.setAttribute("id", "sentai-open-chat");
+  menuItem.setAttribute("label", "sentAI Chat");
+  menuItem.addEventListener("command", () => openChatPanel(win));
+  toolsPopup.appendChild(menuItem);
+}
+
+function openChatPanel(win: Window) {
+  const url = `chrome://${addon.data.config.addonRef}/content/chatPanel.xhtml`;
+  win.openDialog(url, "sentai-chat-panel", "chrome,resizable,centerscreen,width=420,height=620");
 }
 
 async function onMainWindowUnload(win: Window): Promise<void> {

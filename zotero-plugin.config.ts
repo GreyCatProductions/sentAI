@@ -38,6 +38,12 @@ export default defineConfig({
         target: "firefox115",
         outfile: `.scaffold/build/addon/content/scripts/${pkg.config.addonRef}.js`,
       },
+      {
+        entryPoints: ["src/chatPanel.ts"],
+        bundle: true,
+        target: "firefox115",
+        outfile: `.scaffold/build/addon/content/scripts/chatPanel.js`,
+      },
     ],
   },
 
