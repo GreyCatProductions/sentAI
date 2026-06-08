@@ -2,22 +2,123 @@
   background-color: tomato;
 }
 
-/* ===== sentAI Chat Panel — Basis-Layout (Styling kommt später) ===== */
+/* ===== sentAI Chat Panel ===== */
 
-/* Elemente untereinander anordnen */
+/* Das ganze Panel: alles untereinander */
 #sentai-panel {
   display: flex;
   flex-direction: column;
   height: 100%;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  background: white;
 }
 
-/* Nachrichten-Bereich scrollbar machen */
+/* Suchleiste oben */
+#sentai-suche {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  background: #fafafa;
+}
+
+#sentai-suche label {
+  display: block;
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 3px;
+}
+
+#sentai-suche-zeile {
+  display: flex;
+  gap: 4px;
+}
+
+#sentai-suche-input {
+  flex: 1;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+#sentai-suche-button {
+  padding: 4px 8px;
+  background: #4a80c4;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* Nachrichten-Bereich: scrollbar, Nachrichten untereinander */
 #sentai-nachrichten {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-/* KI und User Nachrichten nebeneinander trennen */
-.von-ki  { align-self: flex-start; }
-.von-user { align-self: flex-end; }
+/* Kleiner Text über Nachricht */
+.absender, .sender {
+  font-size: 10px;
+  color: #aaa;
+}
+
+/* Alle Nachrichten */
+.nachricht, .message {
+  max-width: 85%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* KI-Nachricht: grau, links */
+.von-ki, .sentAI {
+  background: #f0f4fa;
+  align-self: flex-start;
+}
+
+/* User-Nachricht: blau, rechts */
+.von-user, .user {
+  background: #4a80c4;
+  color: white;
+  align-self: flex-end;
+}
+
+/* Eingabe unten */
+#sentai-eingabe {
+  padding: 8px;
+  border-top: 1px solid #eee;
+  background: #fafafa;
+}
+
+#sentai-eingabe-zeile {
+  display: flex;
+  gap: 4px;
+}
+
+#sentai-eingabe-text {
+  flex: 1;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+  resize: none;
+  height: 50px;
+}
+
+#sentai-senden-button {
+  padding: 6px 10px;
+  background: #4a80c4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  align-self: flex-end;
+}
