@@ -11,20 +11,21 @@
   height: 100%;
   font-family: Arial, sans-serif;
   font-size: 13px;
-  background: white;
+  background: var(--material-background);
+  color: var(--primary-color);
 }
 
 /* Suchleiste oben */
 #sentai-suche {
   padding: 8px;
-  border-bottom: 1px solid #eee;
-  background: #fafafa;
+  border-bottom: 1px solid var(--material-border-color);
+  background: var(--material-content-background);
 }
 
 #sentai-suche label {
   display: block;
   font-size: 11px;
-  color: #888;
+  color: var(--secondary-color);
   margin-bottom: 3px;
 }
 
@@ -36,9 +37,11 @@
 #sentai-suche-input {
   flex: 1;
   padding: 4px 6px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--material-border-color);
   border-radius: 3px;
   font-size: 12px;
+  background: var(--material-background);
+  color: var(--primary-color);
 }
 
 #sentai-suche-button {
@@ -64,7 +67,7 @@
 /* Kleiner Text über Nachricht */
 .absender, .sender {
   font-size: 10px;
-  color: #aaa;
+  color: var(--secondary-color);
 }
 
 /* Alle Nachrichten */
@@ -78,7 +81,8 @@
 
 /* KI-Nachricht: grau, links */
 .von-ki, .sentAI {
-  background: #f0f4fa;
+  background: var(--material-content-background);
+  color: var(--primary-color);
   align-self: flex-start;
 }
 
@@ -92,8 +96,8 @@
 /* Eingabe unten */
 #sentai-eingabe {
   padding: 8px;
-  border-top: 1px solid #eee;
-  background: #fafafa;
+  border-top: 1px solid var(--material-border-color);
+  background: var(--material-content-background);
 }
 
 #sentai-eingabe-zeile {
@@ -104,12 +108,14 @@
 #sentai-eingabe-text {
   flex: 1;
   padding: 5px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--material-border-color);
   border-radius: 4px;
   font-size: 12px;
   font-family: Arial, sans-serif;
   resize: none;
   height: 50px;
+  background: var(--material-background);
+  color: var(--primary-color);
 }
 
 #sentai-senden-button {
