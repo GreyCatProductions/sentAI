@@ -19,7 +19,7 @@ export async function search(query: string): Promise<SearchResult[]> {
   const top = semanticSearch(queryEmbedding, allRecords, 5);
 
   return top.map(result => {
-    const attachment = Zotero.Items.get(Number(result.paperId));
+    const attachment = Zotero.Items.get(Number(result.paperId)) || undefined;
     const title: string =
       (attachment?.parentItem?.getField("title") as string | undefined) ||
       (attachment?.getField("title") as string | undefined) ||
