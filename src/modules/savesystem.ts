@@ -47,19 +47,20 @@ class EmbeddingStorage {
     const result = new Map<number, EmbeddingRecord[]>();
     try {
       Zotero.log(`sentAI: loadAll scanning ${this.dir}`);
-      await Zotero.File.iterateDirectory(this.dir, async (entry: OS.File.Entry) => {
-        if (!entry.name.endsWith(".json")) return;
+      const entries: OS.File.Entry[] = [];
+      await Zotero.File.iterateDirectory(this.dir, (entry: OS.File.Entry) => {
+        if (entry.name.endsWith(".json")) entries.push(entry);
+      });
+      await Promise.all(entries.map(async (entry) => {
         try {
-          const text = (await Zotero.File.getContentsAsync(
-            entry.path,
-          )) as string;
+          const text = (await Zotero.File.getContentsAsync(entry.path)) as string;
           const records = JSON.parse(text) as EmbeddingRecord[];
           const id = Number(entry.name.replace(".json", ""));
           if (!Number.isNaN(id)) result.set(id, records);
         } catch (e) {
           Zotero.log(`sentAI: failed to load ${entry.path}: ${e}`);
         }
-      });
+      }));
     } catch (e) {
       Zotero.log(`sentAI: loadAll error: ${e}`);
     }

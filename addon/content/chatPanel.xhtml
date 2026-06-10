@@ -3,15 +3,19 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <title>sentAI Chat</title>
-  <!-- Unsere CSS-Datei einbinden -->
   <link rel="stylesheet" href="zoteroPane.css" />
 </head>
 <body>
 
-  <!-- Das ganze Chat-Panel -->
   <div id="sentai-panel">
 
-    <!-- BEREICH 1: Suchleiste oben -->
+    <!-- Header -->
+    <div id="sentai-header">
+      <span id="sentai-header-title">sentAI</span>
+      <span id="sentai-header-sub">Literatur-Assistent</span>
+    </div>
+
+    <!-- Search bar -->
     <div id="sentai-suche">
       <label>Literatur suchen</label>
       <div id="sentai-suche-zeile">
@@ -20,10 +24,9 @@
       </div>
     </div>
 
-    <!-- BEREICH 2: Nachrichten -->
+    <!-- Messages -->
     <div id="sentai-nachrichten">
 
-      <!-- Beispiel: KI-Nachricht -->
       <div class="absender">sentAI</div>
       <div class="nachricht von-ki">
         Hallo! Stell mir eine Frage zu deiner Literatur.
@@ -31,16 +34,15 @@
 
     </div>
 
-    <!-- BEREICH 3: Eingabe unten -->
+    <!-- Input area -->
     <div id="sentai-eingabe">
       <div id="sentai-eingabe-zeile">
         <textarea id="sentai-eingabe-text" placeholder="Frage eingeben..."></textarea>
-        <button id="sentai-senden-button">➤</button>
+        <button id="sentai-senden-button">&#x27A4;</button>
       </div>
     </div>
 
   </div>
-
 
   <script src="scripts/chatPanel.js"></script>
 
