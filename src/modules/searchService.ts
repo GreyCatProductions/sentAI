@@ -21,8 +21,8 @@ export async function search(query: string): Promise<SearchResult[]> {
   return top.map(result => {
     const attachment = Zotero.Items.get(Number(result.paperId));
     const title: string =
-      attachment?.parentItem?.getField("title") ??
-      attachment?.getField("title") ??
+      (attachment?.parentItem?.getField("title") as string | undefined) ??
+      attachment?.getDisplayTitle() ??
       result.paperId;
     return { title, chunkText: result.chunkText, similarity: result.similarity };
   });

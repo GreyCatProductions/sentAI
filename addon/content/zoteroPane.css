@@ -4,6 +4,13 @@
 
 /* ===== sentAI Chat Panel ===== */
 
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 /* Das ganze Panel: alles untereinander */
 #sentai-panel {
   display: flex;
