@@ -1,15 +1,20 @@
 import { assert } from "chai";
-import { chunkText, PdfIndexer } from "../src/modules/pdfIndexer";
+import { chunkText } from "../src/modules/pdfIndexer";
 
-const LONG = "This sentence contains enough characters to pass the minimum chunk length filter. ".repeat(2);
+// Two long sentences that comfortably pass the MIN_CHUNK_CHARS filter
+const LONG = "This sentence is long enough to pass the minimum chunk length filter easily. " +
+             "It contains enough prose to represent a real academic paragraph fragment.";
 
 describe("chunkText", function () {
-  it("should not exceed maxChunkSize", function () {
-    const longPara = "a".repeat(600);
-    const text = `${longPara}\n\n${longPara}\n\n${longPara}`;
-    const chunks = chunkText(text, 1000);
+  it("should respect the token budget — no chunk exceeds maxTokens * 4 chars significantly", function () {
+    const maxTokens = 50;
+    // Build text with sentences well under and over budget
+    const sentence = "This is a normal sentence that takes up a predictable number of tokens. ";
+    const text = sentence.repeat(20);
+    const chunks = chunkText(text, maxTokens);
     for (const chunk of chunks) {
-      assert.isAtMost(chunk.length, 1000);
+      // Allow a single sentence overshoot (one sentence may exceed budget on its own)
+      assert.isAtMost(chunk.length, maxTokens * 4 + 200);
     }
   });
 
@@ -27,12 +32,9 @@ describe("chunkText", function () {
   });
 
   it("should drop everything from the references section onward", function () {
-    const content = LONG;
-    const ref = "References";
-    const afterRef = LONG;
-    const chunks = chunkText(`${content}\n\n${ref}\n\n${afterRef}`);
-    assert.isTrue(chunks.every(c => !c.includes(afterRef.slice(0, 20))));
-    assert.isTrue(chunks.every(c => c !== ref));
+    const marker = "Unique-marker-string-that-appears-only-after-references.";
+    const chunks = chunkText(`${LONG}\n\nReferences\n\n${marker}`);
+    assert.isTrue(chunks.every(c => !c.includes("Unique-marker")));
   });
 
   it("should drop references section in German (Quellen)", function () {
@@ -44,5 +46,20 @@ describe("chunkText", function () {
     const text = `${LONG}\n\nAll rights reserved\n\n${LONG}`;
     const chunks = chunkText(text);
     assert.isTrue(chunks.every(c => !/all rights reserved/i.test(c)));
+  });
+
+  it("should not split mid-sentence", function () {
+    const s1 = "The first sentence ends here properly.";
+    const s2 = "The second sentence starts a new thought entirely.";
+    // maxTokens=10 forces a split; sentences should remain intact
+    const chunks = chunkText(`${s1} ${s2}`, 10);
+    const joined = chunks.join(" ");
+    assert.include(joined, s1);
+    assert.include(joined, s2);
+    // Neither sentence should be split across chunks
+    for (const chunk of chunks) {
+      assert.isFalse(chunk.startsWith("ends here properly."));
+      assert.isFalse(chunk.startsWith("starts a new thought entirely."));
+    }
   });
 });

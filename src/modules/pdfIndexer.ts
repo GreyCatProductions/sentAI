@@ -8,11 +8,64 @@ const DEV_OUTPUT_DIR = "~/sentAI/src/modules/test_embeddings";
 
 const MIN_CHUNK_CHARS = 100;
 
+// ~4 chars per token for English academic prose — good enough without a tokenizer dep
+const CHARS_PER_TOKEN = 4;
+// text-embedding-3-small supports 8191 tokens; 500 is a practical sweet spot
+const MAX_CHUNK_TOKENS = 500;
+
 // Section headings that mark the start of non-content tail material
 const REFERENCES_HEADING = /^(references|bibliography|quellen|literatur|works cited|literaturverzeichnis)\s*$/i;
 
 // Short boilerplate lines that survive the length filter
 const BOILERPLATE = /^[\d\s.]+$|all rights reserved|downloaded from|©|\bcc\s+by\b|doi:\s*10\.|publisher's note/i;
+
+// PDF ligatures that don't tokenize as their constituent letters
+const LIGATURES: Record<string, string> = {
+  "ﬀ": "ff", "ﬁ": "fi", "ﬂ": "fl",
+  "ﬃ": "ffi", "ﬄ": "ffl", "ﬅ": "st", "ﬆ": "st",
+};
+const LIGATURE_RE = new RegExp(Object.keys(LIGATURES).join("|"), "g");
+
+// Cleans raw PDF-extracted text before chunking:
+// fixes encoding artifacts, removes formatting chars, collapses layout whitespace.
+export function cleanText(raw: string): string {
+  return raw
+    .normalize("NFC")
+    .replace(LIGATURE_RE, m => LIGATURES[m])
+    // Soft hyphens (invisible, from PDF glyph encoding)
+    .replace(/­/g, "")
+    // Line-break hyphenation: "re-\nse arch" → "research"
+    .replace(/(\w)-\n[ \t]*/g, "$1")
+    // Non-breaking and narrow spaces → regular space
+    .replace(/[           ]/g, " ")
+    // Zero-width and BOM characters
+    .replace(/[​‌‍﻿]/g, "")
+    // C0 control characters except \n and \t
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+    // Single newlines (PDF line wraps within a paragraph) → space; preserve \n\n paragraph breaks
+    .replace(/(?<!\n)\n(?!\n)/g, " ")
+    // Multiple spaces → single space
+    .replace(/ {2,}/g, " ")
+    // Trim each line
+    .split("\n").map(l => l.trim()).join("\n")
+    // Normalise paragraph breaks to exactly two newlines
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / CHARS_PER_TOKEN);
+}
+
+// Splits on sentence boundaries: punctuation followed by whitespace + uppercase/quote/paren.
+// Avoids splitting on abbreviations like "Fig. 1" or "et al." by requiring the next word
+// to start with an uppercase letter.
+function toSentences(text: string): string[] {
+  return text
+    .split(/(?<=[.!?])\s+(?=[A-Z"(])/)
+    .map(s => s.trim())
+    .filter(Boolean);
+}
 
 function isNoise(chunk: string): boolean {
   const trimmed = chunk.trim();
@@ -21,25 +74,33 @@ function isNoise(chunk: string): boolean {
   return false;
 }
 
-// Splits extracted PDF text into ~1000-char paragraphs to stay within embedding model input limits.
+// Splits extracted PDF text into sentence-aware chunks within a token budget.
 // Drops headers/footers, boilerplate, and everything from the references section onward.
-export function chunkText(text: string, maxChunkSize = 1000): string[] {
+export function chunkText(text: string, maxTokens = MAX_CHUNK_TOKENS): string[] {
   const paragraphs = text.split(/\n\n+/);
   const chunks: string[] = [];
-  let current = "";
+  let bucket: string[] = [];
+  let bucketTokens = 0;
+
+  const flush = () => {
+    if (bucket.length === 0) return;
+    const chunk = bucket.join(" ").trim();
+    if (!isNoise(chunk)) chunks.push(chunk);
+    bucket = [];
+    bucketTokens = 0;
+  };
 
   for (const para of paragraphs) {
-    // Stop at the references/bibliography section — nothing after is worth embedding
     if (REFERENCES_HEADING.test(para.trim())) break;
 
-    if ((current + para).length > maxChunkSize && current.length > 0) {
-      if (!isNoise(current)) chunks.push(current.trim());
-      current = para;
-    } else {
-      current += "\n\n" + para;
+    for (const sentence of toSentences(para)) {
+      const t = estimateTokens(sentence);
+      if (bucketTokens + t > maxTokens) flush();
+      bucket.push(sentence);
+      bucketTokens += t;
     }
   }
-  if (current.trim() && !isNoise(current)) chunks.push(current.trim());
+  flush();
   return chunks;
 }
 
@@ -76,8 +137,8 @@ export class PdfIndexer {
     const metadata = extractMetadata(item);
 
     // Extract full text via Zotero's built-in PDF worker (0 = no page limit)
-    const { text } = await Zotero.PDFWorker.getFullText(item.id, 0);
-    const chunks: string[] = chunkText(text);
+    const { text: rawText } = await Zotero.PDFWorker.getFullText(item.id, 0);
+    const chunks: string[] = chunkText(cleanText(rawText));
     Zotero.debug(`sentAI: ${chunks.length} chunks to embed`);
 
     const records: EmbeddingRecord[] = [];
