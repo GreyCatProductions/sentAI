@@ -6,21 +6,40 @@ import { hashString } from "../utils/hash";
 // Dev only: pretty-printed JSON files land here for inspection in VS Code
 const DEV_OUTPUT_DIR = "~/sentAI/src/modules/test_embeddings";
 
-// Splits extracted PDF text into ~1000-char paragraphs to stay within embedding model input limits
+const MIN_CHUNK_CHARS = 100;
+
+// Section headings that mark the start of non-content tail material
+const REFERENCES_HEADING = /^(references|bibliography|quellen|literatur|works cited|literaturverzeichnis)\s*$/i;
+
+// Short boilerplate lines that survive the length filter
+const BOILERPLATE = /^[\d\s.]+$|all rights reserved|downloaded from|©|\bcc\s+by\b|doi:\s*10\.|publisher's note/i;
+
+function isNoise(chunk: string): boolean {
+  const trimmed = chunk.trim();
+  if (trimmed.length < MIN_CHUNK_CHARS) return true;
+  if (BOILERPLATE.test(trimmed)) return true;
+  return false;
+}
+
+// Splits extracted PDF text into ~1000-char paragraphs to stay within embedding model input limits.
+// Drops headers/footers, boilerplate, and everything from the references section onward.
 export function chunkText(text: string, maxChunkSize = 1000): string[] {
   const paragraphs = text.split(/\n\n+/);
   const chunks: string[] = [];
   let current = "";
 
   for (const para of paragraphs) {
+    // Stop at the references/bibliography section — nothing after is worth embedding
+    if (REFERENCES_HEADING.test(para.trim())) break;
+
     if ((current + para).length > maxChunkSize && current.length > 0) {
-      chunks.push(current.trim());
+      if (!isNoise(current)) chunks.push(current.trim());
       current = para;
     } else {
       current += "\n\n" + para;
     }
   }
-  if (current.trim()) chunks.push(current.trim());
+  if (current.trim() && !isNoise(current)) chunks.push(current.trim());
   return chunks;
 }
 
