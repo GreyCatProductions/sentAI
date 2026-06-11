@@ -19,11 +19,11 @@ export function semanticSearch(
 ): SearchResult[] {
 
   const results: SearchResult[] = [];
+  const normalizedQuery = normalize(queryEmbedding);
 
   for (const chunk of chunks) {
-    // The chunk embedding is normalized before comparison to calculate cosine similarity.
     const similarity = dotProduct(
-      queryEmbedding,
+      normalizedQuery,
       normalize(chunk.embedding)
     );
 
