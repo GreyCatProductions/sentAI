@@ -1,4 +1,11 @@
 //Format that is used in the DB
+export interface ItemMetadata {
+    title?: string;
+    authors?: string;
+    year?: string;
+    abstract?: string;
+}
+
 export interface EmbeddingRecord {
     paperId: string;
     chunkIndex: number;
@@ -6,4 +13,5 @@ export interface EmbeddingRecord {
     embedding: number[];
     textHash: string;
     createdAt: number;
+    metadata?: ItemMetadata;
 }

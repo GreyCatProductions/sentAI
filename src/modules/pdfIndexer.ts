@@ -1,4 +1,4 @@
-import type { EmbeddingRecord } from "../types";
+import type { EmbeddingRecord, ItemMetadata } from "../types";
 import { embeddingStorage } from "./savesystem";
 import { embedText } from "../modules/embedder"
 import { hashString } from "../utils/hash";
@@ -43,11 +43,37 @@ export function chunkText(text: string, maxChunkSize = 1000): string[] {
   return chunks;
 }
 
+function extractMetadata(item: Zotero.Item): ItemMetadata {
+  const parent = item.parentItem ?? item;
+  const creators = parent.getCreators();
+  const authors = creators
+    .filter(c => c.creatorTypeID === Zotero.CreatorTypes.getID("author"))
+    .map(c => [c.lastName, c.firstName].filter(Boolean).join(", "))
+    .join("; ");
+  return {
+    title: (parent.getField("title") as string) || undefined,
+    authors: authors || undefined,
+    year: (parent.getField("year") as string) || undefined,
+    abstract: (parent.getField("abstractNote") as string) || undefined,
+  };
+}
+
+function buildEmbeddingInput(chunk: string, meta: ItemMetadata): string {
+  const parts: string[] = [];
+  if (meta.title) parts.push(`Title: ${meta.title}`);
+  if (meta.authors) parts.push(`Authors: ${meta.authors}`);
+  if (meta.year) parts.push(`Year: ${meta.year}`);
+  if (meta.abstract) parts.push(`Abstract: ${meta.abstract}`);
+  return parts.length > 0 ? parts.join("\n") + "\n\n" + chunk : chunk;
+}
+
 export class PdfIndexer {
   // Entry point — called by hooks.ts whenever a new PDF is added to Zotero
   static async process(item: Zotero.Item) {
     const path = await item.getFilePathAsync();
     Zotero.debug(`sentAI: New PDF uploaded: ${path}`);
+
+    const metadata = extractMetadata(item);
 
     // Extract full text via Zotero's built-in PDF worker (0 = no page limit)
     const { text } = await Zotero.PDFWorker.getFullText(item.id, 0);
@@ -57,7 +83,8 @@ export class PdfIndexer {
     const records: EmbeddingRecord[] = [];
     for (let i = 0; i < chunks.length; i++) {
       const text = chunks[i];
-      const embedding = await embedText(text);
+      const embeddingInput = buildEmbeddingInput(text, metadata);
+      const embedding = await embedText(embeddingInput);
       const textHash = hashString(text)
       records.push({
         paperId: String(item.id),
@@ -65,6 +92,7 @@ export class PdfIndexer {
         chunkText: text,
         embedding,
         textHash,
+        metadata,
         createdAt: Date.now(),
       });
     }
