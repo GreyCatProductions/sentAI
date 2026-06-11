@@ -1,8 +1,30 @@
+/* ===== Design tokens with hard fallbacks ===== */
+/* Zotero vars are used when available; explicit fallbacks prevent transparency */
+:root {
+  --s-bg:          var(--material-background,         #f0f2f5);
+  --s-surface:     var(--material-content-background, #ffffff);
+  --s-border:      var(--material-border-color,       #dde1e8);
+  --s-text:        var(--primary-color,               #1a2433);
+  --s-text-muted:  var(--secondary-color,             #6b7a8d);
+  --s-accent:      #4a7fcb;
+  --s-accent-dark: #3568b3;
+  --s-accent-pale: #e8f0fb;
+  --s-ai-bg:       #eef1f7;
+  --s-radius:      12px;
+}
+
+/* ===== Reset ===== */
+*, *::before, *::after { box-sizing: border-box; }
+
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden;
+  background: var(--s-bg);
+  color: var(--s-text);
+  font-family: -apple-system, "Segoe UI", system-ui, Arial, sans-serif;
+  font-size: 13px;
 }
 
 /* ===== Panel shell ===== */
@@ -10,189 +32,191 @@ html, body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  font-family: -apple-system, "Segoe UI", Arial, sans-serif;
-  font-size: 13px;
-  background: var(--material-background);
-  color: var(--primary-color);
 }
 
 /* ===== Header ===== */
 #sentai-header {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 10px 12px 9px;
-  background: var(--material-content-background);
-  border-bottom: 1px solid var(--material-border-color);
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px 10px;
+  background: var(--s-accent);
   flex-shrink: 0;
 }
 
 #sentai-header-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--primary-color);
-  letter-spacing: 0.01em;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.02em;
 }
 
 #sentai-header-sub {
   font-size: 11px;
-  color: var(--secondary-color);
+  color: rgba(255,255,255,0.65);
+  font-weight: 400;
 }
 
 /* ===== Search bar ===== */
 #sentai-suche {
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--material-border-color);
-  background: var(--material-content-background);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--s-border);
+  background: var(--s-surface);
   flex-shrink: 0;
 }
 
 #sentai-suche label {
   display: block;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--secondary-color);
-  margin-bottom: 5px;
+  letter-spacing: 0.07em;
+  color: var(--s-text-muted);
+  margin-bottom: 6px;
 }
 
 #sentai-suche-zeile {
   display: flex;
-  gap: 5px;
+  gap: 6px;
 }
 
 #sentai-suche-input {
   flex: 1;
-  padding: 5px 8px;
-  border: 1px solid var(--material-border-color);
-  border-radius: 5px;
+  padding: 6px 10px;
+  border: 1.5px solid var(--s-border);
+  border-radius: 20px;
   font-size: 12px;
-  background: var(--material-background);
-  color: var(--primary-color);
+  font-family: inherit;
+  background: var(--s-bg);
+  color: var(--s-text);
   outline: none;
   transition: border-color 0.15s;
 }
 
-#sentai-suche-input:focus {
-  border-color: #4a80c4;
-}
+#sentai-suche-input::placeholder { color: var(--s-text-muted); opacity: 0.7; }
+#sentai-suche-input:focus { border-color: var(--s-accent); }
 
 #sentai-suche-button {
-  padding: 5px 10px;
-  background: #4a80c4;
-  color: white;
+  padding: 6px 14px;
+  background: var(--s-accent);
+  color: #fff;
   border: none;
-  border-radius: 5px;
+  border-radius: 20px;
   cursor: pointer;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  font-family: inherit;
   transition: background 0.15s;
   flex-shrink: 0;
 }
 
-#sentai-suche-button:hover {
-  background: #3a6ab0;
-}
+#sentai-suche-button:hover { background: var(--s-accent-dark); }
 
 /* ===== Messages ===== */
 #sentai-nachrichten {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 10px;
+  padding: 14px 12px 10px;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  background: var(--s-bg);
 }
 
+/* Thin scrollbar */
+#sentai-nachrichten::-webkit-scrollbar { width: 4px; }
+#sentai-nachrichten::-webkit-scrollbar-track { background: transparent; }
+#sentai-nachrichten::-webkit-scrollbar-thumb { background: var(--s-border); border-radius: 2px; }
+
+/* Sender label */
 .absender, .sender {
   font-size: 10px;
-  font-weight: 500;
-  color: var(--secondary-color);
-  padding: 0 2px;
-  margin-top: 8px;
+  font-weight: 600;
+  color: var(--s-text-muted);
+  padding: 0 4px;
+  margin-top: 10px;
+  letter-spacing: 0.03em;
 }
 
-.absender:first-child, .sender:first-child {
-  margin-top: 0;
-}
+.absender:first-child,
+.sender:first-child { margin-top: 0; }
 
+/* Bubble */
 .nachricht, .message {
-  max-width: 88%;
-  padding: 8px 11px;
-  border-radius: 10px;
+  max-width: 86%;
+  padding: 8px 12px;
+  border-radius: var(--s-radius);
   font-size: 12px;
-  line-height: 1.55;
+  line-height: 1.6;
   word-break: break-word;
+  white-space: pre-wrap;
 }
 
-/* AI message: left */
+/* AI bubble — left */
 .von-ki, .sentAI {
-  background: var(--material-content-background);
-  color: var(--primary-color);
+  background: var(--s-ai-bg);
+  color: var(--s-text);
   align-self: flex-start;
-  border: 1px solid var(--material-border-color);
-  border-bottom-left-radius: 3px;
+  border: 1px solid var(--s-border);
+  border-bottom-left-radius: 4px;
 }
 
-/* User message: right, blue */
+/* User bubble — right */
 .von-user, .user {
-  background: #4a80c4;
-  color: white;
+  background: var(--s-accent);
+  color: #fff;
   align-self: flex-end;
-  border-bottom-right-radius: 3px;
+  border-bottom-right-radius: 4px;
 }
 
 /* ===== Input area ===== */
 #sentai-eingabe {
-  padding: 8px 10px;
-  border-top: 1px solid var(--material-border-color);
-  background: var(--material-content-background);
+  padding: 10px 12px;
+  border-top: 1px solid var(--s-border);
+  background: var(--s-surface);
   flex-shrink: 0;
 }
 
 #sentai-eingabe-zeile {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: flex-end;
 }
 
 #sentai-eingabe-text {
   flex: 1;
-  padding: 7px 9px;
-  border: 1px solid var(--material-border-color);
-  border-radius: 8px;
+  padding: 8px 11px;
+  border: 1.5px solid var(--s-border);
+  border-radius: 10px;
   font-size: 12px;
   font-family: inherit;
   resize: none;
-  height: 46px;
-  background: var(--material-background);
-  color: var(--primary-color);
+  height: 48px;
+  background: var(--s-bg);
+  color: var(--s-text);
   outline: none;
   transition: border-color 0.15s;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
-#sentai-eingabe-text:focus {
-  border-color: #4a80c4;
-}
+#sentai-eingabe-text::placeholder { color: var(--s-text-muted); opacity: 0.7; }
+#sentai-eingabe-text:focus { border-color: var(--s-accent); }
 
 #sentai-senden-button {
-  width: 34px;
-  height: 34px;
-  background: #4a80c4;
-  color: white;
+  width: 36px;
+  height: 36px;
+  background: var(--s-accent);
+  color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 50%;
   cursor: pointer;
   font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 0.15s;
+  transition: background 0.15s, transform 0.1s;
 }
 
-#sentai-senden-button:hover {
-  background: #3a6ab0;
-}
+#sentai-senden-button:hover  { background: var(--s-accent-dark); }
+#sentai-senden-button:active { transform: scale(0.93); }
