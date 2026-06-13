@@ -21,6 +21,13 @@ app.post("/embed", async (req, res) => {
   });
 
   const json = await azureRes.json() as { data: { embedding: number[] }[] };
+
+  if (!azureRes.ok || !json.data) {
+    console.error("Azure embedding failed:", azureRes.status, JSON.stringify(json));
+    res.status(502).json({ error: "Embedding request failed" });
+    return;
+  }
+
   const embedding = json.data[0].embedding;
 
   res.json({ embedding });
