@@ -12,6 +12,5 @@ export interface EmbeddingRecord {
     chunkText: string; //Save explicit for fast lookup. TODO: Optional since space expensive. Look up pdf alternative
     embedding: number[];
     textHash: string;
-    createdAt: number;
     metadata?: ItemMetadata;
 }
