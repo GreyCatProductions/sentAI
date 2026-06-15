@@ -148,7 +148,7 @@ export class PdfIndexer {
       const embedding = await embedText(embeddingInput);
       const textHash = hashString(text)
       records.push({
-        paperId: String(item.id),
+        paperId: item.key,
         chunkIndex: i,
         chunkText: text,
         embedding,

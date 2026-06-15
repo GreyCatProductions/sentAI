@@ -49,17 +49,17 @@ describe("chunkText", function () {
   });
 
   it("should not split mid-sentence", function () {
-    const s1 = "The first sentence ends here properly.";
-    const s2 = "The second sentence starts a new thought entirely.";
-    // maxTokens=10 forces a split; sentences should remain intact
-    const chunks = chunkText(`${s1} ${s2}`, 10);
+    const s1 = "The first sentence ends here properly and has been made long enough to pass the minimum character filter.";
+    const s2 = "The second sentence starts a new thought entirely and is also long enough to clear the minimum length check.";
+    // maxTokens=30 forces a split between sentences; each sentence must remain intact
+    const chunks = chunkText(`${s1} ${s2}`, 30);
     const joined = chunks.join(" ");
     assert.include(joined, s1);
     assert.include(joined, s2);
     // Neither sentence should be split across chunks
     for (const chunk of chunks) {
-      assert.isFalse(chunk.startsWith("ends here properly."));
-      assert.isFalse(chunk.startsWith("starts a new thought entirely."));
+      assert.isFalse(chunk.startsWith("and has been made long enough"));
+      assert.isFalse(chunk.startsWith("and is also long enough"));
     }
   });
 });

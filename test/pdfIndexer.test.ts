@@ -18,6 +18,9 @@ describe("PdfIndexer", function () {
             id: fakeItemId,
             key: "FAKEKEY1",
             getFilePathAsync: async () => "/fake/path.pdf",
+            parentItem: null,
+            getCreators: () => [],
+            getField: (_field: string) => "",
         } as unknown as Zotero.Item;
 
         // Stub PDFWorker to avoid needing a real PDF
