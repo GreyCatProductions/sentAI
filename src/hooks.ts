@@ -15,7 +15,7 @@ async function onStartup() {
 
   initLocale();
 
-  embeddingStorage.ensureDir();
+  await embeddingStorage.init();
 
   addon.api = { search };
   addon.data.initialized = true;
@@ -73,6 +73,7 @@ function onShutdown(): void {
   if (notifierID) Zotero.Notifier.unregisterObserver(notifierID);
   ztoolkit.unregisterAll();
   addon.data.dialog?.window?.close();
+  embeddingStorage.close();
   // Remove addon object
   addon.data.alive = false;
   // @ts-expect-error - Plugin instance is not typed
