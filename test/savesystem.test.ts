@@ -14,7 +14,6 @@ describe("EmbeddingStorage", function () {
       chunkText: "chunk1",
       embedding: [0.5, -0.5],
       textHash: "hash1",
-      createdAt: 0,
     },
     {
       paperId: "paper1",
@@ -22,7 +21,6 @@ describe("EmbeddingStorage", function () {
       chunkText: "chunk2",
       embedding: [0.25, -0.25],
       textHash: "hash2",
-      createdAt: 0,
     },
   ];
 

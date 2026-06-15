@@ -17,6 +17,13 @@ async function onStartup() {
 
   await embeddingStorage.init();
 
+  Zotero.PreferencePanes.register({
+    pluginID: addon.data.config.addonID,
+    src: `chrome://${addon.data.config.addonRef}/content/preferences.xhtml`,
+    label: "sentAI",
+    image: `chrome://${addon.data.config.addonRef}/content/icons/favicon@0.5x.png`,
+  });
+
   addon.api = { search };
   addon.data.initialized = true;
 
@@ -90,18 +97,31 @@ async function onNotify(
   ids: Array<string | number>,
   extraData: { [key: string]: any },
 ) {
-  Zotero.log("Some notification fired") //TODO: Remove
   if (event === "add" && type === "item") {
     for (const id of ids as number[]) {
       const item = Zotero.Items.get(id);
       if (!item) continue;
-      Zotero.log(`Item ${id}: isAttachment=${item.isAttachment()}, itemType=${item.itemType}, contentType=${item.attachmentContentType}`);
       if (
         item.isAttachment() &&
         item.attachmentContentType === "application/pdf"
       ) {
-        Zotero.log("Embedding paper");
+        if (await embeddingStorage.isIndexed(item.id)) continue;
         await PdfIndexer.process(item);
+      }
+    }
+  }
+
+  if ((event === "delete" || event === "trash") && type === "item") {
+    for (const id of ids as number[]) {
+      Zotero.log(`sentAI: ${event} fired for item ${id}`);
+      await embeddingStorage.remove(id);
+      if (event === "trash") {
+        const item = Zotero.Items.get(id);
+        const attachments = item?.getAttachments() ?? [];
+        Zotero.log(`sentAI: child attachments: [${attachments.join(", ")}]`);
+        for (const attId of attachments) {
+          await embeddingStorage.remove(attId);
+        }
       }
     }
   }

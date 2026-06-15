@@ -44,7 +44,6 @@ function rowToRecord(row: any): EmbeddingRecord {
     chunkText: row.chunk_text as string,
     embedding: base64ToEmbedding(row.embedding as string),
     textHash: row.text_hash as string,
-    createdAt: row.created_at as number,
   };
   if (row.meta_title || row.meta_authors || row.meta_year || row.meta_abstract) {
     record.metadata = {
@@ -86,7 +85,6 @@ class EmbeddingStorage {
         chunk_text    TEXT    NOT NULL,
         embedding     TEXT    NOT NULL,
         text_hash     TEXT    NOT NULL,
-        created_at    INTEGER NOT NULL,
         model_id      TEXT    NOT NULL,
         meta_title    TEXT,
         meta_authors  TEXT,
@@ -109,8 +107,8 @@ class EmbeddingStorage {
         await Zotero.DB.queryAsync(
           `INSERT INTO sentai.chunks
              (item_id, item_key, chunk_index, chunk_text, embedding,
-              text_hash, created_at, model_id, meta_title, meta_authors, meta_year, meta_abstract)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+              text_hash, model_id, meta_title, meta_authors, meta_year, meta_abstract)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
           [
             itemId,
             r.paperId,
@@ -118,7 +116,6 @@ class EmbeddingStorage {
             r.chunkText,
             embeddingToBase64(r.embedding),
             r.textHash,
-            r.createdAt,
             getEmbeddingModel(),
             r.metadata?.title ?? null,
             r.metadata?.authors ?? null,

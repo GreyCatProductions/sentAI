@@ -25,7 +25,7 @@ export default defineConfig({
       buildTime: "{{buildTime}}",
     },
     prefs: {
-      prefix: pkg.config.prefsPrefix,
+      prefix: `extensions.zotero.${pkg.config.addonRef}`,
     },
     esbuildOptions: [
       {

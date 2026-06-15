@@ -3,9 +3,6 @@ import { embeddingStorage } from "./savesystem";
 import { embedText } from "../modules/embedder"
 import { hashString } from "../utils/hash";
 
-// Dev only: pretty-printed JSON files land here for inspection in VS Code
-const DEV_OUTPUT_DIR = "~/sentAI/src/modules/test_embeddings";
-
 const MIN_CHUNK_CHARS = 100;
 
 // ~4 chars per token for English academic prose — good enough without a tokenizer dep
@@ -154,20 +151,10 @@ export class PdfIndexer {
         embedding,
         textHash,
         metadata,
-        createdAt: Date.now(),
       });
     }
 
     await embeddingStorage.save(item.id, records);
     Zotero.debug(`sentAI: saved ${records.length} embeddings for item ${item.id}`);
-
-    // Write a readable copy to the project folder for dev inspection
-    if (typeof addon !== "undefined" && addon.data.env === "development") {
-      Zotero.File.createDirectoryIfMissing(DEV_OUTPUT_DIR);
-      await Zotero.File.putContentsAsync(
-        PathUtils.join(DEV_OUTPUT_DIR, `${item.id}.json`),
-        JSON.stringify(records, null, 2),
-      );
-    }
   }
 }
