@@ -1,9 +1,8 @@
 function getServerUrl(): string {
-    const fromPrefs = Zotero.Prefs.get(
+    const url = Zotero.Prefs.get(
         "extensions.zotero.sentai.serverUrl",
         true,
     ) as string | undefined;
-    const url = fromPrefs || __server_url__;
     if (!url) throw new Error("sentAI: Server URL is not configured. Set it in sentAI settings.");
     return url.replace(/\/$/, "");
 }

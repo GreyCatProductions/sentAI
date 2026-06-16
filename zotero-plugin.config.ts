@@ -23,6 +23,7 @@ export default defineConfig({
       homepage: pkg.homepage,
       buildVersion: pkg.version,
       buildTime: "{{buildTime}}",
+      serverUrl: process.env.SERVER_URL ?? "",
     },
     prefs: {
       prefix: `extensions.zotero.${pkg.config.addonRef}`,

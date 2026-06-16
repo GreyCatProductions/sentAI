@@ -1,3 +1,3 @@
 pref("enable", true);
 pref("embeddingModel", "text-embedding-3-small");
-pref("serverUrl", "");
+pref("serverUrl", "http://141.89.241.146/");
