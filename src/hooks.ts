@@ -4,6 +4,7 @@ import { embeddingStorage } from "./modules/savesystem";
 import { PdfIndexer } from "./modules/pdfIndexer";
 import { search } from "./modules/searchService";
 import { getPref, setPref } from "./utils/prefs";
+import { autoAttachPdf } from "./modules/autoAttach";
 
 let notifierID: string | undefined;
 
@@ -112,6 +113,8 @@ async function onNotify(
       ) {
         if (await embeddingStorage.isIndexed(item.id)) continue;
         await PdfIndexer.process(item);
+      } else {
+        await autoAttachPdf(item);
       }
     }
   }

@@ -29,10 +29,12 @@ const settingsToggle = document.getElementById("sentai-settings-toggle")!;
 const settingsDrawer = document.getElementById("sentai-settings")!;
 const chunkInput = document.getElementById("sentai-chunk-size") as HTMLInputElement;
 const topKInput = document.getElementById("sentai-top-k") as HTMLInputElement;
+const autoAttachInput = document.getElementById("sentai-auto-attach-pdf") as HTMLInputElement;
 
 if (api) {
   chunkInput.value = String(api.getPref("maxChunkTokens") ?? 500);
   topKInput.value = String(api.getPref("topK") ?? 5);
+  autoAttachInput.checked = Boolean(api.getPref("autoAttachPdf") ?? false);
 }
 
 settingsToggle.addEventListener("click", () => {
@@ -48,4 +50,8 @@ chunkInput.addEventListener("change", () => {
 topKInput.addEventListener("change", () => {
   const val = parseInt(topKInput.value, 10);
   if (!isNaN(val) && api) api.setPref("topK", val);
+});
+
+autoAttachInput.addEventListener("change", () => {
+  if (api) api.setPref("autoAttachPdf", autoAttachInput.checked);
 });
