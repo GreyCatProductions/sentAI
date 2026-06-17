@@ -14,4 +14,12 @@
     </html:label>
     <html:input type="text" id="sentai-pref-server-url" preference="serverUrl" style="flex: 1;" />
   </hbox>
+  <hbox align="center" style="margin-top: 8px;">
+    <html:label for="sentai-pref-max-chunk-tokens" data-l10n-id="pref-max-chunk-tokens-label" style="min-width: 120px;"></html:label>
+    <html:input type="number" id="sentai-pref-max-chunk-tokens" preference="maxChunkTokens" min="100" max="2000" style="width: 80px;" />
+  </hbox>
+  <hbox align="center" style="margin-top: 8px;">
+    <html:label for="sentai-pref-top-k" data-l10n-id="pref-top-k-label" style="min-width: 120px;"></html:label>
+    <html:input type="number" id="sentai-pref-top-k" preference="topK" min="1" max="50" style="width: 80px;" />
+  </hbox>
 </groupbox>

@@ -13,6 +13,19 @@
     <div id="sentai-header">
       <span id="sentai-header-title">sentAI</span>
       <span id="sentai-header-sub">Literatur-Assistent</span>
+      <button id="sentai-settings-toggle" title="Settings">&#x2699;</button>
+    </div>
+
+    <!-- Settings drawer -->
+    <div id="sentai-settings">
+      <div class="sentai-settings-row">
+        <label for="sentai-chunk-size">Max Chunk Size (tokens)</label>
+        <input type="number" id="sentai-chunk-size" min="100" max="2000" step="50" />
+      </div>
+      <div class="sentai-settings-row">
+        <label for="sentai-top-k">Top-K Results</label>
+        <input type="number" id="sentai-top-k" min="1" max="50" />
+      </div>
     </div>
 
     <!-- Search bar -->

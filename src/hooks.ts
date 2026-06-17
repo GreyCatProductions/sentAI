@@ -3,6 +3,7 @@ import { createZToolkit } from "./utils/ztoolkit";
 import { embeddingStorage } from "./modules/savesystem";
 import { PdfIndexer } from "./modules/pdfIndexer";
 import { search } from "./modules/searchService";
+import { getPref, setPref } from "./utils/prefs";
 
 let notifierID: string | undefined;
 
@@ -24,7 +25,11 @@ async function onStartup() {
     image: `chrome://${addon.data.config.addonRef}/content/icons/favicon@0.5x.png`,
   });
 
-  addon.api = { search };
+  addon.api = {
+    search,
+    getPref: (key: string) => getPref(key as any),
+    setPref: (key: string, value: any) => setPref(key as any, value),
+  };
   addon.data.initialized = true;
 
   notifierID = Zotero.Notifier.registerObserver(

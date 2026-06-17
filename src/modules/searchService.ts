@@ -1,6 +1,7 @@
 import { embedText } from "./embedder";
 import { embeddingStorage } from "./savesystem";
 import { semanticSearch } from "./semanticSearch";
+import { getPref } from "../utils/prefs";
 
 export interface SearchResult {
   title: string;
@@ -16,7 +17,8 @@ export async function search(query: string): Promise<SearchResult[]> {
 
   if (allRecords.length === 0) return [];
 
-  const top = semanticSearch(queryEmbedding, allRecords, 5);
+  const topK = (getPref("topK") as number) || 5;
+  const top = semanticSearch(queryEmbedding, allRecords, topK);
 
   return top.map(result => {
     const attachment = Zotero.Items.get(Number(result.paperId)) || undefined;

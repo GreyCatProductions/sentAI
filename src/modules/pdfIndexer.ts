@@ -2,6 +2,7 @@ import type { EmbeddingRecord, ItemMetadata } from "../types";
 import { embeddingStorage } from "./savesystem";
 import { embedText } from "../modules/embedder"
 import { hashString } from "../utils/hash";
+import { getPref } from "../utils/prefs";
 
 const MIN_CHUNK_CHARS = 100;
 
@@ -135,7 +136,8 @@ export class PdfIndexer {
 
     // Extract full text via Zotero's built-in PDF worker (0 = no page limit)
     const { text: rawText } = await Zotero.PDFWorker.getFullText(item.id, 0);
-    const chunks: string[] = chunkText(cleanText(rawText));
+    const maxChunkTokens = (getPref("maxChunkTokens") as number) || MAX_CHUNK_TOKENS;
+    const chunks: string[] = chunkText(cleanText(rawText), maxChunkTokens);
     Zotero.debug(`sentAI: ${chunks.length} chunks to embed`);
 
     const records: EmbeddingRecord[] = [];

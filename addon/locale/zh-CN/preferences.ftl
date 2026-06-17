@@ -1,5 +1,9 @@
-pref-title = 插件模板设置示例
+pref-title = sentAI 设置
 pref-enable =
     .label = 开启
 pref-input = 输入
 pref-help = { $name } Build { $version } { $time }
+pref-model-label = 嵌入模型
+pref-server-url-label = 服务器地址
+pref-max-chunk-tokens-label = 最大块大小
+pref-top-k-label = Top-K 结果数
