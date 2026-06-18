@@ -6,6 +6,7 @@ import type { SearchResult } from "./modules/searchService";
 
 type Api = {
   search: (query: string) => Promise<SearchResult[]>;
+  ask: (query: string) => Promise<string>;
   getPref: (key: string) => unknown;
   setPref: (key: string, value: unknown) => void;
 };
@@ -16,12 +17,37 @@ const api: Api | undefined = (window as any).arguments?.[0];
 document.getElementById("sentai-suche-button")!.addEventListener("click", onSearch);
 
 // Send button
-document.getElementById("sentai-senden-button")!.addEventListener("click", () => {
-  const input = document.getElementById("sentai-eingabe-text") as HTMLTextAreaElement;
-  const text = input.value.trim();
-  if (!text) return;
+const sendButton = document.getElementById("sentai-senden-button") as HTMLButtonElement;
+const chatInput = document.getElementById("sentai-eingabe-text") as HTMLTextAreaElement;
+
+async function sendMessage() {
+  const text = chatInput.value.trim();
+  if (!text || !api) return;
+
   addMessage("Du", text, true);
-  input.value = "";
+  chatInput.value = "";
+  sendButton.disabled = true;
+
+  const placeholder = addMessage("sentAI", "...", false);
+
+  try {
+    const answer = await api.ask(text);
+    placeholder.textContent = answer;
+  } catch (e: any) {
+    placeholder.textContent = `Error: ${e?.message ?? "Unknown error"}`;
+  } finally {
+    sendButton.disabled = false;
+    const container = document.getElementById("sentai-nachrichten")!;
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+sendButton.addEventListener("click", sendMessage);
+chatInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
 });
 
 // Settings toggle

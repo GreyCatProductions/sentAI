@@ -19,3 +19,4 @@ declare const addon: import("../src/addon").default;
 
 declare const __env__: "production" | "development";
 declare const __server_url__: string;
+declare const __gemini_api_key__: string;

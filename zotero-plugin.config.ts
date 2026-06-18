@@ -34,6 +34,7 @@ export default defineConfig({
         define: {
           __env__: `"${process.env.NODE_ENV}"`,
           __server_url__: `"${process.env.SERVER_URL ?? ""}"`,
+          __gemini_api_key__: `"${process.env.GEMINI_API_KEY ?? ""}"`,
         },
         bundle: true,
         target: "firefox115",

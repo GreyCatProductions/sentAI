@@ -20,6 +20,15 @@ export async function embedText(text: string): Promise<number[]> {
     );
 
     const res = await Promise.race([fetchPromise, timeout]);
-    const json = (await res.json()) as unknown as { embedding: number[] };
+    const rawText = await res.text();
+    if (!res.ok) {
+      throw new Error(`Embedding server error ${res.status}: ${rawText.slice(0, 200)}`);
+    }
+    let json: { embedding: number[] };
+    try {
+      json = JSON.parse(rawText);
+    } catch {
+      throw new Error(`Embedding server returned non-JSON: ${rawText.slice(0, 200)}`);
+    }
     return json.embedding;
 }

@@ -3,6 +3,7 @@ import { createZToolkit } from "./utils/ztoolkit";
 import { embeddingStorage } from "./modules/savesystem";
 import { PdfIndexer } from "./modules/pdfIndexer";
 import { search } from "./modules/searchService";
+import { ask } from "./modules/ragService";
 import { getPref, setPref } from "./utils/prefs";
 import { autoAttachPdf } from "./modules/autoAttach";
 
@@ -28,6 +29,7 @@ async function onStartup() {
 
   addon.api = {
     search,
+    ask,
     getPref: (key: string) => getPref(key as any),
     setPref: (key: string, value: any) => setPref(key as any, value),
   };
