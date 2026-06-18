@@ -1,7 +1,6 @@
 /// <reference lib="dom" />
 
 import { addMessage } from "./ui/messages";
-import { onSearch } from "./ui/search";
 import type { SearchResult } from "./modules/searchService";
 
 type Api = {
@@ -12,9 +11,6 @@ type Api = {
 };
 
 const api: Api | undefined = (window as any).arguments?.[0];
-
-// Search button
-document.getElementById("sentai-suche-button")!.addEventListener("click", onSearch);
 
 // Send button
 const sendButton = document.getElementById("sentai-senden-button") as HTMLButtonElement;

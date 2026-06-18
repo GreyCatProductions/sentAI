@@ -1,16 +1,15 @@
-/* ===== Design tokens with hard fallbacks ===== */
-/* Zotero vars are used when available; explicit fallbacks prevent transparency */
+/* ===== Design tokens ===== */
 :root {
-  --s-bg:          var(--material-background,         #f0f2f5);
-  --s-surface:     var(--material-content-background, #ffffff);
-  --s-border:      var(--material-border-color,       #dde1e8);
-  --s-text:        var(--primary-color,               #1a2433);
-  --s-text-muted:  var(--secondary-color,             #6b7a8d);
-  --s-accent:      #4a7fcb;
-  --s-accent-dark: #3568b3;
-  --s-accent-pale: #e8f0fb;
-  --s-ai-bg:       #eef1f7;
-  --s-radius:      12px;
+  --s-bg:        #ffffff;
+  --s-surface:   #ffffff;
+  --s-border:    #e8eaed;
+  --s-text:      #1f1f1f;
+  --s-text-muted:#5f6368;
+  --s-accent:    #1a73e8;
+  --s-accent-dk: #1557b0;
+  --s-ai-bg:     #f0f4ff;
+  --s-radius:    20px;
+  --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 /* ===== Reset ===== */
@@ -23,7 +22,7 @@ html, body {
   overflow: hidden;
   background: var(--s-bg);
   color: var(--s-text);
-  font-family: -apple-system, "Segoe UI", system-ui, Arial, sans-serif;
+  font-family: "Google Sans", -apple-system, "Segoe UI", system-ui, Arial, sans-serif;
   font-size: 13px;
 }
 
@@ -39,21 +38,22 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 11px 14px 10px;
-  background: var(--s-accent);
+  padding: 12px 16px;
+  background: var(--s-surface);
+  border-bottom: 1px solid var(--s-border);
   flex-shrink: 0;
 }
 
 #sentai-header-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: 0.02em;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--s-accent);
+  letter-spacing: -0.01em;
 }
 
 #sentai-header-sub {
   font-size: 11px;
-  color: rgba(255,255,255,0.65);
+  color: var(--s-text-muted);
   font-weight: 400;
   flex: 1;
 }
@@ -61,31 +61,55 @@ html, body {
 #sentai-settings-toggle {
   background: none;
   border: none;
-  color: rgba(255,255,255,0.75);
+  color: var(--s-text-muted);
   font-size: 16px;
   cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
-  line-height: 1;
+  padding: 4px;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  transition: color 0.15s, background 0.15s;
+  transition: background 150ms ease, color 150ms ease, transform 120ms var(--ease-out);
 }
 
-#sentai-settings-toggle:hover { color: #fff; background: rgba(255,255,255,0.15); }
-#sentai-settings-toggle.active { color: #fff; background: rgba(255,255,255,0.2); }
+@media (hover: hover) and (pointer: fine) {
+  #sentai-settings-toggle:hover {
+    background: var(--s-border);
+    color: var(--s-text);
+  }
+}
+
+#sentai-settings-toggle:active  { transform: scale(0.88); }
+#sentai-settings-toggle.active  { color: var(--s-accent); background: #e8f0fe; }
 
 /* ===== Settings drawer ===== */
 #sentai-settings {
-  display: none;
+  display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 10px 12px;
   background: var(--s-surface);
   border-bottom: 1px solid var(--s-border);
   flex-shrink: 0;
+  overflow: hidden;
+  max-height: 0;
+  padding: 0 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    max-height 240ms var(--ease-out),
+    padding    240ms var(--ease-out),
+    opacity    180ms ease;
 }
 
-#sentai-settings.open { display: flex; }
+#sentai-settings.open {
+  max-height: 180px;
+  padding: 12px 16px;
+  opacity: 1;
+  pointer-events: auto;
+}
 
 .sentai-settings-row {
   display: flex;
@@ -95,93 +119,44 @@ html, body {
 
 .sentai-settings-row label {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--s-text-muted);
   flex: 1;
 }
 
 .sentai-settings-row input[type="number"] {
   width: 72px;
-  padding: 4px 7px;
+  padding: 5px 8px;
   border: 1.5px solid var(--s-border);
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 12px;
   font-family: inherit;
   background: var(--s-bg);
   color: var(--s-text);
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 150ms ease;
 }
 
 .sentai-settings-row input[type="number"]:focus { border-color: var(--s-accent); }
 
-/* ===== Search bar ===== */
-#sentai-suche {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--s-border);
-  background: var(--s-surface);
-  flex-shrink: 0;
-}
-
-#sentai-suche label {
-  display: block;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--s-text-muted);
-  margin-bottom: 6px;
-}
-
-#sentai-suche-zeile {
-  display: flex;
-  gap: 6px;
-}
-
-#sentai-suche-input {
-  flex: 1;
-  padding: 6px 10px;
-  border: 1.5px solid var(--s-border);
-  border-radius: 20px;
-  font-size: 12px;
-  font-family: inherit;
-  background: var(--s-bg);
-  color: var(--s-text);
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-#sentai-suche-input::placeholder { color: var(--s-text-muted); opacity: 0.7; }
-#sentai-suche-input:focus { border-color: var(--s-accent); }
-
-#sentai-suche-button {
-  padding: 6px 14px;
-  background: var(--s-accent);
-  color: #fff;
-  border: none;
-  border-radius: 20px;
+.sentai-settings-row input[type="checkbox"] {
+  accent-color: var(--s-accent);
+  width: 14px;
+  height: 14px;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
-  transition: background 0.15s;
-  flex-shrink: 0;
 }
-
-#sentai-suche-button:hover { background: var(--s-accent-dark); }
 
 /* ===== Messages ===== */
 #sentai-nachrichten {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 12px 10px;
+  padding: 16px 14px 10px;
   display: flex;
   flex-direction: column;
   gap: 2px;
   background: var(--s-bg);
 }
 
-/* Thin scrollbar */
 #sentai-nachrichten::-webkit-scrollbar { width: 4px; }
 #sentai-nachrichten::-webkit-scrollbar-track { background: transparent; }
 #sentai-nachrichten::-webkit-scrollbar-thumb { background: var(--s-border); border-radius: 2px; }
@@ -192,22 +167,30 @@ html, body {
   font-weight: 600;
   color: var(--s-text-muted);
   padding: 0 4px;
-  margin-top: 10px;
-  letter-spacing: 0.03em;
+  margin-top: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .absender:first-child,
 .sender:first-child { margin-top: 0; }
 
+/* Entry animation */
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
 /* Bubble */
 .nachricht, .message {
-  max-width: 86%;
-  padding: 8px 12px;
+  max-width: 88%;
+  padding: 9px 14px;
   border-radius: var(--s-radius);
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.55;
   word-break: break-word;
   white-space: pre-wrap;
+  animation: msg-in 200ms var(--ease-out) both;
 }
 
 /* AI bubble — left */
@@ -215,8 +198,7 @@ html, body {
   background: var(--s-ai-bg);
   color: var(--s-text);
   align-self: flex-start;
-  border: 1px solid var(--s-border);
-  border-bottom-left-radius: 4px;
+  border-bottom-left-radius: 6px;
 }
 
 /* User bubble — right */
@@ -224,13 +206,12 @@ html, body {
   background: var(--s-accent);
   color: #fff;
   align-self: flex-end;
-  border-bottom-right-radius: 4px;
+  border-bottom-right-radius: 6px;
 }
 
 /* ===== Input area ===== */
 #sentai-eingabe {
-  padding: 10px 12px;
-  border-top: 1px solid var(--s-border);
+  padding: 10px 14px 14px;
   background: var(--s-surface);
   flex-shrink: 0;
 }
@@ -239,30 +220,37 @@ html, body {
   display: flex;
   gap: 8px;
   align-items: flex-end;
+  background: var(--s-bg);
+  border: 1.5px solid var(--s-border);
+  border-radius: 24px;
+  padding: 6px 6px 6px 14px;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+#sentai-eingabe-zeile:focus-within {
+  border-color: var(--s-accent);
+  box-shadow: 0 0 0 3px #1a73e814;
 }
 
 #sentai-eingabe-text {
   flex: 1;
-  padding: 8px 11px;
-  border: 1.5px solid var(--s-border);
-  border-radius: 10px;
-  font-size: 12px;
+  padding: 4px 0;
+  border: none;
+  background: transparent;
+  font-size: 13px;
   font-family: inherit;
   resize: none;
-  height: 48px;
-  background: var(--s-bg);
+  height: 36px;
   color: var(--s-text);
   outline: none;
-  transition: border-color 0.15s;
   line-height: 1.5;
 }
 
-#sentai-eingabe-text::placeholder { color: var(--s-text-muted); opacity: 0.7; }
-#sentai-eingabe-text:focus { border-color: var(--s-accent); }
+#sentai-eingabe-text::placeholder { color: var(--s-text-muted); }
 
 #sentai-senden-button {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   background: var(--s-accent);
   color: #fff;
   border: none;
@@ -273,8 +261,12 @@ html, body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 0.15s, transform 0.1s;
+  transition: background 150ms ease, transform 120ms var(--ease-out), opacity 150ms ease;
 }
 
-#sentai-senden-button:hover  { background: var(--s-accent-dark); }
-#sentai-senden-button:active { transform: scale(0.93); }
+@media (hover: hover) and (pointer: fine) {
+  #sentai-senden-button:hover { background: var(--s-accent-dk); }
+}
+
+#sentai-senden-button:active   { transform: scale(0.92); }
+#sentai-senden-button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
