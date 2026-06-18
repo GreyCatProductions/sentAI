@@ -21,10 +21,14 @@ export async function search(query: string): Promise<SearchResult[]> {
   const top = semanticSearch(queryEmbedding, allRecords, topK);
 
   return top.map(result => {
-    const attachment = Zotero.Items.get(Number(result.paperId)) || undefined;
+    if (result.metadata?.title) {
+      return { title: result.metadata.title, chunkText: result.chunkText, similarity: result.similarity };
+    }
+    const libID = Zotero.Libraries.userLibraryID;
+    const item = Zotero.Items.getByLibraryAndKey(libID, result.paperId) as Zotero.Item | false;
     const title: string =
-      (attachment?.parentItem?.getField("title") as string | undefined) ||
-      (attachment?.getField("title") as string | undefined) ||
+      (item && (item.parentItem?.getField("title") as string | undefined)) ||
+      (item && (item.getField("title") as string | undefined)) ||
       result.paperId;
     return { title, chunkText: result.chunkText, similarity: result.similarity };
   });

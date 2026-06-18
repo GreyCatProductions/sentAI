@@ -57,9 +57,11 @@ export default defineConfig({
     hooks: {
       "test:prebuild": () => {
         const url = process.env.SERVER_URL ?? "";
+        const geminiKey = process.env.GEMINI_API_KEY ?? "";
         writeFileSync(
           "./test/00_setup.test.ts",
-          `(globalThis as any).__server_url__ = ${JSON.stringify(url)};\n`,
+          `(globalThis as any).__server_url__ = ${JSON.stringify(url)};\n` +
+          `(globalThis as any).__gemini_api_key__ = ${JSON.stringify(geminiKey)};\n`,
         );
       },
     },

@@ -1,10 +1,13 @@
 import { search } from "./searchService";
 
-const SYSTEM_PROMPT = `You are a research assistant with access to excerpts from the user's academic paper library.
-Answer the user's question using ONLY the provided paper excerpts.
-For each claim, cite the source paper inline like this: [Paper Title].
-If the excerpts don't contain enough information to answer, say so honestly.
-Be concise and precise.`;
+const SYSTEM_PROMPT = `Du bist ein akademischer Forschungsassistent. Deine Aufgabe: Argumente, Gegenargumente und Belege aus der Papier-Bibliothek des Nutzers finden.
+
+Antworte kurz und präzise:
+- Max. 3 Punkte pro Abschnitt
+- Jede Aussage mit Quellenangabe: [Titel des Papers]
+- Struktur: "Argumente dafür:", "Argumente dagegen:", "Kernaussagen:" (nur wenn relevant)
+- Nur Inhalte aus den bereitgestellten Auszügen verwenden — keine erfundenen Quellen
+- Immer auf Deutsch antworten`;
 
 export async function ask(query: string): Promise<string> {
   const results = await search(query);
@@ -17,21 +20,18 @@ export async function ask(query: string): Promise<string> {
     .map((r) => `[${r.title}]\n${r.chunkText}`)
     .join("\n\n---\n\n");
 
-  const userPrompt = `Paper excerpts from my library:\n\n${context}\n\nQuestion: ${query}`;
+  const userPrompt = `${SYSTEM_PROMPT}\n\nPaper excerpts from my library:\n\n${context}\n\nQuestion: ${query}`;
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${__gemini_api_key__}`;
+  const endpoint = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${__gemini_api_key__}`;
 
   const response = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      systemInstruction: {
-        parts: [{ text: SYSTEM_PROMPT }],
-      },
       contents: [{ role: "user", parts: [{ text: userPrompt }] }],
       generationConfig: {
         temperature: 0.2,
-        maxOutputTokens: 1024,
+        maxOutputTokens: 4096,
       },
     }),
   });
@@ -49,8 +49,11 @@ export async function ask(query: string): Promise<string> {
     throw new Error(`Gemini returned non-JSON (${response.status}): ${rawText.slice(0, 300)}`);
   }
 
-  return (
-    (data.candidates?.[0]?.content?.parts?.[0]?.text as string | undefined) ??
-    "No response from Gemini."
-  );
+  const parts: any[] = data.candidates?.[0]?.content?.parts ?? [];
+  const text = parts
+    .filter((p: any) => !p.thought)
+    .map((p: any) => p.text ?? "")
+    .join("");
+
+  return text || "No response from Gemini.";
 }

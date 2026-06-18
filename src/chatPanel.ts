@@ -1,6 +1,6 @@
 /// <reference lib="dom" />
 
-import { addMessage } from "./ui/messages";
+import { addMessage, updateMessage } from "./ui/messages";
 import type { SearchResult } from "./modules/searchService";
 
 type Api = {
@@ -24,12 +24,21 @@ async function sendMessage() {
   chatInput.value = "";
   sendButton.disabled = true;
 
-  const placeholder = addMessage("sentAI", "...", false);
+  const placeholder = addMessage("sentAI", "", false);
+  placeholder.classList.add("loading");
+  [0, 0.16, 0.32].forEach((delay) => {
+    const dot = document.createElement("span");
+    dot.className = "loading-dot";
+    dot.style.animationDelay = `${delay}s`;
+    placeholder.appendChild(dot);
+  });
 
   try {
     const answer = await api.ask(text);
-    placeholder.textContent = answer;
+    placeholder.classList.remove("loading");
+    updateMessage(placeholder, answer);
   } catch (e: any) {
+    placeholder.classList.remove("loading");
     placeholder.textContent = `Error: ${e?.message ?? "Unknown error"}`;
   } finally {
     sendButton.disabled = false;
