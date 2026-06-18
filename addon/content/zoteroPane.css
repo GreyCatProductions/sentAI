@@ -55,7 +55,65 @@ html, body {
   font-size: 11px;
   color: rgba(255,255,255,0.65);
   font-weight: 400;
+  flex: 1;
 }
+
+#sentai-settings-toggle {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.75);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+
+#sentai-settings-toggle:hover { color: #fff; background: rgba(255,255,255,0.15); }
+#sentai-settings-toggle.active { color: #fff; background: rgba(255,255,255,0.2); }
+
+/* ===== Settings drawer ===== */
+#sentai-settings {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--s-surface);
+  border-bottom: 1px solid var(--s-border);
+  flex-shrink: 0;
+}
+
+#sentai-settings.open { display: flex; }
+
+.sentai-settings-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sentai-settings-row label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--s-text-muted);
+  flex: 1;
+}
+
+.sentai-settings-row input[type="number"] {
+  width: 72px;
+  padding: 4px 7px;
+  border: 1.5px solid var(--s-border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  background: var(--s-bg);
+  color: var(--s-text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.sentai-settings-row input[type="number"]:focus { border-color: var(--s-accent); }
 
 /* ===== Search bar ===== */
 #sentai-suche {
