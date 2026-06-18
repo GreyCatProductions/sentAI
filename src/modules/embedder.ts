@@ -21,14 +21,21 @@ export async function embedText(text: string): Promise<number[]> {
 
     const res = await Promise.race([fetchPromise, timeout]);
     const rawText = await res.text();
+
     if (!res.ok) {
       throw new Error(`Embedding server error ${res.status}: ${rawText.slice(0, 200)}`);
     }
+
     let json: { embedding: number[] };
     try {
       json = JSON.parse(rawText);
     } catch {
       throw new Error(`Embedding server returned non-JSON: ${rawText.slice(0, 200)}`);
     }
+
+    if (!Array.isArray(json.embedding) || json.embedding.length === 0) {
+      throw new Error("Embedding server returned empty embedding vector");
+    }
+
     return json.embedding;
 }
