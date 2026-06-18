@@ -5,12 +5,16 @@ import Anthropic from "@anthropic-ai/sdk";
 const app = express();
 app.use(express.json());
 
-const anthropic = new Anthropic();
+const anthropic = new Anthropic({
+  apiKey: process.env.CLAUDE_API_KEY,
+  baseURL: process.env.CLAUDE_ENDPOINT,
+  defaultHeaders: { "api-key": process.env.CLAUDE_API_KEY },
+});
 
 const AZURE_ENDPOINT = process.env.AZURE_EMBEDDING_ENDPOINT!;
 const AZURE_API_KEY = process.env.AZURE_API_KEY!;
 const PORT = process.env.PORT ?? 3000;
-const LLM_MODEL = process.env.LLM_MODEL!;
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL!;
 
 app.post("/embed", async (req, res) => {
   const { text } = req.body as { text: string };
@@ -48,7 +52,7 @@ app.post("/chat", async (req, res) => {
   res.setHeader("Connection", "keep-alive");
 
   const stream = anthropic.messages.stream({
-    model: LLM_MODEL,
+    model: CLAUDE_MODEL,
     max_tokens: 4096,
     ...(system ? { system } : {}),
     messages,
