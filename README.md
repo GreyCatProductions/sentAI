@@ -42,10 +42,36 @@ sentAI is a Zotero 9 plugin that indexes your PDFs as semantic vectors and lets 
   └─────────────────┘
 
 
- Search query (Tools → sentAI Chat)
+ Search query typed in sentAI Chat
          │
          ▼
-  embed query → cosine similarity over all stored chunks → top 5 results
+  ┌─────────────────┐
+  │  Embed query     │  ← local server → Azure OpenAI
+  └────────┬────────┘
+           │
+           ▼
+  ┌─────────────────┐
+  │ Cosine search   │  ← top 5 chunks from local storage
+  └────────┬────────┘
+           │
+           ▼
+  ┌──────────────────────────────────┐
+  │  Build prompt                    │
+  │  [Paper Title]                   │
+  │  <chunk text>                    │  ← repeated for each result
+  │  ...                             │
+  │  Question: <your query>          │
+  └────────┬─────────────────────────┘
+           │
+           ▼
+  ┌─────────────────┐
+  │  Gemini 2.5     │  ← gemini-2.5-flash, temp 0.2
+  │  Flash          │
+  └────────┬────────┘
+           │
+           ▼
+  Answer with inline citations
+  e.g. "Memory consolidation occurs during sleep [Stickgold 2005]."
 ```
 
 ## Features
@@ -53,15 +79,18 @@ sentAI is a Zotero 9 plugin that indexes your PDFs as semantic vectors and lets 
 | | |
 |---|---|
 | **Auto-indexing** | Every PDF you add is chunked and embedded automatically |
+| **Auto-attach** | Items without a PDF trigger a download attempt before indexing |
 | **Semantic search** | Cosine similarity over your full library, surfacing the most relevant passages |
+| **RAG answers** | Send button calls Gemini 2.5 Flash, which answers from retrieved chunks with inline paper citations |
 | **Chat panel** | Built-in panel accessible from the Zotero Tools menu |
-| **Fully local storage** | Vectors live in your Zotero data directory — only embedding requests hit the cloud |
+| **Fully local storage** | Vectors live in your Zotero data directory — only embedding and LLM requests hit the cloud |
 
 ## Requirements
 
 - [Zotero 9](https://www.zotero.org)
 - [Node.js LTS](https://nodejs.org/en/)
 - An Azure AI / Cognitive Services API key with a `text-embedding-3-small` deployment
+- A Google Gemini API key (for RAG answer generation)
 
 ## Setup
 
@@ -82,6 +111,7 @@ cp .env.example .env
 | `ZOTERO_PLUGIN_PROFILE_PATH` | Path to your Zotero dev profile |
 | `AZURE_EMBEDDING_ENDPOINT` | Full Azure endpoint URL (incl. deployment + api-version) |
 | `AZURE_API_KEY` | Azure Cognitive Services API key |
+| `GEMINI_API_KEY` | Google Gemini API key (used by the RAG answer step) |
 
 **3. Start the embedding server**
 
@@ -121,13 +151,17 @@ npm run release    # Bump version, commit, tag, push → GitHub Actions release
 | Feature | |
 |---|---|
 | PDF detection on upload | `done` |
+| Auto-attach PDF for items without an attachment | `done` |
 | Text extraction | `done` |
 | Paragraph-aware chunking | `done` |
 | Embedding via Azure `text-embedding-3-small` | `done` |
 | Local vector storage | `done` |
 | Cosine similarity search | `done` |
 | Chat panel UI | `done` |
-| RAG / LLM answer generation | `planned` |
+| RAG answers via Gemini 2.5 Flash with inline citations | `done` |
+| Conversation history (multi-turn follow-ups) | `planned` |
+| Query rewriting for better retrieval | `planned` |
+| Streaming responses | `planned` |
 
 ---
 
