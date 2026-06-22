@@ -86,3 +86,4 @@ topKInput.addEventListener("change", () => {
 autoAttachInput.addEventListener("change", () => {
   if (api) api.setPref("autoAttachPdf", autoAttachInput.checked);
 });
+

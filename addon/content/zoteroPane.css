@@ -12,6 +12,35 @@
   --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
 }
 
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --s-bg:        #1e1e1e;
+    --s-surface:   #2a2a2a;
+    --s-border:    #3c3c3c;
+    --s-text:      #e8eaed;
+    --s-text-muted:#9aa0a6;
+    --s-accent:    #4a9eff;
+    --s-accent-dk: #3a8eef;
+    --s-ai-bg:     #2a3142;
+  }
+}
+
+/* Dark Mode über Zotero's eigene Klasse */
+[data-color-scheme="dark"] :root,
+:root[data-color-scheme="dark"],
+.zotero-dark :root,
+body.dark :root {
+  --s-bg:        #1e1e1e;
+  --s-surface:   #2a2a2a;
+  --s-border:    #3c3c3c;
+  --s-text:      #e8eaed;
+  --s-text-muted:#9aa0a6;
+  --s-accent:    #4a9eff;
+  --s-accent-dk: #3a8eef;
+  --s-ai-bg:     #2a3142;
+}
+
 /* ===== Reset ===== */
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -145,6 +174,7 @@ html, body {
   height: 14px;
   cursor: pointer;
 }
+
 
 /* ===== Messages ===== */
 #sentai-nachrichten {
