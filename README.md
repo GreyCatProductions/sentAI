@@ -42,25 +42,35 @@ sentAI is a Zotero 9 plugin that indexes your PDFs as semantic vectors and lets 
   └─────────────────┘
 
 
- Search query typed in sentAI Chat
+ Query typed in Chat tab
          │
          ▼
   ┌─────────────────┐
-  │  Embed query     │  ← local server → Azure OpenAI
+  │ Keyword extract  │  ← gemini-2.0-flash-lite
+  └────────┬────────┘       distils question → search terms
+           │
+           ▼
+  ┌─────────────────┐
+  │  Embed keywords  │  ← local server → Azure OpenAI
   └────────┬────────┘
            │
            ▼
   ┌─────────────────┐
-  │ Cosine search   │  ← top 5 chunks from local storage
+  │ Cosine search   │  ← top-K chunks from local storage
+  └────────┬────────┘       (optionally filtered by collection)
+           │
+           ▼
+  ┌─────────────────┐
+  │ Threshold filter │  ← drop chunks below min. similarity
   └────────┬────────┘
            │
            ▼
   ┌──────────────────────────────────┐
   │  Build prompt                    │
   │  [Paper Title]                   │
-  │  <chunk text>                    │  ← repeated for each result
+  │  <chunk text>                    │  ← only high-relevance chunks
   │  ...                             │
-  │  Question: <your query>          │
+  │  Question: <original query>      │
   └────────┬─────────────────────────┘
            │
            ▼
@@ -81,8 +91,13 @@ sentAI is a Zotero 9 plugin that indexes your PDFs as semantic vectors and lets 
 | **Auto-indexing** | Every PDF you add is chunked and embedded automatically |
 | **Auto-attach** | Items without a PDF trigger a download attempt before indexing |
 | **Semantic search** | Cosine similarity over your full library, surfacing the most relevant passages |
-| **RAG answers** | Send button calls Gemini 2.5 Flash, which answers from retrieved chunks with inline paper citations |
-| **Chat panel** | Built-in panel accessible from the Zotero Tools menu |
+| **RAG answers** | Chat tab calls Gemini 2.5 Flash, answering from retrieved chunks with inline paper citations |
+| **Keyword extraction** | A lightweight Gemini Flash Lite call distils your question into search terms before embedding — better retrieval signal |
+| **Collection filter** | Restrict any search to a specific Zotero collection via a dropdown in the Search tab |
+| **Similarity threshold** | Configurable minimum score (default 10 %) — chunks below it never reach the LLM |
+| **References filtering** | Indexing stops at "References" / "Bibliography" headings — no citation lists in the index |
+| **Two-tab UI** | **Search** tab for direct semantic search with scored result cards; **Chat** tab for RAG answers |
+| **Result cards** | Title, match score %, 2-line snippet, author / year / journal chips |
 | **Fully local storage** | Vectors live in your Zotero data directory — only embedding and LLM requests hit the cloud |
 
 ## Requirements
@@ -153,14 +168,19 @@ npm run release    # Bump version, commit, tag, push → GitHub Actions release
 | PDF detection on upload | `done` |
 | Auto-attach PDF for items without an attachment | `done` |
 | Text extraction | `done` |
+| References / bibliography section filtering | `done` |
 | Paragraph-aware chunking | `done` |
 | Embedding via Azure `text-embedding-3-small` | `done` |
-| Local vector storage | `done` |
+| Local vector storage (SQLite) | `done` |
 | Cosine similarity search | `done` |
-| Chat panel UI | `done` |
+| Two-tab UI (Search + Chat) | `done` |
+| Scored result cards with metadata chips | `done` |
+| Collection filter for scoped search | `done` |
+| Keyword extraction pre-pass (Gemini Flash Lite) | `done` |
+| Similarity threshold filter | `done` |
 | RAG answers via Gemini 2.5 Flash with inline citations | `done` |
+| Hybrid search (semantic + keyword via RRF) | `planned` |
 | Conversation history (multi-turn follow-ups) | `planned` |
-| Query rewriting for better retrieval | `planned` |
 | Streaming responses | `planned` |
 
 ---
