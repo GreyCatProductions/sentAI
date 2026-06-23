@@ -4,10 +4,11 @@ import { addMessage, updateMessage } from "./ui/messages";
 import type { SearchResult } from "./modules/searchService";
 
 type Api = {
-  search: (query: string) => Promise<SearchResult[]>;
+  search: (query: string, collectionId?: number) => Promise<SearchResult[]>;
   ask: (query: string) => Promise<string>;
   getPref: (key: string) => unknown;
   setPref: (key: string, value: unknown) => void;
+  getCollections: () => { id: number; name: string }[];
 };
 
 const api: Api | undefined = (window as any).arguments?.[0];
@@ -29,6 +30,45 @@ tabs.forEach((tab) => {
 const searchInput = document.getElementById("sentai-search-input") as HTMLInputElement;
 const searchBtn = document.getElementById("sentai-search-btn") as HTMLButtonElement;
 const searchResults = document.getElementById("sentai-search-results")!;
+
+// Collection dropdown (custom — native <select> renders ghost labels in Gecko)
+const colBtn = document.getElementById("sentai-collection-btn")!;
+const colLabel = document.getElementById("sentai-collection-label")!;
+const colDropdown = document.getElementById("sentai-collection-dropdown")!;
+let selectedCollectionId: number | undefined = undefined;
+
+function buildCollectionOption(id: number | undefined, name: string, active: boolean): HTMLElement {
+  const el = document.createElement("div");
+  el.className = "s-col-option" + (active ? " selected" : "");
+  el.textContent = name;
+  el.addEventListener("click", () => {
+    selectedCollectionId = id;
+    colLabel.textContent = name;
+    colDropdown.querySelectorAll(".s-col-option").forEach((o) => o.classList.remove("selected"));
+    el.classList.add("selected");
+    colDropdown.classList.remove("open");
+    colBtn.classList.remove("open");
+  });
+  return el;
+}
+
+if (api) {
+  colDropdown.appendChild(buildCollectionOption(undefined, "All Collections", true));
+  for (const col of api.getCollections()) {
+    colDropdown.appendChild(buildCollectionOption(col.id, col.name, false));
+  }
+}
+
+colBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const isOpen = colDropdown.classList.toggle("open");
+  colBtn.classList.toggle("open", isOpen);
+});
+
+document.addEventListener("click", () => {
+  colDropdown.classList.remove("open");
+  colBtn.classList.remove("open");
+});;
 
 function highlightKeywords(text: string, query: string): DocumentFragment {
   const words = query
@@ -137,7 +177,7 @@ async function runSearch() {
   searchResults.appendChild(loading);
 
   try {
-    const results = await api.search(query);
+    const results = await api.search(query, selectedCollectionId);
     renderResultCards(results, query);
   } catch (e: any) {
     searchResults.innerHTML = "";
@@ -207,11 +247,13 @@ const settingsDrawer = document.getElementById("sentai-settings")!;
 const chunkInput = document.getElementById("sentai-chunk-size") as HTMLInputElement;
 const topKInput = document.getElementById("sentai-top-k") as HTMLInputElement;
 const autoAttachInput = document.getElementById("sentai-auto-attach-pdf") as HTMLInputElement;
+const minSimilarityInput = document.getElementById("sentai-min-similarity") as HTMLInputElement;
 
 if (api) {
   chunkInput.value = String(api.getPref("maxChunkTokens") ?? 500);
   topKInput.value = String(api.getPref("topK") ?? 5);
   autoAttachInput.checked = Boolean(api.getPref("autoAttachPdf") ?? false);
+  minSimilarityInput.value = String(api.getPref("minSimilarity") ?? 10);
 }
 
 settingsToggle.addEventListener("click", () => {
@@ -231,4 +273,9 @@ topKInput.addEventListener("change", () => {
 
 autoAttachInput.addEventListener("change", () => {
   if (api) api.setPref("autoAttachPdf", autoAttachInput.checked);
+});
+
+minSimilarityInput.addEventListener("change", () => {
+  const val = parseInt(minSimilarityInput.value, 10);
+  if (!isNaN(val) && api) api.setPref("minSimilarity", Math.max(0, Math.min(100, val)));
 });

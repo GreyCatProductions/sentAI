@@ -32,6 +32,13 @@ async function onStartup() {
     ask,
     getPref: (key: string) => getPref(key as any),
     setPref: (key: string, value: any) => setPref(key as any, value),
+    getCollections: (): { id: number; name: string }[] => {
+      const libID = Zotero.Libraries.userLibraryID;
+      const cols = Zotero.Collections.getByLibrary(libID) as any[];
+      return cols
+        .map((c: any) => ({ id: c.id as number, name: c.name as string }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    },
   };
   addon.data.initialized = true;
 

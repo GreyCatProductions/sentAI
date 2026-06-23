@@ -1,4 +1,6 @@
 import { search } from "./searchService";
+import { extractKeywords } from "./keywordExtractor";
+import { getPref } from "../utils/prefs";
 
 const SYSTEM_PROMPT = `You are an academic research assistant. Your task: find arguments, 
 counterarguments, and evidence from the user's paper library.
@@ -16,17 +18,22 @@ type GeminiPart = { text?: string; thought?: boolean };
 type GeminiResponse = { candidates?: { content?: { parts?: GeminiPart[] } }[] };
 
 export async function ask(query: string): Promise<string> {
-  const results = await search(query);
+  const searchQuery = await extractKeywords(query);
+  const threshold = ((getPref("minSimilarity") as number) ?? 10) / 100;
+  const allResults = await search(searchQuery);
+  const results = allResults.filter((r) => r.similarity >= threshold);
 
   if (results.length === 0) {
-    return "No indexed papers found. Please add PDFs to your Zotero library first.";
+    return allResults.length === 0
+      ? "No indexed papers found. Please add PDFs to your Zotero library first."
+      : "No sufficiently relevant results found. Try rephrasing your question.";
   }
 
   const context = results
     .map((r) => `[${r.title}]\n${r.chunkText}`)
     .join("\n\n---\n\n");
 
-  const prompt = `${SYSTEM_PROMPT}\n\nTextauszüge aus meiner Bibliothek:\n\n${context}\n\nFrage: ${query}`;
+  const prompt = `${SYSTEM_PROMPT}\n\nExcerpts from my library:\n\n${context}\n\nQuestion: ${query}`;
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${__gemini_api_key__}`,

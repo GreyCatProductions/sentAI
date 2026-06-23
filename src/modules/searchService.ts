@@ -13,11 +13,19 @@ export interface SearchResult {
   chunkIndex?: number;
 }
 
-export async function search(query: string): Promise<SearchResult[]> {
+export async function search(query: string, collectionId?: number): Promise<SearchResult[]> {
   const queryEmbedding = await embedText(query);
 
-  const allEmbeddings = await embeddingStorage.loadAll();
-  const allRecords = Array.from(allEmbeddings.values()).flat();
+  let allRecords;
+  if (collectionId != null) {
+    const col = Zotero.Collections.get(collectionId) as any;
+    const items: Zotero.Item[] = col?.getChildItems(false) ?? [];
+    const byId = await embeddingStorage.loadByItemIds(items.map((i) => i.id));
+    allRecords = Array.from(byId.values()).flat();
+  } else {
+    const allEmbeddings = await embeddingStorage.loadAll();
+    allRecords = Array.from(allEmbeddings.values()).flat();
+  }
 
   if (allRecords.length === 0) return [];
 

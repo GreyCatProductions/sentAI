@@ -32,6 +32,10 @@
         <label for="sentai-auto-attach-pdf" style="flex: 1;">Auto-download PDF (DOI/ISBN)</label>
         <input type="checkbox" id="sentai-auto-attach-pdf" />
       </div>
+      <div class="sentai-settings-row">
+        <label for="sentai-min-similarity">Min. Similarity (%)</label>
+        <input type="number" id="sentai-min-similarity" min="0" max="100" step="5" />
+      </div>
     </div>
 
     <!-- Tab bar -->
@@ -45,6 +49,13 @@
       <div id="sentai-search-bar">
         <input type="text" id="sentai-search-input" placeholder="Search your library..." />
         <button id="sentai-search-btn">&#x27A4;</button>
+      </div>
+      <div id="sentai-collection-bar">
+        <button id="sentai-collection-btn" type="button">
+          <span id="sentai-collection-label">All Collections</span>
+          <span class="s-col-arrow">&#x25BE;</span>
+        </button>
+        <div id="sentai-collection-dropdown"></div>
       </div>
       <div id="sentai-search-results">
         <div class="s-empty">Type a query to search your indexed papers.</div>
