@@ -7,6 +7,10 @@ export interface SearchResult {
   title: string;
   chunkText: string;
   similarity: number;
+  authors?: string;
+  year?: string;
+  journal?: string;
+  chunkIndex?: number;
 }
 
 export async function search(query: string): Promise<SearchResult[]> {
@@ -21,15 +25,44 @@ export async function search(query: string): Promise<SearchResult[]> {
   const top = semanticSearch(queryEmbedding, allRecords, topK);
 
   return top.map(result => {
+    const { chunkText, similarity } = result;
+
     if (result.metadata?.title) {
-      return { title: result.metadata.title, chunkText: result.chunkText, similarity: result.similarity };
+      return {
+        title: result.metadata.title,
+        chunkText,
+        similarity,
+        authors: result.metadata.authors,
+        year: result.metadata.year,
+        chunkIndex: result.chunkIndex,
+      };
     }
+
     const libID = Zotero.Libraries.userLibraryID;
     const item = Zotero.Items.getByLibraryAndKey(libID, result.paperId) as Zotero.Item | false;
+    const parent = item && item.parentItem ? item.parentItem : item || false;
+
     const title: string =
-      (item && (item.parentItem?.getField("title") as string | undefined)) ||
-      (item && (item.getField("title") as string | undefined)) ||
+      (parent && (parent.getField("title") as string | undefined)) ||
       result.paperId;
-    return { title, chunkText: result.chunkText, similarity: result.similarity };
+
+    const authors = parent
+      ? (() => {
+          const creators = parent.getCreators() as { firstName?: string; lastName?: string }[];
+          if (!creators.length) return undefined;
+          const first = creators[0].lastName ?? creators[0].firstName ?? "";
+          return creators.length > 1 ? `${first} et al.` : first;
+        })()
+      : undefined;
+
+    const rawDate = parent ? (parent.getField("date") as string | undefined) : undefined;
+    const year = rawDate ? rawDate.match(/\d{4}/)?.[0] : undefined;
+
+    const journal = parent
+      ? ((parent.getField("publicationTitle") as string | undefined) ||
+         (parent.getField("publisher") as string | undefined))
+      : undefined;
+
+    return { title, chunkText, similarity, authors, year, journal, chunkIndex: result.chunkIndex };
   });
 }

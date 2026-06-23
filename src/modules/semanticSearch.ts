@@ -1,11 +1,12 @@
-import type { EmbeddingRecord } from "../types";
+import type { EmbeddingRecord, ItemMetadata } from "../types";
 import { normalize, dotProduct } from "../utils/vector";
-
 
 interface SearchResult {
   paperId: string;
   chunkText: string;
+  chunkIndex: number;
   similarity: number;
+  metadata?: ItemMetadata;
 }
 
 /**
@@ -30,7 +31,9 @@ export function semanticSearch(
     results.push({
       paperId: chunk.paperId,
       chunkText: chunk.chunkText,
-      similarity
+      chunkIndex: chunk.chunkIndex,
+      similarity,
+      metadata: chunk.metadata,
     });
   }
 

@@ -34,21 +34,38 @@
       </div>
     </div>
 
-    <!-- Messages -->
-    <div id="sentai-nachrichten">
-
-      <div class="sender">sentAI</div>
-      <div class="message sentAI">Hello! Ask me anything about your library. I will find arguments, counterarguments,
-        and evidence from your papers.</div>
-
+    <!-- Tab bar -->
+    <div id="sentai-tabs">
+      <button class="sentai-tab active" data-tab="search">Search</button>
+      <button class="sentai-tab" data-tab="chat">Chat</button>
     </div>
 
-    <!-- Input area -->
-    <div id="sentai-eingabe">
-      <div id="sentai-eingabe-zeile">
-        <textarea id="sentai-eingabe-text" placeholder="Ask a question..."></textarea>
-        <button id="sentai-senden-button">&#x27A4;</button>
+    <!-- Search panel -->
+    <div id="sentai-search-panel" class="sentai-view active">
+      <div id="sentai-search-bar">
+        <input type="text" id="sentai-search-input" placeholder="Search your library..." />
+        <button id="sentai-search-btn">&#x27A4;</button>
       </div>
+      <div id="sentai-search-results">
+        <div class="s-empty">Type a query to search your indexed papers.</div>
+      </div>
+    </div>
+
+    <!-- Chat panel -->
+    <div id="sentai-chat-panel" class="sentai-view">
+
+      <div id="sentai-nachrichten">
+        <div class="sender">sentAI</div>
+        <div class="message sentAI">Hello! Ask me anything about your library. I will find arguments, counterarguments, and evidence from your papers.</div>
+      </div>
+
+      <div id="sentai-eingabe">
+        <div id="sentai-eingabe-zeile">
+          <textarea id="sentai-eingabe-text" placeholder="Ask a question..."></textarea>
+          <button id="sentai-senden-button">&#x27A4;</button>
+        </div>
+      </div>
+
     </div>
 
   </div>

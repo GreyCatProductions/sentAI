@@ -99,7 +99,7 @@ function registerToolbarButton(win: _ZoteroTypes.MainWindow) {
 
 function openChatPanel(win: Window) {
   const url = `chrome://${addon.data.config.addonRef}/content/chatPanel.xhtml`;
-  win.openDialog(url, "sentai-chat-panel", "chrome,resizable,centerscreen,width=440,height=520", addon.api);
+  win.openDialog(url, "sentai-chat-panel", "chrome,resizable,centerscreen,width=480,height=640", addon.api);
 }
 
 async function onMainWindowUnload(win: Window): Promise<void> {
