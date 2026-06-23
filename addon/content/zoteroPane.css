@@ -270,6 +270,17 @@ html, body {
   font-size: 0.88em;
 }
 
+.s-cite.clickable {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+
+.s-cite.clickable:hover {
+  opacity: 0.75;
+}
+
 /* Lists inside bubbles */
 .message ul {
   margin: 4px 0 4px 16px;
@@ -453,7 +464,13 @@ html, body {
   font-size: 11px;
 }
 
-.sentai-tab:hover { color: var(--s-text); }
+.sentai-tab:hover:not(:disabled) { color: var(--s-text); }
+
+.sentai-tab:disabled,
+.sentai-tab.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
 
 .sentai-tab.active {
   color: var(--s-accent);
@@ -642,6 +659,25 @@ html, body {
   border-radius: 10px;
   flex-shrink: 0;
   letter-spacing: 0.02em;
+}
+
+.s-jump-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--s-border);
+  border-radius: 6px;
+  color: var(--s-text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 5px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.s-jump-btn:hover {
+  background: var(--s-accent-bg);
+  border-color: var(--s-accent);
+  color: var(--s-accent);
 }
 
 .s-result-snippet {

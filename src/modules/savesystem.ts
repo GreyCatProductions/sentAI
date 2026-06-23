@@ -169,6 +169,13 @@ class EmbeddingStorage {
     return ((rows as any[])[0]?.cnt ?? 0) > 0;
   }
 
+  async hasAny(): Promise<boolean> {
+    const rows = await Zotero.DB.queryAsync(
+      "SELECT 1 FROM sentai.chunks LIMIT 1",
+    );
+    return (rows as any[]).length > 0;
+  }
+
   async loadByItemIds(ids: number[]): Promise<Map<number, EmbeddingRecord[]>> {
     if (ids.length === 0) return new Map();
     const placeholders = ids.map(() => "?").join(",");

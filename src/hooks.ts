@@ -13,19 +13,11 @@ async function onStartup() {
   await Promise.all([
     Zotero.initializationPromise,
     Zotero.unlockPromise,
-    Zotero.uiReadyPromise,
   ]);
 
   initLocale();
 
   await embeddingStorage.init();
-
-  Zotero.PreferencePanes.register({
-    pluginID: addon.data.config.addonID,
-    src: `chrome://${addon.data.config.addonRef}/content/preferences.xhtml`,
-    label: "sentAI",
-    image: `chrome://${addon.data.config.addonRef}/content/icons/favicon@0.5x.png`,
-  });
 
   addon.api = {
     search,
@@ -35,14 +27,19 @@ async function onStartup() {
     healthCheck: async (): Promise<{ embedder: boolean; hasIndex: boolean }> => {
       let embedder = false;
       try {
-        const res = await fetch(`${__server_url__}/health`);
-        embedder = res.ok;
+        const timeout = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("timeout")), 5000),
+        );
+        await Promise.race([fetch(`${__server_url__}/health`), timeout]);
+        embedder = true; // any HTTP response means server is reachable
       } catch {
         embedder = false;
       }
-      const allEmbeddings = await embeddingStorage.loadAll();
-      const hasIndex = Array.from(allEmbeddings.values()).flat().length > 0;
+      const hasIndex = await embeddingStorage.hasAny();
       return { embedder, hasIndex };
+    },
+    openItem: (itemId: number): void => {
+      Zotero.getMainWindow()?.ZoteroPane?.selectItem(itemId);
     },
     getCollections: (): { id: number; name: string }[] => {
       const libID = Zotero.Libraries.userLibraryID;
@@ -58,6 +55,16 @@ async function onStartup() {
     { notify: onNotify },
     ["item"],
   );
+
+  // UI-dependent setup: wait for the main window before touching the DOM
+  await Zotero.uiReadyPromise;
+
+  Zotero.PreferencePanes.register({
+    pluginID: addon.data.config.addonID,
+    src: `chrome://${addon.data.config.addonRef}/content/preferences.xhtml`,
+    label: "sentAI",
+    image: `chrome://${addon.data.config.addonRef}/content/icons/favicon@0.5x.png`,
+  });
 
   await Promise.all(
     Zotero.getMainWindows().map((win) => onMainWindowLoad(win)),

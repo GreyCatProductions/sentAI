@@ -5,11 +5,12 @@ import type { SearchResult } from "./modules/searchService";
 
 type Api = {
   search: (query: string, collectionId?: number) => Promise<SearchResult[]>;
-  ask: (query: string) => Promise<string>;
+  ask: (query: string) => Promise<{ answer: string; sources: SearchResult[] }>;
   getPref: (key: string) => unknown;
   setPref: (key: string, value: unknown) => void;
   getCollections: () => { id: number; name: string }[];
   healthCheck: () => Promise<{ embedder: boolean; hasIndex: boolean }>;
+  openItem: (itemId: number) => void;
 };
 
 const api: Api | undefined = (window as any).arguments?.[0];
@@ -31,6 +32,13 @@ tabs.forEach((tab) => {
 const statusOverlay = document.getElementById("sentai-status-overlay")!;
 const statusMessage = document.getElementById("sentai-status-message")!;
 const retryBtn = document.getElementById("sentai-retry-btn") as HTMLButtonElement;
+const chatTab = document.querySelector<HTMLButtonElement>('[data-tab="chat"]')!;
+
+function setChatTabEnabled(enabled: boolean) {
+  chatTab.disabled = !enabled;
+  chatTab.classList.toggle("disabled", !enabled);
+  chatTab.title = enabled ? "" : "Embedding server not reachable";
+}
 
 function showViews() {
   statusOverlay.classList.remove("active");
@@ -44,19 +52,63 @@ function showError(msg: string) {
   statusOverlay.classList.add("active");
 }
 
-async function runHealthCheck() {
+async function runHealthCheck(autoRetry = true) {
   retryBtn.disabled = true;
   statusMessage.textContent = "Checking connection…";
   statusOverlay.classList.add("active");
   views.forEach((v) => v.classList.remove("active"));
 
-  if (!api) {
+  if (!api || typeof (api as any).healthCheck !== "function") {
+    if (autoRetry) {
+      setTimeout(() => runHealthCheck(true), 1500);
+      return;
+    }
+    setChatTabEnabled(false);
     showError("Plugin not initialized.");
     retryBtn.disabled = false;
     return;
   }
 
-  const { embedder, hasIndex } = await api.healthCheck();
+  let embedder = false;
+  let hasIndex = false;
+  try {
+    ({ embedder, hasIndex } = await api.healthCheck());
+  } catch {
+    // treat as not reachable
+  }
+
+  if (!embedder && autoRetry) {
+    let attempts = 0;
+    const maxAttempts = 8;
+    const retry = async () => {
+      attempts++;
+      statusMessage.textContent = `Checking connection… (${attempts}/${maxAttempts})`;
+      try {
+        const result = await api!.healthCheck();
+        if (result.embedder) {
+          finishHealthCheck(result.embedder, result.hasIndex);
+          return;
+        }
+      } catch {
+        // keep retrying
+      }
+      if (attempts < maxAttempts) {
+        setTimeout(retry, 1500);
+      } else {
+        setChatTabEnabled(false);
+        showError("Embedding server not reachable.\nMake sure the server is running.");
+        retryBtn.disabled = false;
+      }
+    };
+    setTimeout(retry, 1500);
+    return;
+  }
+
+  finishHealthCheck(embedder, hasIndex);
+}
+
+function finishHealthCheck(embedder: boolean, hasIndex: boolean) {
+  setChatTabEnabled(embedder);
 
   if (!embedder) {
     showError("Embedding server not reachable.\nMake sure the server is running.");
@@ -77,7 +129,7 @@ async function runHealthCheck() {
   retryBtn.disabled = false;
 }
 
-retryBtn.addEventListener("click", runHealthCheck);
+retryBtn.addEventListener("click", () => runHealthCheck());
 runHealthCheck();
 
 // ===== Search tab =====
@@ -193,6 +245,18 @@ function renderResultCards(results: SearchResult[], query: string) {
     row1.appendChild(title);
     row1.appendChild(score);
 
+    if (r.itemId != null && api) {
+      const jumpBtn = document.createElement("button");
+      jumpBtn.className = "s-jump-btn";
+      jumpBtn.title = "Show in Zotero";
+      jumpBtn.textContent = "↗";
+      jumpBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        api.openItem(r.itemId!);
+      });
+      row1.appendChild(jumpBtn);
+    }
+
     const snippet = document.createElement("div");
     snippet.className = "s-result-snippet";
     snippet.textContent = r.chunkText;
@@ -232,7 +296,9 @@ async function runSearch() {
 
   try {
     const results = await api.search(query, selectedCollectionId);
-    renderResultCards(results, query);
+    const threshold = ((api.getPref("minSimilarity") as number) ?? 10) / 100;
+    const filtered = results.filter((r) => r.similarity >= threshold);
+    renderResultCards(filtered, query);
   } catch (e: any) {
     searchResults.innerHTML = "";
     const err = document.createElement("div");
@@ -256,6 +322,26 @@ searchInput.addEventListener("keydown", (e) => {
 const sendButton = document.getElementById("sentai-senden-button") as HTMLButtonElement;
 const chatInput = document.getElementById("sentai-eingabe-text") as HTMLTextAreaElement;
 
+function wireCitations(msgEl: HTMLElement, sources: SearchResult[]) {
+  if (!api || sources.length === 0) return;
+  const titleMap = new Map<string, number>();
+  for (const s of sources) {
+    if (s.itemId != null) {
+      titleMap.set(s.title.toLowerCase().trim(), s.itemId);
+    }
+  }
+  msgEl.querySelectorAll<HTMLElement>(".s-cite").forEach((cite) => {
+    const raw = cite.textContent ?? "";
+    const title = raw.replace(/^\[/, "").replace(/\]$/, "").toLowerCase().trim();
+    const itemId = titleMap.get(title);
+    if (itemId != null) {
+      cite.classList.add("clickable");
+      cite.title = "Show in Zotero";
+      cite.addEventListener("click", () => api!.openItem(itemId));
+    }
+  });
+}
+
 async function sendMessage() {
   const text = chatInput.value.trim();
   if (!text || !api) return;
@@ -274,9 +360,10 @@ async function sendMessage() {
   });
 
   try {
-    const answer = await api.ask(text);
+    const { answer, sources } = await api.ask(text);
     placeholder.classList.remove("loading");
     updateMessage(placeholder, answer);
+    wireCitations(placeholder, sources);
   } catch (e: any) {
     placeholder.classList.remove("loading");
     placeholder.textContent = `Error: ${e?.message ?? "Unknown error"}`;

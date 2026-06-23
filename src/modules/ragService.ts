@@ -1,4 +1,4 @@
-import { search } from "./searchService";
+import { search, SearchResult } from "./searchService";
 import { extractKeywords } from "./keywordExtractor";
 import { getPref } from "../utils/prefs";
 
@@ -17,16 +17,17 @@ const ERROR_TEXT = 'Something went wrong. If you have stable internet connection
 type GeminiPart = { text?: string; thought?: boolean };
 type GeminiResponse = { candidates?: { content?: { parts?: GeminiPart[] } }[] };
 
-export async function ask(query: string): Promise<string> {
+export async function ask(query: string): Promise<{ answer: string; sources: SearchResult[] }> {
   const searchQuery = await extractKeywords(query);
   const threshold = ((getPref("minSimilarity") as number) ?? 10) / 100;
   const allResults = await search(searchQuery);
   const results = allResults.filter((r) => r.similarity >= threshold);
 
   if (results.length === 0) {
-    return allResults.length === 0
+    const answer = allResults.length === 0
       ? "No indexed papers found. Please add PDFs to your Zotero library first."
-      : "No sufficiently relevant results found. Try rephrasing your question.";
+      : `No results above the ${Math.round(threshold * 100)}% similarity threshold. Try lowering "Min. Similarity" in settings or rephrasing your question.`;
+    return { answer, sources: [] };
   }
 
   const context = results
@@ -60,5 +61,5 @@ export async function ask(query: string): Promise<string> {
     .map((p) => p.text ?? "")
     .join("");
 
-  return text || ERROR_TEXT;
+  return { answer: text || ERROR_TEXT, sources: results };
 }

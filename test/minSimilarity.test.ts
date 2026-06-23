@@ -5,6 +5,11 @@ import { embeddingStorage } from "../src/modules/savesystem";
 
 const ITEM_ID = 88884;
 
+const sentaiApi = () => (Zotero as any).SentAI.api as {
+  getPref: (key: string) => unknown;
+  setPref: (key: string, value: unknown) => void;
+};
+
 function makeFakeItem(id: number, key: string): Zotero.Item {
   return {
     id,
@@ -29,7 +34,6 @@ async function indexFakeText(item: Zotero.Item, text: string) {
 describe("minSimilarity pref", function () {
   before(async function () {
     this.timeout(30000);
-    Zotero.Prefs.set("extensions.zotero.sentai.embeddingModel", "text-embedding-3-small", true);
     const text = Array(4)
       .fill("Similarity thresholds filter search results based on cosine distance between embeddings.")
       .join("\n\n");
@@ -37,32 +41,34 @@ describe("minSimilarity pref", function () {
   });
 
   after(async function () {
-    Zotero.Prefs.set("extensions.zotero.sentai.minSimilarity", 10, true);
+    sentaiApi().setPref("minSimilarity", 10);
     await embeddingStorage.remove(ITEM_ID);
   });
 
   it("minSimilarity=101 filters all chunks — ask returns threshold message", async function () {
     this.timeout(30000);
-    // 101 → threshold = 1.01, above the maximum possible cosine similarity of 1.0
-    Zotero.Prefs.set("extensions.zotero.sentai.minSimilarity", 101, true);
+    sentaiApi().setPref("minSimilarity", 101);
     const result = await ask("similarity thresholds cosine distance");
-    assert.include(result, "No sufficiently relevant results found");
+    assert.deepEqual(result.sources, []);
+    assert.include(result.answer, "101%");
   });
 
-  it("minSimilarity=0 passes all chunks — ask returns a generated answer", async function () {
+  it("minSimilarity=0 passes all chunks — ask returns a generated answer with sources", async function () {
     this.timeout(30000);
-    Zotero.Prefs.set("extensions.zotero.sentai.minSimilarity", 0, true);
+    sentaiApi().setPref("minSimilarity", 0);
     const result = await ask("similarity thresholds cosine distance");
-    assert.isString(result);
-    assert.isAbove(result.length, 0);
-    assert.notInclude(result, "No sufficiently relevant");
-    assert.notInclude(result, "No indexed papers");
+    assert.isString(result.answer);
+    assert.isAbove(result.answer.length, 0);
+    assert.notInclude(result.answer, "No sufficiently relevant");
+    assert.notInclude(result.answer, "No indexed papers");
+    assert.isArray(result.sources);
+    assert.isAbove(result.sources.length, 0);
   });
 
   it("read-back: getPref returns the value that was set", function () {
-    Zotero.Prefs.set("extensions.zotero.sentai.minSimilarity", 42, true);
-    const val = Zotero.Prefs.get("extensions.zotero.sentai.minSimilarity", true) as number;
+    sentaiApi().setPref("minSimilarity", 42);
+    const val = sentaiApi().getPref("minSimilarity") as number;
     assert.strictEqual(val, 42);
-    Zotero.Prefs.set("extensions.zotero.sentai.minSimilarity", 10, true);
+    sentaiApi().setPref("minSimilarity", 10);
   });
 });

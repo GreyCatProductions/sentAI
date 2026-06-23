@@ -11,6 +11,7 @@ export interface SearchResult {
   year?: string;
   journal?: string;
   chunkIndex?: number;
+  itemId?: number;
 }
 
 export async function search(query: string, collectionId?: number): Promise<SearchResult[]> {
@@ -32,8 +33,14 @@ export async function search(query: string, collectionId?: number): Promise<Sear
   const topK = (getPref("topK") as number) || 5;
   const top = semanticSearch(queryEmbedding, allRecords, topK);
 
+  const libID = Zotero.Libraries.userLibraryID;
+
   return top.map(result => {
     const { chunkText, similarity } = result;
+
+    const item = Zotero.Items.getByLibraryAndKey(libID, result.paperId) as Zotero.Item | false;
+    const parent = item && item.parentItem ? item.parentItem : item || false;
+    const itemId: number | undefined = parent ? parent.id : undefined;
 
     if (result.metadata?.title) {
       return {
@@ -43,12 +50,9 @@ export async function search(query: string, collectionId?: number): Promise<Sear
         authors: result.metadata.authors,
         year: result.metadata.year,
         chunkIndex: result.chunkIndex,
+        itemId,
       };
     }
-
-    const libID = Zotero.Libraries.userLibraryID;
-    const item = Zotero.Items.getByLibraryAndKey(libID, result.paperId) as Zotero.Item | false;
-    const parent = item && item.parentItem ? item.parentItem : item || false;
 
     const title: string =
       (parent && (parent.getField("title") as string | undefined)) ||
@@ -71,6 +75,6 @@ export async function search(query: string, collectionId?: number): Promise<Sear
          (parent.getField("publisher") as string | undefined))
       : undefined;
 
-    return { title, chunkText, similarity, authors, year, journal, chunkIndex: result.chunkIndex };
+    return { title, chunkText, similarity, authors, year, journal, chunkIndex: result.chunkIndex, itemId };
   });
 }
