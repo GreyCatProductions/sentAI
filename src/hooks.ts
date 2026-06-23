@@ -32,6 +32,18 @@ async function onStartup() {
     ask,
     getPref: (key: string) => getPref(key as any),
     setPref: (key: string, value: any) => setPref(key as any, value),
+    healthCheck: async (): Promise<{ embedder: boolean; hasIndex: boolean }> => {
+      let embedder = false;
+      try {
+        const res = await fetch(`${__server_url__}/health`);
+        embedder = res.ok;
+      } catch {
+        embedder = false;
+      }
+      const allEmbeddings = await embeddingStorage.loadAll();
+      const hasIndex = Array.from(allEmbeddings.values()).flat().length > 0;
+      return { embedder, hasIndex };
+    },
     getCollections: (): { id: number; name: string }[] => {
       const libID = Zotero.Libraries.userLibraryID;
       const cols = Zotero.Collections.getByLibrary(libID) as any[];

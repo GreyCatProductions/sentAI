@@ -44,8 +44,17 @@
       <button class="sentai-tab" data-tab="chat">Chat</button>
     </div>
 
+    <!-- Status overlay (shown when embedder unreachable) -->
+    <div id="sentai-status-overlay" class="sentai-view active">
+      <div id="sentai-status-content">
+        <div id="sentai-status-icon">⚠</div>
+        <div id="sentai-status-message">Checking connection…</div>
+        <button id="sentai-retry-btn" type="button">Retry</button>
+      </div>
+    </div>
+
     <!-- Search panel -->
-    <div id="sentai-search-panel" class="sentai-view active">
+    <div id="sentai-search-panel" class="sentai-view">
       <div id="sentai-search-bar">
         <input type="text" id="sentai-search-input" placeholder="Search your library..." />
         <button id="sentai-search-btn">&#x27A4;</button>

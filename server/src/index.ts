@@ -16,6 +16,10 @@ const AZURE_API_KEY = process.env.AZURE_API_KEY!;
 const PORT = process.env.PORT ?? 3000;
 const CLAUDE_MODEL = process.env.CLAUDE_MODEL!;
 
+app.get("/health", (_req, res) => {
+  res.json({ ok: true });
+});
+
 app.post("/embed", async (req, res) => {
   const { text } = req.body as { text: string };
 

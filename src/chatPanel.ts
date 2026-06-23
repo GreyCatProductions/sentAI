@@ -9,6 +9,7 @@ type Api = {
   getPref: (key: string) => unknown;
   setPref: (key: string, value: unknown) => void;
   getCollections: () => { id: number; name: string }[];
+  healthCheck: () => Promise<{ embedder: boolean; hasIndex: boolean }>;
 };
 
 const api: Api | undefined = (window as any).arguments?.[0];
@@ -25,6 +26,59 @@ tabs.forEach((tab) => {
     );
   });
 });
+
+// ===== Health check =====
+const statusOverlay = document.getElementById("sentai-status-overlay")!;
+const statusMessage = document.getElementById("sentai-status-message")!;
+const retryBtn = document.getElementById("sentai-retry-btn") as HTMLButtonElement;
+
+function showViews() {
+  statusOverlay.classList.remove("active");
+}
+
+function showError(msg: string) {
+  statusMessage.textContent = msg;
+  // Deactivate all real views, activate overlay
+  views.forEach((v) => v.classList.remove("active"));
+  tabs.forEach((t) => t.classList.remove("active"));
+  statusOverlay.classList.add("active");
+}
+
+async function runHealthCheck() {
+  retryBtn.disabled = true;
+  statusMessage.textContent = "Checking connection…";
+  statusOverlay.classList.add("active");
+  views.forEach((v) => v.classList.remove("active"));
+
+  if (!api) {
+    showError("Plugin not initialized.");
+    retryBtn.disabled = false;
+    return;
+  }
+
+  const { embedder, hasIndex } = await api.healthCheck();
+
+  if (!embedder) {
+    showError("Embedding server not reachable.\nMake sure the server is running.");
+    retryBtn.disabled = false;
+    return;
+  }
+
+  if (!hasIndex) {
+    showError("No papers indexed yet.\nAdd PDFs to your Zotero library to get started.");
+    retryBtn.disabled = false;
+    return;
+  }
+
+  // All good — activate first tab, hide overlay
+  showViews();
+  tabs[0]?.classList.add("active");
+  views.forEach((v) => v.classList.toggle("active", v.id === "sentai-search-panel"));
+  retryBtn.disabled = false;
+}
+
+retryBtn.addEventListener("click", runHealthCheck);
+runHealthCheck();
 
 // ===== Search tab =====
 const searchInput = document.getElementById("sentai-search-input") as HTMLInputElement;
