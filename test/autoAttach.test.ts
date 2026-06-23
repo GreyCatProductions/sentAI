@@ -13,6 +13,7 @@ function makeItem(opts: {
     key: "ATTACH01",
     isAttachment: () => opts.isAttachment ?? false,
     isNote: () => opts.isNote ?? false,
+    isRegularItem: () => !(opts.isAttachment ?? false) && !(opts.isNote ?? false),
     getAttachments: () => (opts.attachments ?? []).map((a) => a.id),
   } as unknown as Zotero.Item;
 }
@@ -20,12 +21,14 @@ function makeItem(opts: {
 describe("autoAttachPdf", function () {
   let originalGet: typeof Zotero.Items.get;
   let originalCanFind: typeof Zotero.Attachments.canFindPDFForItem;
+  let originalCanFindFile: unknown;
   let originalAddFile: typeof Zotero.Attachments.addAvailableFile;
   let addFileCallCount: number;
 
   before(function () {
     originalGet = Zotero.Items.get;
     originalCanFind = Zotero.Attachments.canFindPDFForItem;
+    originalCanFindFile = (Zotero.Attachments as any).canFindFileForItem;
     originalAddFile = Zotero.Attachments.addAvailableFile;
   });
 
@@ -36,12 +39,14 @@ describe("autoAttachPdf", function () {
       return false;
     };
     (Zotero.Attachments as any).canFindPDFForItem = () => true;
+    (Zotero.Attachments as any).canFindFileForItem = () => true;
   });
 
   afterEach(function () {
     Zotero.Prefs.set(PREF, false, true);
     Zotero.Items.get = originalGet;
     (Zotero.Attachments as any).canFindPDFForItem = originalCanFind;
+    (Zotero.Attachments as any).canFindFileForItem = originalCanFindFile;
     (Zotero.Attachments as any).addAvailableFile = originalAddFile;
   });
 
@@ -78,6 +83,7 @@ describe("autoAttachPdf", function () {
 
   it("core: does nothing when canFindPDFForItem returns false (no DOI/ISBN)", async function () {
     (Zotero.Attachments as any).canFindPDFForItem = () => false;
+    (Zotero.Attachments as any).canFindFileForItem = () => false;
     await autoAttachPdfCore(makeItem({}));
     assert.equal(addFileCallCount, 0);
   });
