@@ -9,6 +9,8 @@ Antworte kurz und präzise:
 - Nur Inhalte aus den bereitgestellten Auszügen verwenden — keine erfundenen Quellen
 - Immer auf Deutsch antworten`;
 
+const ERROR_TEXT = 'Something went wrong. If you have stable internet connection, the issue is likely on our side. Please try again later.'
+
 type GeminiPart = { text?: string; thought?: boolean };
 type GeminiResponse = { candidates?: { content?: { parts?: GeminiPart[] } }[] };
 
@@ -40,7 +42,7 @@ export async function ask(query: string): Promise<string> {
   const rawText = await response.text();
 
   if (!response.ok) {
-    throw new Error(`Gemini ${response.status}: ${rawText.slice(0, 300)}`);
+    return ERROR_TEXT;
   }
 
   const data: GeminiResponse = JSON.parse(rawText);
@@ -50,5 +52,5 @@ export async function ask(query: string): Promise<string> {
     .map((p) => p.text ?? "")
     .join("");
 
-  return text || "Keine Antwort von Gemini erhalten.";
+  return text || ERROR_TEXT;
 }
