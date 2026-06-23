@@ -53,25 +53,48 @@ async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
     `${addon.data.config.addonRef}-mainWindow.ftl`,
   );
 
-  registerChatPanelMenuItem(win);
+  registerToolbarButton(win);
 }
 
-function registerChatPanelMenuItem(win: _ZoteroTypes.MainWindow) {
+function registerToolbarButton(win: _ZoteroTypes.MainWindow) {
   const doc = win.document;
-  if (doc.getElementById("sentai-open-chat")) return;
+  if (doc.getElementById("sentai-toolbar-button")) return;
 
-  const toolsPopup = doc.getElementById("menu_ToolsPopup");
-  if (!toolsPopup) return;
+  const toolbar = doc.querySelector("#zotero-items-toolbar");
+  if (!toolbar) return;
 
-  const separator = doc.createXULElement("menuseparator");
-  separator.setAttribute("id", "sentai-menu-separator");
-  toolsPopup.appendChild(separator);
+  const iconUrl = `chrome://${addon.data.config.addonRef}/content/icons/favicon@0.5x.png`;
 
-  const menuItem = doc.createXULElement("menuitem");
-  menuItem.setAttribute("id", "sentai-open-chat");
-  menuItem.setAttribute("label", "sentAI Chat");
-  menuItem.addEventListener("command", () => openChatPanel(win));
-  toolsPopup.appendChild(menuItem);
+  let button: Element;
+  const lookupNode = toolbar.querySelector("#zotero-tb-lookup");
+  if (lookupNode) {
+    button = lookupNode.cloneNode(true) as Element;
+    button.setAttribute("command", "");
+    button.setAttribute("oncommand", "");
+    button.setAttribute("mousedown", "");
+    button.setAttribute("onmousedown", "");
+  } else {
+    button = doc.createXULElement("toolbarbutton");
+    button.setAttribute("class", "zotero-tb-button");
+  }
+
+  button.setAttribute("id", "sentai-toolbar-button");
+  button.setAttribute("label", "sentAI");
+  button.setAttribute("tooltiptext", "sentAI Chat");
+  (button as HTMLElement).style.listStyleImage = `url("${iconUrl}")`;
+  button.addEventListener("click", () => openChatPanel(win));
+
+  const searchBox = toolbar.querySelector("#zotero-tb-search");
+  const separator = doc.createXULElement("toolbarseparator");
+  separator.setAttribute("id", "sentai-toolbar-separator");
+
+  if (searchBox) {
+    toolbar.insertBefore(separator, searchBox);
+    toolbar.insertBefore(button, separator);
+  } else {
+    toolbar.appendChild(button);
+    toolbar.appendChild(separator);
+  }
 }
 
 function openChatPanel(win: Window) {
