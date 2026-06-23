@@ -1,13 +1,14 @@
 import { search } from "./searchService";
 
-const SYSTEM_PROMPT = `Du bist ein akademischer Forschungsassistent. Deine Aufgabe: Argumente, Gegenargumente und Belege aus der Papier-Bibliothek des Nutzers finden.
+const SYSTEM_PROMPT = `You are an academic research assistant. Your task: find arguments, 
+counterarguments, and evidence from the user's paper library.
 
-Antworte kurz und präzise:
-- Max. 3 Punkte pro Abschnitt
-- Jede Aussage mit Quellenangabe: [Titel des Papers]
-- Struktur: "Argumente dafür:", "Argumente dagegen:", "Kernaussagen:" (nur wenn relevant)
-- Nur Inhalte aus den bereitgestellten Auszügen verwenden — keine erfundenen Quellen
-- Immer auf Deutsch antworten`;
+Answer concisely:
+- Max. 3 points per section
+- Every claim with a citation of the provided papers: [Paper Title]
+- Structure: "Arguments for:", "Arguments against:", "Key findings:" (only when relevant)
+- Use only content from the provided excerpts. Do not use information that was not given to you by the user.
+- Always respond in English`;
 
 const ERROR_TEXT = 'Something went wrong. If you have stable internet connection, the issue is likely on our side. Please try again later.'
 
@@ -18,7 +19,7 @@ export async function ask(query: string): Promise<string> {
   const results = await search(query);
 
   if (results.length === 0) {
-    return "Keine indizierten Papers gefunden. Bitte füge zuerst PDFs zu deiner Zotero-Bibliothek hinzu.";
+    return "No indexed papers found. Please add PDFs to your Zotero library first.";
   }
 
   const context = results
