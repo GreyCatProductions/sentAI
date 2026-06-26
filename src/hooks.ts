@@ -24,19 +24,19 @@ async function onStartup() {
     ask,
     getPref: (key: string) => getPref(key as any),
     setPref: (key: string, value: any) => setPref(key as any, value),
-    healthCheck: async (): Promise<{ embedder: boolean; hasIndex: boolean }> => {
-      let embedder = false;
+    serverReachable: async (): Promise<{ reachable: boolean; }> => {
+      let reachable = false;
       try {
         const timeout = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error("timeout")), 5000),
         );
         await Promise.race([fetch(`${__server_url__}/health`), timeout]);
-        embedder = true; // any HTTP response means server is reachable
+        reachable = true;
       } catch {
-        embedder = false;
+        reachable = false;
       }
-      const hasIndex = await embeddingStorage.hasAny();
-      return { embedder, hasIndex };
+
+      return { reachable: reachable };
     },
     openItem: (itemId: number): void => {
       Zotero.getMainWindow()?.ZoteroPane?.selectItem(itemId);

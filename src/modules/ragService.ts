@@ -51,7 +51,7 @@ export async function ask(query: string): Promise<{ answer: string; sources: Sea
   const rawText = await response.text();
 
   if (!response.ok) {
-    return ERROR_TEXT;
+    return { answer: ERROR_TEXT, sources: [] };
   }
 
   const data: GeminiResponse = JSON.parse(rawText);
