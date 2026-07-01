@@ -32,10 +32,14 @@ app.post("/embed", async (req, res) => {
     body: JSON.stringify({ input: text }),
   });
 
-  const json = await azureRes.json() as { data: { embedding: number[] }[] };
+  const json = (await azureRes.json()) as { data: { embedding: number[] }[] };
 
   if (!azureRes.ok || !json.data) {
-    console.error("Azure embedding failed:", azureRes.status, JSON.stringify(json));
+    console.error(
+      "Azure embedding failed:",
+      azureRes.status,
+      JSON.stringify(json),
+    );
     res.status(502).json({ error: "Embedding request failed" });
     return;
   }
@@ -73,7 +77,9 @@ app.post("/chat", async (req, res) => {
   });
 
   const finalMessage = await stream.finalMessage();
-  res.write(`data: ${JSON.stringify({ done: true, usage: finalMessage.usage })}\n\n`);
+  res.write(
+    `data: ${JSON.stringify({ done: true, usage: finalMessage.usage })}\n\n`,
+  );
   res.end();
 });
 

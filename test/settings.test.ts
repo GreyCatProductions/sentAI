@@ -4,7 +4,7 @@ import { embeddingStorage } from "../src/modules/savesystem";
 import { search } from "../src/modules/searchService";
 
 const CHUNK_ITEM_ID = 88881;
-const TOPK_ITEM_ID  = 88882;
+const TOPK_ITEM_ID = 88882;
 
 function makeFakeItem(id: number, key: string): Zotero.Item {
   return {
@@ -20,13 +20,20 @@ function makeFakeItem(id: number, key: string): Zotero.Item {
 async function indexFakeText(item: Zotero.Item, text: string) {
   const orig = Zotero.PDFWorker.getFullText;
   (Zotero.PDFWorker as any).getFullText = async () => ({ text });
-  try { await PdfIndexer.process(item); }
-  finally { Zotero.PDFWorker.getFullText = orig; }
+  try {
+    await PdfIndexer.process(item);
+  } finally {
+    Zotero.PDFWorker.getFullText = orig;
+  }
 }
 
 describe("settings prefs", function () {
   before(function () {
-    Zotero.Prefs.set("extensions.zotero.sentai.embeddingModel", "text-embedding-3-small", true);
+    Zotero.Prefs.set(
+      "extensions.zotero.sentai.embeddingModel",
+      "text-embedding-3-small",
+      true,
+    );
   });
 
   // ── maxChunkTokens ──────────────────────────────────────────────────────────

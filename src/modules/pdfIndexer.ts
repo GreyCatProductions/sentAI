@@ -1,6 +1,6 @@
 import type { EmbeddingRecord, ItemMetadata } from "../types";
 import { embeddingStorage } from "./savesystem";
-import { embedText } from "../modules/embedder"
+import { embedText } from "../modules/embedder";
 import { hashString } from "../utils/hash";
 import { getPref } from "../utils/prefs";
 
@@ -12,43 +12,54 @@ const CHARS_PER_TOKEN = 4;
 const MAX_CHUNK_TOKENS = 500;
 
 // Section headings that mark the start of non-content tail material
-const REFERENCES_HEADING = /^(references|bibliography|quellen|literatur|works cited|literaturverzeichnis)\s*$/i;
+const REFERENCES_HEADING =
+  /^(references|bibliography|quellen|literatur|works cited|literaturverzeichnis)\s*$/i;
 
 // Short boilerplate lines that survive the length filter
-const BOILERPLATE = /^[\d\s.]+$|all rights reserved|downloaded from|©|\bcc\s+by\b|doi:\s*10\.|publisher's note/i;
+const BOILERPLATE =
+  /^[\d\s.]+$|all rights reserved|downloaded from|©|\bcc\s+by\b|doi:\s*10\.|publisher's note/i;
 
 // PDF ligatures that don't tokenize as their constituent letters
 const LIGATURES: Record<string, string> = {
-  "ﬀ": "ff", "ﬁ": "fi", "ﬂ": "fl",
-  "ﬃ": "ffi", "ﬄ": "ffl", "ﬅ": "st", "ﬆ": "st",
+  ﬀ: "ff",
+  ﬁ: "fi",
+  ﬂ: "fl",
+  ﬃ: "ffi",
+  ﬄ: "ffl",
+  ﬅ: "st",
+  ﬆ: "st",
 };
 const LIGATURE_RE = new RegExp(Object.keys(LIGATURES).join("|"), "g");
 
 // Cleans raw PDF-extracted text before chunking:
 // fixes encoding artifacts, removes formatting chars, collapses layout whitespace.
 export function cleanText(raw: string): string {
-  return raw
-    .normalize("NFC")
-    .replace(LIGATURE_RE, m => LIGATURES[m])
-    // Soft hyphens (invisible, from PDF glyph encoding)
-    .replace(/­/g, "")
-    // Line-break hyphenation: "re-\nse arch" → "research"
-    .replace(/(\w)-\n[ \t]*/g, "$1")
-    // Non-breaking and narrow spaces → regular space
-    .replace(/[           ]/g, " ")
-    // Zero-width and BOM characters
-    .replace(/[​‌‍﻿]/g, "")
-    // C0 control characters except \n and \t
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
-    // Single newlines (PDF line wraps within a paragraph) → space; preserve \n\n paragraph breaks
-    .replace(/(?<!\n)\n(?!\n)/g, " ")
-    // Multiple spaces → single space
-    .replace(/ {2,}/g, " ")
-    // Trim each line
-    .split("\n").map(l => l.trim()).join("\n")
-    // Normalise paragraph breaks to exactly two newlines
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return (
+    raw
+      .normalize("NFC")
+      .replace(LIGATURE_RE, (m) => LIGATURES[m])
+      // Soft hyphens (invisible, from PDF glyph encoding)
+      .replace(/­/g, "")
+      // Line-break hyphenation: "re-\nse arch" → "research"
+      .replace(/(\w)-\n[ \t]*/g, "$1")
+      // Non-breaking and narrow spaces → regular space
+      .replace(/[           ]/g, " ")
+      // Zero-width and BOM characters
+      .replace(/[​‌‍﻿]/g, "")
+      // C0 control characters except \n and \t
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+      // Single newlines (PDF line wraps within a paragraph) → space; preserve \n\n paragraph breaks
+      .replace(/(?<!\n)\n(?!\n)/g, " ")
+      // Multiple spaces → single space
+      .replace(/ {2,}/g, " ")
+      // Trim each line
+      .split("\n")
+      .map((l) => l.trim())
+      .join("\n")
+      // Normalise paragraph breaks to exactly two newlines
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+  );
 }
 
 function estimateTokens(text: string): number {
@@ -61,7 +72,7 @@ function estimateTokens(text: string): number {
 function toSentences(text: string): string[] {
   return text
     .split(/(?<=[.!?])\s+(?=[A-Z"(])/)
-    .map(s => s.trim())
+    .map((s) => s.trim())
     .filter(Boolean);
 }
 
@@ -74,7 +85,10 @@ function isNoise(chunk: string): boolean {
 
 // Splits extracted PDF text into sentence-aware chunks within a token budget.
 // Drops headers/footers, boilerplate, and everything from the references section onward.
-export function chunkText(text: string, maxTokens = MAX_CHUNK_TOKENS): string[] {
+export function chunkText(
+  text: string,
+  maxTokens = MAX_CHUNK_TOKENS,
+): string[] {
   const paragraphs = text.split(/\n\n+/);
   const chunks: string[] = [];
   let bucket: string[] = [];
@@ -106,8 +120,8 @@ function extractMetadata(item: Zotero.Item): ItemMetadata {
   const parent = item.parentItem ?? item;
   const creators = parent.getCreators();
   const authors = creators
-    .filter(c => c.creatorTypeID === Zotero.CreatorTypes.getID("author"))
-    .map(c => [c.lastName, c.firstName].filter(Boolean).join(", "))
+    .filter((c) => c.creatorTypeID === Zotero.CreatorTypes.getID("author"))
+    .map((c) => [c.lastName, c.firstName].filter(Boolean).join(", "))
     .join("; ");
   return {
     title: (parent.getField("title") as string) || undefined,
@@ -136,7 +150,8 @@ export class PdfIndexer {
 
     // Extract full text via Zotero's built-in PDF worker (0 = no page limit)
     const { text: rawText } = await Zotero.PDFWorker.getFullText(item.id, 0);
-    const maxChunkTokens = (getPref("maxChunkTokens") as number) || MAX_CHUNK_TOKENS;
+    const maxChunkTokens =
+      (getPref("maxChunkTokens") as number) || MAX_CHUNK_TOKENS;
     const chunks: string[] = chunkText(cleanText(rawText), maxChunkTokens);
     Zotero.debug(`sentAI: ${chunks.length} chunks to embed`);
 
@@ -145,7 +160,7 @@ export class PdfIndexer {
       const text = chunks[i];
       const embeddingInput = buildEmbeddingInput(text, metadata);
       const embedding = await embedText(embeddingInput);
-      const textHash = hashString(text)
+      const textHash = hashString(text);
       records.push({
         paperId: item.key,
         chunkIndex: i,
@@ -157,6 +172,8 @@ export class PdfIndexer {
     }
 
     await embeddingStorage.save(item.id, records);
-    Zotero.debug(`sentAI: saved ${records.length} embeddings for item ${item.id}`);
+    Zotero.debug(
+      `sentAI: saved ${records.length} embeddings for item ${item.id}`,
+    );
   }
 }

@@ -1,9 +1,7 @@
 export function normalize(vec: number[]): number[] {
-  const norm = Math.sqrt(
-    vec.reduce((sum, x) => sum + x * x, 0)
-  );
+  const norm = Math.sqrt(vec.reduce((sum, x) => sum + x * x, 0));
 
-  return vec.map(x => x / norm);
+  return vec.map((x) => x / norm);
 }
 
 export function dotProduct(a: number[], b: number[]): number {

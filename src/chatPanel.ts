@@ -3,6 +3,7 @@
 import { addMessage, updateMessage } from "./ui/messages";
 import type { SearchResult } from "./modules/searchService";
 import type { SearchFilters } from "./types";
+import type { SkillDef } from "./modules/skillsLoader";
 
 type Api = {
   search: (query: string, filters?: SearchFilters) => Promise<SearchResult[]>;
@@ -11,6 +12,8 @@ type Api = {
   setPref: (key: string, value: unknown) => void;
   getCollections: () => { id: number; name: string }[];
   getTags: () => Promise<string[]>;
+  getSkills: () => Promise<SkillDef[]>;
+  openSkillsFolder: () => void;
   healthCheck: () => Promise<{ embedder: boolean; hasIndex: boolean }>;
   openItem: (itemId: number) => void;
 };
@@ -33,7 +36,9 @@ tabs.forEach((tab) => {
 // ===== Health check =====
 const statusOverlay = document.getElementById("sentai-status-overlay")!;
 const statusMessage = document.getElementById("sentai-status-message")!;
-const retryBtn = document.getElementById("sentai-retry-btn") as HTMLButtonElement;
+const retryBtn = document.getElementById(
+  "sentai-retry-btn",
+) as HTMLButtonElement;
 const chatTab = document.querySelector<HTMLButtonElement>('[data-tab="chat"]')!;
 
 function setChatTabEnabled(enabled: boolean) {
@@ -98,7 +103,9 @@ async function runHealthCheck(autoRetry = true) {
         setTimeout(retry, 1500);
       } else {
         setChatTabEnabled(false);
-        showError("Embedding server not reachable.\nMake sure the server is running.");
+        showError(
+          "Embedding server not reachable.\nMake sure the server is running.",
+        );
         retryBtn.disabled = false;
       }
     };
@@ -113,13 +120,17 @@ function finishHealthCheck(embedder: boolean, hasIndex: boolean) {
   setChatTabEnabled(embedder);
 
   if (!embedder) {
-    showError("Embedding server not reachable.\nMake sure the server is running.");
+    showError(
+      "Embedding server not reachable.\nMake sure the server is running.",
+    );
     retryBtn.disabled = false;
     return;
   }
 
   if (!hasIndex) {
-    showError("No papers indexed yet.\nAdd PDFs to your Zotero library to get started.");
+    showError(
+      "No papers indexed yet.\nAdd PDFs to your Zotero library to get started.",
+    );
     retryBtn.disabled = false;
     return;
   }
@@ -127,7 +138,9 @@ function finishHealthCheck(embedder: boolean, hasIndex: boolean) {
   // All good — activate first tab, hide overlay
   showViews();
   tabs[0]?.classList.add("active");
-  views.forEach((v) => v.classList.toggle("active", v.id === "sentai-search-panel"));
+  views.forEach((v) =>
+    v.classList.toggle("active", v.id === "sentai-search-panel"),
+  );
   retryBtn.disabled = false;
 }
 
@@ -135,8 +148,12 @@ retryBtn.addEventListener("click", () => runHealthCheck());
 runHealthCheck();
 
 // ===== Search tab =====
-const searchInput = document.getElementById("sentai-search-input") as HTMLInputElement;
-const searchBtn = document.getElementById("sentai-search-btn") as HTMLButtonElement;
+const searchInput = document.getElementById(
+  "sentai-search-input",
+) as HTMLInputElement;
+const searchBtn = document.getElementById(
+  "sentai-search-btn",
+) as HTMLButtonElement;
 const searchResults = document.getElementById("sentai-search-results")!;
 
 // Collection dropdown (custom — native <select> renders ghost labels in Gecko)
@@ -145,14 +162,20 @@ const colLabel = document.getElementById("sentai-collection-label")!;
 const colDropdown = document.getElementById("sentai-collection-dropdown")!;
 let selectedCollectionId: number | undefined = undefined;
 
-function buildCollectionOption(id: number | undefined, name: string, active: boolean): HTMLElement {
+function buildCollectionOption(
+  id: number | undefined,
+  name: string,
+  active: boolean,
+): HTMLElement {
   const el = document.createElement("div");
   el.className = "s-col-option" + (active ? " selected" : "");
   el.textContent = name;
   el.addEventListener("click", () => {
     selectedCollectionId = id;
     colLabel.textContent = name;
-    colDropdown.querySelectorAll(".s-col-option").forEach((o) => o.classList.remove("selected"));
+    colDropdown
+      .querySelectorAll(".s-col-option")
+      .forEach((o) => o.classList.remove("selected"));
     el.classList.add("selected");
     colDropdown.classList.remove("open");
     colBtn.classList.remove("open");
@@ -161,7 +184,9 @@ function buildCollectionOption(id: number | undefined, name: string, active: boo
 }
 
 if (api) {
-  colDropdown.appendChild(buildCollectionOption(undefined, "All Collections", true));
+  colDropdown.appendChild(
+    buildCollectionOption(undefined, "All Collections", true),
+  );
   for (const col of api.getCollections()) {
     colDropdown.appendChild(buildCollectionOption(col.id, col.name, false));
   }
@@ -176,18 +201,28 @@ colBtn.addEventListener("click", (e) => {
 document.addEventListener("click", () => {
   colDropdown.classList.remove("open");
   colBtn.classList.remove("open");
-});;
+});
 
 // ===== Filter bar =====
-const filterToggle = document.getElementById("sentai-filter-toggle") as HTMLButtonElement;
+const filterToggle = document.getElementById(
+  "sentai-filter-toggle",
+) as HTMLButtonElement;
 const filterPanel = document.getElementById("sentai-filter-panel")!;
 const filterCountBadge = document.getElementById("sentai-filter-count")!;
 const tagChipsContainer = document.getElementById("sentai-tag-chips")!;
-const tagInput = document.getElementById("sentai-tag-input") as HTMLInputElement;
+const tagInput = document.getElementById(
+  "sentai-tag-input",
+) as HTMLInputElement;
 const tagDatalist = document.getElementById("sentai-tag-datalist")!;
-const yearFromInput = document.getElementById("sentai-year-from") as HTMLInputElement;
-const yearToInput = document.getElementById("sentai-year-to") as HTMLInputElement;
-const itemTypeBtn = document.getElementById("sentai-item-type-btn") as HTMLButtonElement;
+const yearFromInput = document.getElementById(
+  "sentai-year-from",
+) as HTMLInputElement;
+const yearToInput = document.getElementById(
+  "sentai-year-to",
+) as HTMLInputElement;
+const itemTypeBtn = document.getElementById(
+  "sentai-item-type-btn",
+) as HTMLButtonElement;
 const itemTypeBtnLabel = document.getElementById("sentai-item-type-label")!;
 const itemTypeDropdown = document.getElementById("sentai-item-type-dropdown")!;
 
@@ -205,14 +240,20 @@ const ITEM_TYPES: { value: string; label: string }[] = [
   { value: "report", label: "Report" },
 ];
 
-function buildTypeOption(value: string, label: string, active: boolean): HTMLElement {
+function buildTypeOption(
+  value: string,
+  label: string,
+  active: boolean,
+): HTMLElement {
   const el = document.createElement("div");
   el.className = "s-type-option" + (active ? " selected" : "");
   el.textContent = label;
   el.addEventListener("click", () => {
     selectedItemType = value;
     itemTypeBtnLabel.textContent = label;
-    itemTypeDropdown.querySelectorAll(".s-type-option").forEach((o) => o.classList.remove("selected"));
+    itemTypeDropdown
+      .querySelectorAll(".s-type-option")
+      .forEach((o) => o.classList.remove("selected"));
     el.classList.add("selected");
     itemTypeDropdown.classList.remove("open");
     itemTypeBtn.classList.remove("open");
@@ -239,7 +280,10 @@ document.addEventListener("click", () => {
 function updateFilterCount() {
   const yearFrom = yearFromInput.value.trim();
   const yearTo = yearToInput.value.trim();
-  const count = selectedTags.length + (yearFrom || yearTo ? 1 : 0) + (selectedItemType ? 1 : 0);
+  const count =
+    selectedTags.length +
+    (yearFrom || yearTo ? 1 : 0) +
+    (selectedItemType ? 1 : 0);
   filterCountBadge.textContent = String(count);
   (filterCountBadge as HTMLElement).hidden = count === 0;
 }
@@ -349,7 +393,8 @@ function renderResultCards(results: SearchResult[], query: string) {
   if (results.length === 0) {
     const empty = document.createElement("div");
     empty.className = "s-empty";
-    empty.textContent = "No results found. Try a different query or index more PDFs.";
+    empty.textContent =
+      "No results found. Try a different query or index more PDFs.";
     searchResults.appendChild(empty);
     return;
   }
@@ -393,7 +438,9 @@ function renderResultCards(results: SearchResult[], query: string) {
     card.appendChild(snippet);
 
     const authorDisplay = formatAuthors(r.authors);
-    const footerItems = [authorDisplay, r.year, r.journal].filter(Boolean) as string[];
+    const footerItems = [authorDisplay, r.year, r.journal].filter(
+      Boolean,
+    ) as string[];
 
     if (footerItems.length) {
       const footer = document.createElement("div");
@@ -423,8 +470,12 @@ async function runSearch() {
   searchResults.appendChild(loading);
 
   try {
-    const yearFrom = yearFromInput.value.trim() ? parseInt(yearFromInput.value.trim(), 10) : undefined;
-    const yearTo = yearToInput.value.trim() ? parseInt(yearToInput.value.trim(), 10) : undefined;
+    const yearFrom = yearFromInput.value.trim()
+      ? parseInt(yearFromInput.value.trim(), 10)
+      : undefined;
+    const yearTo = yearToInput.value.trim()
+      ? parseInt(yearToInput.value.trim(), 10)
+      : undefined;
     const itemType = selectedItemType || undefined;
 
     const filters: SearchFilters = {
@@ -459,8 +510,12 @@ searchInput.addEventListener("keydown", (e) => {
 });
 
 // ===== Chat tab =====
-const sendButton = document.getElementById("sentai-senden-button") as HTMLButtonElement;
-const chatInput = document.getElementById("sentai-eingabe-text") as HTMLTextAreaElement;
+const sendButton = document.getElementById(
+  "sentai-senden-button",
+) as HTMLButtonElement;
+const chatInput = document.getElementById(
+  "sentai-eingabe-text",
+) as HTMLTextAreaElement;
 
 function wireCitations(msgEl: HTMLElement, sources: SearchResult[]) {
   if (!api || sources.length === 0) return;
@@ -472,7 +527,11 @@ function wireCitations(msgEl: HTMLElement, sources: SearchResult[]) {
   }
   msgEl.querySelectorAll<HTMLElement>(".s-cite").forEach((cite) => {
     const raw = cite.textContent ?? "";
-    const title = raw.replace(/^\[/, "").replace(/\]$/, "").toLowerCase().trim();
+    const title = raw
+      .replace(/^\[/, "")
+      .replace(/\]$/, "")
+      .toLowerCase()
+      .trim();
     const itemId = titleMap.get(title);
     if (itemId != null) {
       cite.classList.add("clickable");
@@ -525,10 +584,16 @@ chatInput.addEventListener("keydown", (e) => {
 // ===== Settings =====
 const settingsToggle = document.getElementById("sentai-settings-toggle")!;
 const settingsDrawer = document.getElementById("sentai-settings")!;
-const chunkInput = document.getElementById("sentai-chunk-size") as HTMLInputElement;
+const chunkInput = document.getElementById(
+  "sentai-chunk-size",
+) as HTMLInputElement;
 const topKInput = document.getElementById("sentai-top-k") as HTMLInputElement;
-const autoAttachInput = document.getElementById("sentai-auto-attach-pdf") as HTMLInputElement;
-const minSimilarityInput = document.getElementById("sentai-min-similarity") as HTMLInputElement;
+const autoAttachInput = document.getElementById(
+  "sentai-auto-attach-pdf",
+) as HTMLInputElement;
+const minSimilarityInput = document.getElementById(
+  "sentai-min-similarity",
+) as HTMLInputElement;
 
 if (api) {
   chunkInput.value = String(api.getPref("maxChunkTokens") ?? 500);
@@ -558,5 +623,62 @@ autoAttachInput.addEventListener("change", () => {
 
 minSimilarityInput.addEventListener("change", () => {
   const val = parseInt(minSimilarityInput.value, 10);
-  if (!isNaN(val) && api) api.setPref("minSimilarity", Math.max(0, Math.min(100, val)));
+  if (!isNaN(val) && api)
+    api.setPref("minSimilarity", Math.max(0, Math.min(100, val)));
 });
+
+// ===== Skills bar =====
+const skillsBar = document.getElementById("sentai-skills-bar") as HTMLElement;
+const skillsChips = document.getElementById(
+  "sentai-skills-chips",
+) as HTMLElement;
+const skillsOpenBtn = document.getElementById(
+  "sentai-skills-open",
+) as HTMLButtonElement;
+
+function lastUserMessage(): string {
+  const container = document.getElementById("sentai-nachrichten");
+  if (!container) return "";
+  const userBubbles = container.querySelectorAll<HTMLElement>(".message.user");
+  if (userBubbles.length === 0) return "";
+  return userBubbles[userBubbles.length - 1].textContent?.trim() ?? "";
+}
+
+function buildSkillChip(skill: SkillDef): HTMLButtonElement {
+  const btn = document.createElement("button");
+  btn.className = "s-skill-chip";
+  btn.type = "button";
+  btn.textContent = skill.icon ? `${skill.icon} ${skill.name}` : skill.name;
+  if (skill.description) btn.title = skill.description;
+  btn.addEventListener("click", () => {
+    const ctx = lastUserMessage();
+    chatInput.value = ctx
+      ? `${skill.prompt}\n\nContext from our conversation: ${ctx}`
+      : skill.prompt;
+    sendMessage();
+  });
+  return btn;
+}
+
+if (api) {
+  api
+    .getSkills()
+    .then((skills) => {
+      if (skills.length === 0) {
+        skillsBar.hidden = true;
+        return;
+      }
+      for (const skill of skills) {
+        skillsChips.appendChild(buildSkillChip(skill));
+      }
+    })
+    .catch(() => {
+      skillsBar.hidden = true;
+    });
+
+  skillsOpenBtn.addEventListener("click", () => {
+    api!.openSkillsFolder();
+  });
+} else {
+  skillsBar.hidden = true;
+}

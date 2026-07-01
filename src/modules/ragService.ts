@@ -2,31 +2,36 @@ import { search, SearchResult } from "./searchService";
 import { extractKeywords } from "./keywordExtractor";
 import { getPref } from "../utils/prefs";
 
-const SYSTEM_PROMPT = `You are an academic research assistant. Your task: find arguments, 
-counterarguments, and evidence from the user's paper library.
+const SYSTEM_PROMPT = `You are an academic research assistant. Answer the user's question using only the paper excerpts provided below.
 
-Answer concisely:
-- Max. 3 points per section
-- Every claim with a citation of the provided papers: [Paper Title]
-- Structure: "Arguments for:", "Arguments against:", "Key findings:" (only when relevant)
-- Use only content from the provided excerpts. Do not use information that was not given to you by the user.
+Rules:
+- Be direct and concise — 3 to 5 sentences per point, no padding
+- Cite claims inline with [Paper Title] — only once per sentence, not after every clause
+- Use a header only when the answer has 3 or more clearly distinct sections; otherwise plain prose
+- No bullet lists unless comparing 3+ discrete items; prefer short paragraphs
+- Never restate the question or explain what you are about to do
+- Use only content from the provided excerpts
 - Always respond in English`;
 
-const ERROR_TEXT = 'Something went wrong. If you have stable internet connection, the issue is likely on our side. Please try again later.'
+const ERROR_TEXT =
+  "Something went wrong. If you have stable internet connection, the issue is likely on our side. Please try again later.";
 
 type GeminiPart = { text?: string; thought?: boolean };
 type GeminiResponse = { candidates?: { content?: { parts?: GeminiPart[] } }[] };
 
-export async function ask(query: string): Promise<{ answer: string; sources: SearchResult[] }> {
+export async function ask(
+  query: string,
+): Promise<{ answer: string; sources: SearchResult[] }> {
   const searchQuery = await extractKeywords(query);
   const threshold = ((getPref("minSimilarity") as number) ?? 10) / 100;
   const allResults = await search(searchQuery);
   const results = allResults.filter((r) => r.similarity >= threshold);
 
   if (results.length === 0) {
-    const answer = allResults.length === 0
-      ? "No indexed papers found. Please add PDFs to your Zotero library first."
-      : `No results above the ${Math.round(threshold * 100)}% similarity threshold. Try lowering "Min. Similarity" in settings or rephrasing your question.`;
+    const answer =
+      allResults.length === 0
+        ? "No indexed papers found. Please add PDFs to your Zotero library first."
+        : `No results above the ${Math.round(threshold * 100)}% similarity threshold. Try lowering "Min. Similarity" in settings or rephrasing your question.`;
     return { answer, sources: [] };
   }
 
@@ -43,7 +48,7 @@ export async function ask(query: string): Promise<{ answer: string; sources: Sea
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 4096 },
+        generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
       }),
     },
   );

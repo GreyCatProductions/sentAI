@@ -7,7 +7,9 @@ type Api = { search: (query: string) => Promise<SearchResult[]> };
 const api: Api | undefined = (window as any).arguments?.[0];
 
 export async function onSearch() {
-  const input = document.getElementById("sentai-suche-input") as HTMLInputElement;
+  const input = document.getElementById(
+    "sentai-suche-input",
+  ) as HTMLInputElement;
   const query = input.value.trim();
   if (!query) return;
 
@@ -28,7 +30,10 @@ export async function onSearch() {
 
     for (const result of results) {
       const score = (result.similarity * 100).toFixed(1);
-      addMessage("sentAI", `[${score}%] ${result.title}\n\n${result.chunkText}`);
+      addMessage(
+        "sentAI",
+        `[${score}%] ${result.title}\n\n${result.chunkText}`,
+      );
     }
   } catch (e) {
     console.log(`sentAI: search error - ${(e as Error).message}`);

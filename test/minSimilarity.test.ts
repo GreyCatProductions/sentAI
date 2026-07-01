@@ -5,10 +5,11 @@ import { embeddingStorage } from "../src/modules/savesystem";
 
 const ITEM_ID = 88884;
 
-const sentaiApi = () => (Zotero as any).SentAI.api as {
-  getPref: (key: string) => unknown;
-  setPref: (key: string, value: unknown) => void;
-};
+const sentaiApi = () =>
+  (Zotero as any).SentAI.api as {
+    getPref: (key: string) => unknown;
+    setPref: (key: string, value: unknown) => void;
+  };
 
 function makeFakeItem(id: number, key: string): Zotero.Item {
   return {
@@ -35,7 +36,9 @@ describe("minSimilarity pref", function () {
   before(async function () {
     this.timeout(30000);
     const text = Array(4)
-      .fill("Similarity thresholds filter search results based on cosine distance between embeddings.")
+      .fill(
+        "Similarity thresholds filter search results based on cosine distance between embeddings.",
+      )
       .join("\n\n");
     await indexFakeText(makeFakeItem(ITEM_ID, "MSIM001"), text);
   });

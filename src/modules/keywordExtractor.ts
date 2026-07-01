@@ -6,7 +6,9 @@ Examples:
 "papers about neural networks in medicine" → neural networks, deep learning, medical diagnosis, clinical AI
 "Wie beeinflusst Stress das Immunsystem?" → stress, immune system, cortisol, inflammation, psychological response`;
 
-type GeminiResponse = { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+type GeminiResponse = {
+  candidates?: { content?: { parts?: { text?: string }[] } }[];
+};
 
 export async function extractKeywords(query: string): Promise<string> {
   try {
@@ -16,7 +18,12 @@ export async function extractKeywords(query: string): Promise<string> {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: `${KEYWORD_PROMPT}\n\nQuestion: ${query}` }] }],
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: `${KEYWORD_PROMPT}\n\nQuestion: ${query}` }],
+            },
+          ],
           generationConfig: { temperature: 0, maxOutputTokens: 80 },
         }),
       },

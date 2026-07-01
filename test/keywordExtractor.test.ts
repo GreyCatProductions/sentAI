@@ -14,7 +14,9 @@ describe("extractKeywords", function () {
 
   it("returns a non-empty string for a valid query", async function () {
     this.timeout(15000);
-    const result = await extractKeywords("What does Kant say about morality and ethics?");
+    const result = await extractKeywords(
+      "What does Kant say about morality and ethics?",
+    );
     assert.isString(result);
     assert.isAbove(result.length, 0);
   });
@@ -29,7 +31,10 @@ describe("extractKeywords", function () {
   });
 
   it("falls back to original query when response is not ok", async function () {
-    (globalThis as any).fetch = async () => ({ ok: false, json: async () => ({}) });
+    (globalThis as any).fetch = async () => ({
+      ok: false,
+      json: async () => ({}),
+    });
     const query = "non-ok response fallback";
     const result = await extractKeywords(query);
     assert.strictEqual(result, query);

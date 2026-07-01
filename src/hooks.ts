@@ -6,18 +6,21 @@ import { search } from "./modules/searchService";
 import { ask } from "./modules/ragService";
 import { getPref, setPref } from "./utils/prefs";
 import { autoAttachPdf } from "./modules/autoAttach";
+import {
+  initSkillsFolder,
+  loadSkills,
+  openSkillsFolder,
+} from "./modules/skillsLoader";
 
 let notifierID: string | undefined;
 
 async function onStartup() {
-  await Promise.all([
-    Zotero.initializationPromise,
-    Zotero.unlockPromise,
-  ]);
+  await Promise.all([Zotero.initializationPromise, Zotero.unlockPromise]);
 
   initLocale();
 
   await embeddingStorage.init();
+  await initSkillsFolder();
 
   addon.api = {
     search,
@@ -50,7 +53,10 @@ async function onStartup() {
       }
       return { reachable };
     },
-    healthCheck: async (): Promise<{ embedder: boolean; hasIndex: boolean }> => {
+    healthCheck: async (): Promise<{
+      embedder: boolean;
+      hasIndex: boolean;
+    }> => {
       let embedder = false;
       try {
         const timeout = new Promise<never>((_, reject) =>
@@ -64,6 +70,8 @@ async function onStartup() {
       const hasIndex = embedder ? await embeddingStorage.hasAny() : false;
       return { embedder, hasIndex };
     },
+    getSkills: () => loadSkills(),
+    openSkillsFolder: () => openSkillsFolder(),
     openItem: (itemId: number): void => {
       Zotero.getMainWindow()?.ZoteroPane?.selectItem(itemId);
     },
@@ -77,10 +85,7 @@ async function onStartup() {
   };
   addon.data.initialized = true;
 
-  notifierID = Zotero.Notifier.registerObserver(
-    { notify: onNotify },
-    ["item"],
-  );
+  notifierID = Zotero.Notifier.registerObserver({ notify: onNotify }, ["item"]);
 
   // UI-dependent setup: wait for the main window before touching the DOM
   await Zotero.uiReadyPromise;
@@ -151,7 +156,12 @@ function registerToolbarButton(win: _ZoteroTypes.MainWindow) {
 
 function openChatPanel(win: Window) {
   const url = `chrome://${addon.data.config.addonRef}/content/chatPanel.xhtml`;
-  win.openDialog(url, "sentai-chat-panel", "chrome,resizable,centerscreen,width=480,height=640", addon.api);
+  win.openDialog(
+    url,
+    "sentai-chat-panel",
+    "chrome,resizable,centerscreen,width=480,height=640",
+    addon.api,
+  );
 }
 
 async function onMainWindowUnload(win: Window): Promise<void> {
@@ -210,7 +220,6 @@ async function onNotify(
       }
     }
   }
-
 }
 
 /**

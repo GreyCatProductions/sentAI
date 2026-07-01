@@ -1,37 +1,40 @@
 /* ===== Design tokens ===== */
 :root {
-  --s-bg:            #f4f6f9;
-  --s-surface:       #ffffff;
-  --s-border:        #e4e7ec;
-  --s-text:          #111827;
-  --s-text-muted:    #6b7280;
-  --s-accent:        #1a73e8;
-  --s-accent-dk:     #1557b0;
-  --s-accent-bg:     #1a73e812;
-  --s-ai-bg:         #eef2ff;
-  --s-highlight:     #fbbc0430;
-  --s-radius:        20px;
-  --s-card-shadow:   0 1px 2px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.05);
-  --s-card-shadow-hover: 0 4px 16px rgba(0,0,0,0.10), 0 0 0 1.5px var(--s-accent);
-  --ease-out:        cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in-out:     cubic-bezier(0.77, 0, 0.175, 1);
+  --s-bg: #f4f6f9;
+  --s-surface: #ffffff;
+  --s-border: #e4e7ec;
+  --s-text: #111827;
+  --s-text-muted: #6b7280;
+  --s-accent: #1a73e8;
+  --s-accent-dk: #1557b0;
+  --s-accent-bg: #1a73e812;
+  --s-ai-bg: #eef2ff;
+  --s-highlight: #fbbc0430;
+  --s-radius: 20px;
+  --s-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  --s-card-shadow-hover:
+    0 4px 16px rgba(0, 0, 0, 0.1), 0 0 0 1.5px var(--s-accent);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
 /* Dark Mode */
 @media (prefers-color-scheme: dark) {
   :root {
-    --s-bg:            #141416;
-    --s-surface:       #1e1f23;
-    --s-border:        #2e3038;
-    --s-text:          #e8eaed;
-    --s-text-muted:    #9aa0a6;
-    --s-accent:        #4a9eff;
-    --s-accent-dk:     #3a8eef;
-    --s-accent-bg:     #4a9eff16;
-    --s-ai-bg:         #1e2540;
-    --s-highlight:     #fbbc0428;
-    --s-card-shadow:   0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
-    --s-card-shadow-hover: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 1.5px var(--s-accent);
+    --s-bg: #141416;
+    --s-surface: #1e1f23;
+    --s-border: #2e3038;
+    --s-text: #e8eaed;
+    --s-text-muted: #9aa0a6;
+    --s-accent: #4a9eff;
+    --s-accent-dk: #3a8eef;
+    --s-accent-bg: #4a9eff16;
+    --s-ai-bg: #1e2540;
+    --s-highlight: #fbbc0428;
+    --s-card-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    --s-card-shadow-hover:
+      0 4px 20px rgba(0, 0, 0, 0.5), 0 0 0 1.5px var(--s-accent);
   }
 }
 
@@ -40,31 +43,44 @@
 :root[data-color-scheme="dark"],
 .zotero-dark :root,
 body.dark :root {
-  --s-bg:            #141416;
-  --s-surface:       #1e1f23;
-  --s-border:        #2e3038;
-  --s-text:          #e8eaed;
-  --s-text-muted:    #9aa0a6;
-  --s-accent:        #4a9eff;
-  --s-accent-dk:     #3a8eef;
-  --s-accent-bg:     #4a9eff16;
-  --s-ai-bg:         #1e2540;
-  --s-highlight:     #fbbc0428;
-  --s-card-shadow:   0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
-  --s-card-shadow-hover: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 1.5px var(--s-accent);
+  --s-bg: #141416;
+  --s-surface: #1e1f23;
+  --s-border: #2e3038;
+  --s-text: #e8eaed;
+  --s-text-muted: #9aa0a6;
+  --s-accent: #4a9eff;
+  --s-accent-dk: #3a8eef;
+  --s-accent-bg: #4a9eff16;
+  --s-ai-bg: #1e2540;
+  --s-highlight: #fbbc0428;
+  --s-card-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --s-card-shadow-hover:
+    0 4px 20px rgba(0, 0, 0, 0.5), 0 0 0 1.5px var(--s-accent);
 }
 
 /* ===== Reset ===== */
-*, *::before, *::after { box-sizing: border-box; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden;
   background: var(--s-bg);
   color: var(--s-text);
-  font-family: "Google Sans", -apple-system, "Segoe UI", system-ui, Arial, sans-serif;
+  font-family:
+    "Google Sans",
+    -apple-system,
+    "Segoe UI",
+    system-ui,
+    Arial,
+    sans-serif;
   font-size: 13px;
 }
 
@@ -115,7 +131,10 @@ html, body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 150ms ease, color 150ms ease, transform 120ms var(--ease-out);
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    transform 120ms var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -125,8 +144,13 @@ html, body {
   }
 }
 
-#sentai-settings-toggle:active  { transform: scale(0.90); }
-#sentai-settings-toggle.active  { color: var(--s-accent); background: #e8f0fe; }
+#sentai-settings-toggle:active {
+  transform: scale(0.9);
+}
+#sentai-settings-toggle.active {
+  color: var(--s-accent);
+  background: #e8f0fe;
+}
 
 /* ===== Settings drawer ===== */
 #sentai-settings {
@@ -143,8 +167,8 @@ html, body {
   pointer-events: none;
   transition:
     max-height 200ms var(--ease-out),
-    padding    200ms var(--ease-out),
-    opacity    160ms var(--ease-out);
+    padding 200ms var(--ease-out),
+    opacity 160ms var(--ease-out);
 }
 
 #sentai-settings.open {
@@ -180,7 +204,9 @@ html, body {
   transition: border-color 150ms ease;
 }
 
-.sentai-settings-row input[type="number"]:focus { border-color: var(--s-accent); }
+.sentai-settings-row input[type="number"]:focus {
+  border-color: var(--s-accent);
+}
 
 .sentai-settings-row input[type="checkbox"] {
   accent-color: var(--s-accent);
@@ -188,7 +214,6 @@ html, body {
   height: 14px;
   cursor: pointer;
 }
-
 
 /* ===== Messages ===== */
 #sentai-nachrichten {
@@ -201,12 +226,20 @@ html, body {
   background: var(--s-bg);
 }
 
-#sentai-nachrichten::-webkit-scrollbar { width: 4px; }
-#sentai-nachrichten::-webkit-scrollbar-track { background: transparent; }
-#sentai-nachrichten::-webkit-scrollbar-thumb { background: var(--s-border); border-radius: 2px; }
+#sentai-nachrichten::-webkit-scrollbar {
+  width: 4px;
+}
+#sentai-nachrichten::-webkit-scrollbar-track {
+  background: transparent;
+}
+#sentai-nachrichten::-webkit-scrollbar-thumb {
+  background: var(--s-border);
+  border-radius: 2px;
+}
 
 /* Sender label */
-.absender, .sender {
+.absender,
+.sender {
   font-size: 10px;
   font-weight: 600;
   color: var(--s-text-muted);
@@ -217,21 +250,36 @@ html, body {
 }
 
 .absender:first-child,
-.sender:first-child { margin-top: 0; }
+.sender:first-child {
+  margin-top: 0;
+}
 
 /* Entry animations */
 @keyframes msg-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0);   }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes card-in {
-  from { opacity: 0; transform: scale(0.97); }
-  to   { opacity: 1; transform: scale(1);    }
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Bubble */
-.nachricht, .message {
+.nachricht,
+.message {
   max-width: 88%;
   padding: 9px 14px;
   border-radius: var(--s-radius);
@@ -244,8 +292,16 @@ html, body {
 
 /* Pulsing loading dots */
 @keyframes dot-pulse {
-  0%, 80%, 100% { opacity: 0.25; transform: scale(0.75); }
-  40%           { opacity: 1;    transform: scale(1);    }
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.75);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .message.loading {
@@ -294,7 +350,8 @@ html, body {
 }
 
 /* AI bubble — left */
-.von-ki, .sentAI {
+.von-ki,
+.sentAI {
   background: var(--s-ai-bg);
   color: var(--s-text);
   align-self: flex-start;
@@ -302,7 +359,8 @@ html, body {
 }
 
 /* User bubble — right */
-.von-user, .user {
+.von-user,
+.user {
   background: var(--s-accent);
   color: #fff;
   align-self: flex-end;
@@ -324,7 +382,9 @@ html, body {
   border: 1.5px solid var(--s-border);
   border-radius: 24px;
   padding: 6px 6px 6px 14px;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 #sentai-eingabe-zeile:focus-within {
@@ -346,7 +406,9 @@ html, body {
   line-height: 1.5;
 }
 
-#sentai-eingabe-text::placeholder { color: var(--s-text-muted); }
+#sentai-eingabe-text::placeholder {
+  color: var(--s-text-muted);
+}
 
 #sentai-senden-button {
   width: 34px;
@@ -361,15 +423,26 @@ html, body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 150ms ease, transform 120ms var(--ease-out), opacity 150ms ease;
+  transition:
+    background 150ms ease,
+    transform 120ms var(--ease-out),
+    opacity 150ms ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  #sentai-senden-button:hover { background: var(--s-accent-dk); }
+  #sentai-senden-button:hover {
+    background: var(--s-accent-dk);
+  }
 }
 
-#sentai-senden-button:active   { transform: scale(0.94); }
-#sentai-senden-button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+#sentai-senden-button:active {
+  transform: scale(0.94);
+}
+#sentai-senden-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
 
 /* ===== Views ===== */
 .sentai-view {
@@ -381,8 +454,12 @@ html, body {
 }
 
 @keyframes view-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .sentai-view.active {
@@ -428,15 +505,25 @@ html, body {
   font-family: inherit;
   font-weight: 500;
   cursor: pointer;
-  transition: background 150ms ease, transform 120ms var(--ease-out);
+  transition:
+    background 150ms ease,
+    transform 120ms var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  #sentai-retry-btn:hover { background: var(--s-accent-dk); }
+  #sentai-retry-btn:hover {
+    background: var(--s-accent-dk);
+  }
 }
 
-#sentai-retry-btn:active    { transform: scale(0.96); }
-#sentai-retry-btn:disabled  { opacity: 0.5; cursor: not-allowed; transform: none; }
+#sentai-retry-btn:active {
+  transform: scale(0.96);
+}
+#sentai-retry-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
 
 /* ===== Tab bar ===== */
 #sentai-tabs {
@@ -459,13 +546,17 @@ html, body {
   cursor: pointer;
   font-family: inherit;
   margin-bottom: -1px;
-  transition: color 150ms ease, border-color 150ms ease;
+  transition:
+    color 150ms ease,
+    border-color 150ms ease;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   font-size: 11px;
 }
 
-.sentai-tab:hover:not(:disabled) { color: var(--s-text); }
+.sentai-tab:hover:not(:disabled) {
+  color: var(--s-text);
+}
 
 .sentai-tab:disabled,
 .sentai-tab.disabled {
@@ -498,7 +589,9 @@ html, body {
   background: var(--s-bg);
   color: var(--s-text);
   outline: none;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 #sentai-search-input:focus {
@@ -506,7 +599,9 @@ html, body {
   box-shadow: 0 0 0 3px var(--s-accent-bg);
 }
 
-#sentai-search-input::placeholder { color: var(--s-text-muted); }
+#sentai-search-input::placeholder {
+  color: var(--s-text-muted);
+}
 
 #sentai-search-btn {
   width: 34px;
@@ -521,15 +616,26 @@ html, body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 150ms ease, transform 120ms var(--ease-out), opacity 150ms ease;
+  transition:
+    background 150ms ease,
+    transform 120ms var(--ease-out),
+    opacity 150ms ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  #sentai-search-btn:hover { background: var(--s-accent-dk); }
+  #sentai-search-btn:hover {
+    background: var(--s-accent-dk);
+  }
 }
 
-#sentai-search-btn:active   { transform: scale(0.92); }
-#sentai-search-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+#sentai-search-btn:active {
+  transform: scale(0.92);
+}
+#sentai-search-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
 
 #sentai-collection-bar {
   padding: 0 14px 10px;
@@ -554,8 +660,13 @@ html, body {
   transition: border-color 150ms ease;
 }
 
-#sentai-collection-btn:hover { border-color: var(--s-accent); }
-#sentai-collection-btn.open  { border-color: var(--s-accent); border-radius: 8px 8px 0 0; }
+#sentai-collection-btn:hover {
+  border-color: var(--s-accent);
+}
+#sentai-collection-btn.open {
+  border-color: var(--s-accent);
+  border-radius: 8px 8px 0 0;
+}
 
 .s-col-arrow {
   font-size: 10px;
@@ -564,7 +675,9 @@ html, body {
   transition: transform 150ms var(--ease-out);
 }
 
-#sentai-collection-btn.open .s-col-arrow { transform: rotate(180deg); }
+#sentai-collection-btn.open .s-col-arrow {
+  transform: rotate(180deg);
+}
 
 #sentai-collection-dropdown {
   display: none;
@@ -575,16 +688,23 @@ html, body {
   border: 1.5px solid var(--s-accent);
   border-top: none;
   border-radius: 0 0 8px 8px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
   z-index: 999;
   max-height: 180px;
   overflow-y: auto;
 }
 
-#sentai-collection-dropdown.open { display: block; }
+#sentai-collection-dropdown.open {
+  display: block;
+}
 
-#sentai-collection-dropdown::-webkit-scrollbar { width: 4px; }
-#sentai-collection-dropdown::-webkit-scrollbar-thumb { background: var(--s-border); border-radius: 2px; }
+#sentai-collection-dropdown::-webkit-scrollbar {
+  width: 4px;
+}
+#sentai-collection-dropdown::-webkit-scrollbar-thumb {
+  background: var(--s-border);
+  border-radius: 2px;
+}
 
 .s-col-option {
   padding: 7px 12px;
@@ -595,8 +715,13 @@ html, body {
   transition: background 100ms ease;
 }
 
-.s-col-option:hover    { background: var(--s-accent-bg); }
-.s-col-option.selected { color: var(--s-accent); font-weight: 600; }
+.s-col-option:hover {
+  background: var(--s-accent-bg);
+}
+.s-col-option.selected {
+  color: var(--s-accent);
+  font-weight: 600;
+}
 
 #sentai-search-results {
   flex: 1;
@@ -607,9 +732,16 @@ html, body {
   gap: 10px;
 }
 
-#sentai-search-results::-webkit-scrollbar { width: 4px; }
-#sentai-search-results::-webkit-scrollbar-track { background: transparent; }
-#sentai-search-results::-webkit-scrollbar-thumb { background: var(--s-border); border-radius: 2px; }
+#sentai-search-results::-webkit-scrollbar {
+  width: 4px;
+}
+#sentai-search-results::-webkit-scrollbar-track {
+  background: transparent;
+}
+#sentai-search-results::-webkit-scrollbar-thumb {
+  background: var(--s-border);
+  border-radius: 2px;
+}
 
 /* Result cards */
 .s-result-card {
@@ -621,7 +753,9 @@ html, body {
   gap: 5px;
   box-shadow: var(--s-card-shadow);
   animation: card-in 200ms var(--ease-out) both;
-  transition: box-shadow 180ms var(--ease-out), transform 120ms var(--ease-out);
+  transition:
+    box-shadow 180ms var(--ease-out),
+    transform 120ms var(--ease-out);
   cursor: default;
 }
 
@@ -631,7 +765,9 @@ html, body {
   }
 }
 
-.s-result-card:active { transform: scale(0.98); }
+.s-result-card:active {
+  transform: scale(0.98);
+}
 
 .s-result-row1 {
   display: flex;
@@ -672,10 +808,16 @@ html, body {
   font-size: 11px;
   line-height: 1;
   padding: 2px 5px;
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease, transform 100ms var(--ease-out);
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease,
+    transform 100ms var(--ease-out);
 }
 
-.s-jump-btn:active { transform: scale(0.92); }
+.s-jump-btn:active {
+  transform: scale(0.92);
+}
 
 .s-jump-btn:hover {
   background: var(--s-accent-bg);
@@ -737,8 +879,14 @@ html, body {
 }
 
 @keyframes chip-in {
-  from { opacity: 0; transform: scale(0.75); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* ===== Filter bar ===== */
@@ -761,21 +909,31 @@ html, body {
   align-items: center;
   gap: 6px;
   text-align: left;
-  transition: border-color 150ms ease, background 150ms ease, transform 100ms var(--ease-out);
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    transform 100ms var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  #sentai-filter-toggle:hover { border-color: var(--s-accent); background: var(--s-accent-bg); }
+  #sentai-filter-toggle:hover {
+    border-color: var(--s-accent);
+    background: var(--s-accent-bg);
+  }
 }
 
-#sentai-filter-toggle:active { transform: scale(0.98); }
+#sentai-filter-toggle:active {
+  transform: scale(0.98);
+}
 
 #sentai-filter-toggle.open {
   border-color: var(--s-accent);
   border-radius: 8px 8px 0 0;
 }
 
-#sentai-filter-toggle.open .s-col-arrow { transform: rotate(180deg); }
+#sentai-filter-toggle.open .s-col-arrow {
+  transform: rotate(180deg);
+}
 
 .s-filter-count {
   font-size: 10px;
@@ -804,8 +962,8 @@ html, body {
   pointer-events: none;
   transition:
     max-height 200ms var(--ease-out),
-    padding    200ms var(--ease-out),
-    opacity    160ms var(--ease-out);
+    padding 200ms var(--ease-out),
+    opacity 160ms var(--ease-out);
 }
 
 #sentai-filter-panel.open {
@@ -877,7 +1035,9 @@ html, body {
   font-family: inherit;
 }
 
-.s-tag-chip-remove:hover { opacity: 1; }
+.s-tag-chip-remove:hover {
+  opacity: 1;
+}
 
 #sentai-tag-input {
   width: 100%;
@@ -892,8 +1052,12 @@ html, body {
   transition: border-color 150ms ease;
 }
 
-#sentai-tag-input:focus { border-color: var(--s-accent); }
-#sentai-tag-input::placeholder { color: var(--s-text-muted); }
+#sentai-tag-input:focus {
+  border-color: var(--s-accent);
+}
+#sentai-tag-input::placeholder {
+  color: var(--s-text-muted);
+}
 
 .s-filter-year-inputs {
   display: flex;
@@ -917,10 +1081,14 @@ html, body {
 }
 
 #sentai-year-from:focus,
-#sentai-year-to:focus { border-color: var(--s-accent); }
+#sentai-year-to:focus {
+  border-color: var(--s-accent);
+}
 
 #sentai-year-from::placeholder,
-#sentai-year-to::placeholder { color: var(--s-text-muted); }
+#sentai-year-to::placeholder {
+  color: var(--s-text-muted);
+}
 
 .s-filter-sep {
   color: var(--s-text-muted);
@@ -946,16 +1114,27 @@ html, body {
   align-items: center;
   justify-content: space-between;
   text-align: left;
-  transition: border-color 150ms ease, transform 100ms var(--ease-out);
+  transition:
+    border-color 150ms ease,
+    transform 100ms var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .s-type-btn:hover { border-color: var(--s-accent); }
+  .s-type-btn:hover {
+    border-color: var(--s-accent);
+  }
 }
 
-.s-type-btn:active { transform: scale(0.97); }
-.s-type-btn.open  { border-color: var(--s-accent); border-radius: 6px 6px 0 0; }
-.s-type-btn.open .s-col-arrow { transform: rotate(180deg); }
+.s-type-btn:active {
+  transform: scale(0.97);
+}
+.s-type-btn.open {
+  border-color: var(--s-accent);
+  border-radius: 6px 6px 0 0;
+}
+.s-type-btn.open .s-col-arrow {
+  transform: rotate(180deg);
+}
 
 #sentai-item-type-dropdown {
   display: none;
@@ -966,11 +1145,13 @@ html, body {
   border: 1.5px solid var(--s-accent);
   border-top: none;
   border-radius: 0 0 6px 6px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
   z-index: 999;
 }
 
-#sentai-item-type-dropdown.open { display: block; }
+#sentai-item-type-dropdown.open {
+  display: block;
+}
 
 .s-type-option {
   padding: 6px 10px;
@@ -981,5 +1162,88 @@ html, body {
   transition: background 100ms ease;
 }
 
-.s-type-option:hover    { background: var(--s-accent-bg); }
-.s-type-option.selected { color: var(--s-accent); font-weight: 600; }
+.s-type-option:hover {
+  background: var(--s-accent-bg);
+}
+.s-type-option.selected {
+  color: var(--s-accent);
+  font-weight: 600;
+}
+
+/* ===== Skills bar ===== */
+#sentai-skills-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 12px 4px;
+  border-top: 1px solid var(--s-border);
+  flex-shrink: 0;
+}
+
+#sentai-skills-chips {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+
+#sentai-skills-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.s-skill-chip {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--s-border);
+  background: var(--s-surface);
+  color: var(--s-text);
+  font-size: 11.5px;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 120ms var(--ease-out),
+    border-color 120ms var(--ease-out),
+    transform 120ms var(--ease-out);
+}
+
+@media (hover: hover) {
+  .s-skill-chip:hover {
+    background: var(--s-accent-bg);
+    border-color: var(--s-accent);
+    color: var(--s-accent);
+  }
+}
+
+.s-skill-chip:active {
+  transform: scale(0.95);
+}
+
+#sentai-skills-open {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--s-text-muted);
+  font-size: 10.5px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  transition: color 120ms var(--ease-out);
+}
+
+@media (hover: hover) {
+  #sentai-skills-open:hover {
+    color: var(--s-accent);
+    text-decoration: underline;
+  }
+}
+
+#sentai-skills-open:active {
+  opacity: 0.7;
+}

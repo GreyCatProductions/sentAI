@@ -192,7 +192,9 @@ describe("EmbeddingStorage", function () {
   });
 
   it("getIndexedItemIds: returns ids for all indexed items", async function () {
-    const record2: EmbeddingRecord[] = [{ ...testRecords[0], paperId: "paper2" }];
+    const record2: EmbeddingRecord[] = [
+      { ...testRecords[0], paperId: "paper2" },
+    ];
     await embeddingStorage.save(testItemId, testRecords);
     await embeddingStorage.save(testItemId2, record2);
     const ids = await embeddingStorage.getIndexedItemIds();

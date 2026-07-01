@@ -16,17 +16,13 @@ interface SearchResult {
 export function semanticSearch(
   queryEmbedding: number[],
   chunks: EmbeddingRecord[],
-  topK = 10
+  topK = 10,
 ): SearchResult[] {
-
   const results: SearchResult[] = [];
   const normalizedQuery = normalize(queryEmbedding);
 
   for (const chunk of chunks) {
-    const similarity = dotProduct(
-      normalizedQuery,
-      normalize(chunk.embedding)
-    );
+    const similarity = dotProduct(normalizedQuery, normalize(chunk.embedding));
 
     results.push({
       paperId: chunk.paperId,
@@ -42,4 +38,3 @@ export function semanticSearch(
 
   return results.slice(0, topK);
 }
-

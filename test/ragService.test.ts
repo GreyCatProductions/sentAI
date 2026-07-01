@@ -18,7 +18,11 @@ describe("ragService", function () {
     if (result.answer.startsWith("No indexed papers")) {
       this.skip(); // no papers in the test library at this point
     }
-    assert.match(result.answer, /\[.+\]/, "Expected at least one [Citation] in answer");
+    assert.match(
+      result.answer,
+      /\[.+\]/,
+      "Expected at least one [Citation] in answer",
+    );
   });
 
   it("sources should be SearchResult objects with title and similarity", async function () {
@@ -36,7 +40,11 @@ describe("ragService", function () {
     const result = await ask("protein annotation");
     if (result.sources.length === 0) return;
     const withId = result.sources.filter((s) => s.itemId != null);
-    assert.isAbove(withId.length, 0, "Expected at least one source to have an itemId");
+    assert.isAbove(
+      withId.length,
+      0,
+      "Expected at least one source to have an itemId",
+    );
   });
 
   it("should return the no-papers message when nothing is indexed", async function () {
@@ -45,7 +53,9 @@ describe("ragService", function () {
 
   it("should handle a German query and return a non-empty answer", async function () {
     this.timeout(30000);
-    const result = await ask("Was sind die Argumente für einen Community-Ansatz?");
+    const result = await ask(
+      "Was sind die Argumente für einen Community-Ansatz?",
+    );
     assert.isString(result.answer);
     assert.isAbove(result.answer.length, 0);
     if (result.answer.startsWith("No indexed papers")) {
@@ -53,8 +63,20 @@ describe("ragService", function () {
     }
     // Response should contain German words (system prompt enforces English, but titles may be German)
     const lowerAnswer = result.answer.toLowerCase();
-    const germanIndicators = ["die", "der", "das", "und", "für", "ist", "sind", "ein", "eine"];
-    const hasGerman = germanIndicators.some((word) => lowerAnswer.includes(` ${word} `));
+    const germanIndicators = [
+      "die",
+      "der",
+      "das",
+      "und",
+      "für",
+      "ist",
+      "sind",
+      "ein",
+      "eine",
+    ];
+    const hasGerman = germanIndicators.some((word) =>
+      lowerAnswer.includes(` ${word} `),
+    );
     assert.isTrue(hasGerman, "Expected a German response");
   });
 });

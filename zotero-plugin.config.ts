@@ -9,8 +9,9 @@ export default defineConfig({
   name: pkg.config.addonName,
   id: pkg.config.addonID,
   namespace: pkg.config.addonRef,
-  updateURL: `https://github.com/{{owner}}/{{repo}}/releases/download/release/${pkg.version.includes("-") ? "update-beta.json" : "update.json"
-    }`,
+  updateURL: `https://github.com/{{owner}}/{{repo}}/releases/download/release/${
+    pkg.version.includes("-") ? "update-beta.json" : "update.json"
+  }`,
   xpiDownloadLink:
     "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
 
@@ -61,7 +62,7 @@ export default defineConfig({
         writeFileSync(
           "./test/00_setup.test.ts",
           `(globalThis as any).__server_url__ = ${JSON.stringify(url)};\n` +
-          `(globalThis as any).__gemini_api_key__ = ${JSON.stringify(geminiKey)};\n`,
+            `(globalThis as any).__gemini_api_key__ = ${JSON.stringify(geminiKey)};\n`,
         );
       },
     },

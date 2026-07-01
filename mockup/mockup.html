@@ -1,423 +1,412 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-<head>
-  <meta charset="UTF-8" />
-  <title>sentAI Mockup</title>
-  <style>
+  <head>
+    <meta charset="UTF-8" />
+    <title>sentAI Mockup</title>
+    <style>
+      /* ===== GRUNDLAYOUT ===== */
+      body {
+        font-family: Arial, sans-serif;
+        font-size: 13px;
+        background: #ddd;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
 
-    /* ===== GRUNDLAYOUT ===== */
-    body {
-      font-family: Arial, sans-serif;
-      font-size: 13px;
-      background: #ddd;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
+      /* Das Zotero-Fenster */
+      .fenster {
+        width: 1000px;
+        height: 650px;
+        background: white;
+        border: 1px solid #aaa;
+        border-radius: 6px;
+        display: flex; /* Spalten nebeneinander */
+        overflow: hidden;
+      }
 
-    /* Das Zotero-Fenster */
-    .fenster {
-      width: 1000px;
-      height: 650px;
-      background: white;
-      border: 1px solid #aaa;
-      border-radius: 6px;
-      display: flex;              /* Spalten nebeneinander */
-      overflow: hidden;
-    }
+      /* ===== LINKE SPALTE: Bibliothek ===== */
+      .bibliothek {
+        width: 220px;
+        background: #f5f5f5;
+        border-right: 1px solid #ccc;
+      }
 
+      .bibliothek h3 {
+        background: #e0e0e0;
+        padding: 8px 12px;
+        margin: 0;
+        font-size: 12px;
+        border-bottom: 1px solid #ccc;
+      }
 
-    /* ===== LINKE SPALTE: Bibliothek ===== */
-    .bibliothek {
-      width: 220px;
-      background: #f5f5f5;
-      border-right: 1px solid #ccc;
-    }
+      /* Ein Artikel in der Liste */
+      .artikel {
+        padding: 8px 12px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+      }
 
-    .bibliothek h3 {
-      background: #e0e0e0;
-      padding: 8px 12px;
-      margin: 0;
-      font-size: 12px;
-      border-bottom: 1px solid #ccc;
-    }
+      .artikel:hover {
+        background: #e8edf5;
+      }
 
-    /* Ein Artikel in der Liste */
-    .artikel {
-      padding: 8px 12px;
-      border-bottom: 1px solid #eee;
-      cursor: pointer;
-    }
+      /* Der aktuell ausgewählte Artikel */
+      .artikel.aktiv {
+        background: #d0dff0;
+      }
 
-    .artikel:hover {
-      background: #e8edf5;
-    }
+      .artikel .titel {
+        font-size: 12px;
+      }
 
-    /* Der aktuell ausgewählte Artikel */
-    .artikel.aktiv {
-      background: #d0dff0;
-    }
+      .artikel .autor {
+        font-size: 11px;
+        color: #888;
+        margin-top: 2px;
+      }
 
-    .artikel .titel {
-      font-size: 12px;
-    }
+      /* ===== MITTLERE SPALTE: Artikel-Details ===== */
+      .details {
+        flex: 1; /* nimmt den restlichen Platz */
+        border-right: 1px solid #ccc;
+        padding: 16px;
+        overflow-y: auto;
+      }
 
-    .artikel .autor {
-      font-size: 11px;
-      color: #888;
-      margin-top: 2px;
-    }
+      .details h2 {
+        font-size: 14px;
+        margin-bottom: 6px;
+      }
 
+      .details .meta {
+        font-size: 11px;
+        color: #666;
+        margin-bottom: 12px;
+      }
 
-    /* ===== MITTLERE SPALTE: Artikel-Details ===== */
-    .details {
-      flex: 1;                    /* nimmt den restlichen Platz */
-      border-right: 1px solid #ccc;
-      padding: 16px;
-      overflow-y: auto;
-    }
+      .details .abstract {
+        font-size: 12px;
+        color: #444;
+        line-height: 1.6;
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+      }
 
-    .details h2 {
-      font-size: 14px;
-      margin-bottom: 6px;
-    }
+      /* ===== RECHTE SPALTE: AI Chat ===== */
+      .chat-panel {
+        width: 300px;
+        display: flex;
+        flex-direction: column; /* Elemente untereinander */
+      }
 
-    .details .meta {
-      font-size: 11px;
-      color: #666;
-      margin-bottom: 12px;
-    }
+      /* Kopfzeile des Chats */
+      .chat-kopf {
+        background: #e0e0e0;
+        padding: 8px 12px;
+        border-bottom: 1px solid #ccc;
+        font-weight: bold;
+        font-size: 12px;
+      }
 
-    .details .abstract {
-      font-size: 12px;
-      color: #444;
-      line-height: 1.6;
-      border-top: 1px solid #eee;
-      padding-top: 10px;
-    }
+      /* Suchleiste */
+      .suche {
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+        background: #fafafa;
+      }
 
+      .suche label {
+        font-size: 11px;
+        color: #888;
+        display: block;
+        margin-bottom: 3px;
+      }
 
-    /* ===== RECHTE SPALTE: AI Chat ===== */
-    .chat-panel {
-      width: 300px;
-      display: flex;
-      flex-direction: column;     /* Elemente untereinander */
-    }
+      .suche-zeile {
+        display: flex;
+        gap: 4px;
+      }
 
-    /* Kopfzeile des Chats */
-    .chat-kopf {
-      background: #e0e0e0;
-      padding: 8px 12px;
-      border-bottom: 1px solid #ccc;
-      font-weight: bold;
-      font-size: 12px;
-    }
+      .suche-zeile input {
+        flex: 1;
+        padding: 4px 6px;
+        font-size: 12px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+      }
 
-    /* Suchleiste */
-    .suche {
-      padding: 8px;
-      border-bottom: 1px solid #eee;
-      background: #fafafa;
-    }
+      .suche-zeile button {
+        padding: 4px 8px;
+        font-size: 11px;
+        background: #4a80c4;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+      }
 
-    .suche label {
-      font-size: 11px;
-      color: #888;
-      display: block;
-      margin-bottom: 3px;
-    }
+      /* Nachrichten-Bereich (scrollbar) */
+      .nachrichten {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
 
-    .suche-zeile {
-      display: flex;
-      gap: 4px;
-    }
+      /* Allgemeines Nachrichten-Styling */
+      .nachricht {
+        max-width: 85%;
+        padding: 7px 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.5;
+      }
 
-    .suche-zeile input {
-      flex: 1;
-      padding: 4px 6px;
-      font-size: 12px;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-    }
+      /* KI-Nachricht: links, hellgrau */
+      .von-ki {
+        background: #f0f4fa;
+        align-self: flex-start;
+      }
 
-    .suche-zeile button {
-      padding: 4px 8px;
-      font-size: 11px;
-      background: #4a80c4;
-      color: white;
-      border: none;
-      border-radius: 3px;
-      cursor: pointer;
-    }
+      /* User-Nachricht: rechts, blau */
+      .von-user {
+        background: #4a80c4;
+        color: white;
+        align-self: flex-end;
+      }
 
-    /* Nachrichten-Bereich (scrollbar) */
-    .nachrichten {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+      /* Kleine Beschriftung über Nachrichten */
+      .absender {
+        font-size: 10px;
+        color: #aaa;
+      }
 
-    /* Allgemeines Nachrichten-Styling */
-    .nachricht {
-      max-width: 85%;
-      padding: 7px 10px;
-      border-radius: 8px;
-      font-size: 12px;
-      line-height: 1.5;
-    }
+      .absender.rechts {
+        text-align: right;
+      }
 
-    /* KI-Nachricht: links, hellgrau */
-    .von-ki {
-      background: #f0f4fa;
-      align-self: flex-start;
-    }
+      /* Karte für Suchergebnis */
+      .ergebnis-karte {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 8px;
+        margin-top: 6px;
+        font-size: 11px;
+      }
 
-    /* User-Nachricht: rechts, blau */
-    .von-user {
-      background: #4a80c4;
-      color: white;
-      align-self: flex-end;
-    }
+      .ergebnis-karte .karte-titel {
+        font-weight: bold;
+        color: #1a3a6b;
+        margin-bottom: 2px;
+      }
 
-    /* Kleine Beschriftung über Nachrichten */
-    .absender {
-      font-size: 10px;
-      color: #aaa;
-    }
+      .ergebnis-karte .karte-meta {
+        color: #888;
+        margin-bottom: 5px;
+      }
 
-    .absender.rechts {
-      text-align: right;
-    }
+      .ergebnis-karte button {
+        font-size: 10px;
+        padding: 2px 7px;
+        border: 1px solid #bbb;
+        border-radius: 3px;
+        background: #f5f5f5;
+        cursor: pointer;
+        margin-right: 4px;
+      }
 
-    /* Karte für Suchergebnis */
-    .ergebnis-karte {
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      padding: 8px;
-      margin-top: 6px;
-      font-size: 11px;
-    }
+      /* Eingabe-Bereich unten */
+      .eingabe {
+        border-top: 1px solid #eee;
+        padding: 8px;
+        background: #fafafa;
+      }
 
-    .ergebnis-karte .karte-titel {
-      font-weight: bold;
-      color: #1a3a6b;
-      margin-bottom: 2px;
-    }
+      .kontext-chip {
+        font-size: 10px;
+        background: #e8edf5;
+        color: #3a5a8a;
+        border: 1px solid #c0ccdd;
+        border-radius: 3px;
+        padding: 2px 6px;
+        display: inline-block;
+        margin-bottom: 5px;
+      }
 
-    .ergebnis-karte .karte-meta {
-      color: #888;
-      margin-bottom: 5px;
-    }
+      .eingabe-zeile {
+        display: flex;
+        gap: 4px;
+      }
 
-    .ergebnis-karte button {
-      font-size: 10px;
-      padding: 2px 7px;
-      border: 1px solid #bbb;
-      border-radius: 3px;
-      background: #f5f5f5;
-      cursor: pointer;
-      margin-right: 4px;
-    }
+      .eingabe-zeile textarea {
+        flex: 1;
+        padding: 5px;
+        font-size: 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        resize: none;
+        height: 50px;
+        font-family: Arial, sans-serif;
+      }
 
-    /* Eingabe-Bereich unten */
-    .eingabe {
-      border-top: 1px solid #eee;
-      padding: 8px;
-      background: #fafafa;
-    }
+      .eingabe-zeile button {
+        padding: 6px 10px;
+        background: #4a80c4;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        align-self: flex-end;
+      }
 
-    .kontext-chip {
-      font-size: 10px;
-      background: #e8edf5;
-      color: #3a5a8a;
-      border: 1px solid #c0ccdd;
-      border-radius: 3px;
-      padding: 2px 6px;
-      display: inline-block;
-      margin-bottom: 5px;
-    }
+      .hinweis {
+        font-size: 10px;
+        color: #aaa;
+        margin-top: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Das simulierte Zotero-Fenster -->
+    <div class="fenster">
+      <!-- LINKE SPALTE: Bibliothek -->
+      <div class="bibliothek">
+        <h3>Meine Bibliothek</h3>
 
-    .eingabe-zeile {
-      display: flex;
-      gap: 4px;
-    }
-
-    .eingabe-zeile textarea {
-      flex: 1;
-      padding: 5px;
-      font-size: 12px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      resize: none;
-      height: 50px;
-      font-family: Arial, sans-serif;
-    }
-
-    .eingabe-zeile button {
-      padding: 6px 10px;
-      background: #4a80c4;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      align-self: flex-end;
-    }
-
-    .hinweis {
-      font-size: 10px;
-      color: #aaa;
-      margin-top: 3px;
-    }
-
-  </style>
-</head>
-<body>
-
-<!-- Das simulierte Zotero-Fenster -->
-<div class="fenster">
-
-
-  <!-- LINKE SPALTE: Bibliothek -->
-  <div class="bibliothek">
-    <h3>Meine Bibliothek</h3>
-
-    <div class="artikel">
-      <div class="titel">Warum schlafen Studenten nicht</div>
-      <div class="autor">Mueller, T., 2023</div>
-    </div>
-
-    <div class="artikel aktiv">
-      <div class="titel">KI und Prokrastination: Eine Fallstudie</div>
-      <div class="autor">Schmidt & Koch, 2022</div>
-    </div>
-
-    <div class="artikel">
-      <div class="titel">Kaffee als Forschungsmethode</div>
-      <div class="autor">Bauer et al., 2021</div>
-    </div>
-
-    <div class="artikel">
-      <div class="titel">Crowd Knowledge Representation</div>
-      <div class="autor">Lukyanenko et al., 2017</div>
-    </div>
-
-    <div class="artikel">
-      <div class="titel">ChatGPT hat meine Hausarbeit gemacht</div>
-      <div class="autor">Anonym, 2024</div>
-    </div>
-  </div>
-
-
-  <!-- MITTLERE SPALTE: Artikel-Details -->
-  <div class="details">
-    <h2>KI und Prokrastination: Warum Studenten lieber mit ChatGPT reden als zu lernen</h2>
-
-    <div class="meta">
-      Schmidt, L., Koch, M. (2022)<br>
-      Journal of Suspicious Student Behavior, 4(2), 12–99
-    </div>
-
-    <div class="abstract">
-      <strong>Abstract</strong><br><br>
-      Diese Studie untersucht das Phänomen, dass Studenten durchschnittlich 4,7 Stunden täglich
-      mit KI-Systemen chatten, davon 0,3 Stunden zu studiumsrelevanten Themen.
-      Die restliche Zeit wird genutzt um zu fragen ob Hotdogs als Sandwiches zählen.
-      Die Autoren empfehlen dringend eine Abgabefrist.
-    </div>
-  </div>
-
-
-  <!-- RECHTE SPALTE: AI Chat -->
-  <div class="chat-panel">
-
-    <!-- Kopf -->
-    <div class="chat-kopf">sentAI Assistent</div>
-
-    <!-- Suchleiste -->
-    <div class="suche">
-      <label>Literatur suchen</label>
-      <div class="suche-zeile">
-        <input type="text" value="warum ist alles so schwer" />
-        <button>Suchen</button>
-      </div>
-    </div>
-
-    <!-- Nachrichten -->
-    <div class="nachrichten">
-
-      <div class="absender">sentAI</div>
-      <div class="nachricht von-ki">
-        Hallo! Ich helfe dir bei deiner Literaturrecherche. Abgabe wann? 😬
-      </div>
-
-      <div class="absender rechts">Du</div>
-      <div class="nachricht von-user">
-        morgen um 8 uhr. ich hab noch nix
-      </div>
-
-      <div class="absender">sentAI</div>
-      <div class="nachricht von-ki">
-        Okay kein Stress. Welches Thema? Ich suche Quellen, du machst Kaffee.
-      </div>
-
-      <div class="absender rechts">Du</div>
-      <div class="nachricht von-user">
-        KI in der Literaturrecherche, 15 Seiten
-      </div>
-
-      <div class="absender">sentAI</div>
-      <div class="nachricht von-ki">
-        Gefunden! Hier zwei gute Artikel:
-
-        <!-- Suchergebnis-Karte 1 -->
-        <div class="ergebnis-karte">
-          <div class="karte-titel">AI-assisted Literature Review Methods</div>
-          <div class="karte-meta">Wang et al., 2023 · 847 Zitierungen</div>
-          <button>+ Speichern</button>
-          <button>Details</button>
+        <div class="artikel">
+          <div class="titel">Warum schlafen Studenten nicht</div>
+          <div class="autor">Mueller, T., 2023</div>
         </div>
 
-        <!-- Suchergebnis-Karte 2 -->
-        <div class="ergebnis-karte">
-          <div class="karte-titel">Why Students Use AI at 2am</div>
-          <div class="karte-meta">Hoffmann, 2024 · sehr relevant</div>
-          <button>+ Speichern</button>
-          <button>Details</button>
+        <div class="artikel aktiv">
+          <div class="titel">KI und Prokrastination: Eine Fallstudie</div>
+          <div class="autor">Schmidt & Koch, 2022</div>
+        </div>
+
+        <div class="artikel">
+          <div class="titel">Kaffee als Forschungsmethode</div>
+          <div class="autor">Bauer et al., 2021</div>
+        </div>
+
+        <div class="artikel">
+          <div class="titel">Crowd Knowledge Representation</div>
+          <div class="autor">Lukyanenko et al., 2017</div>
+        </div>
+
+        <div class="artikel">
+          <div class="titel">ChatGPT hat meine Hausarbeit gemacht</div>
+          <div class="autor">Anonym, 2024</div>
         </div>
       </div>
 
-      <div class="absender rechts">Du</div>
-      <div class="nachricht von-user">
-        du rettest mein leben danke
+      <!-- MITTLERE SPALTE: Artikel-Details -->
+      <div class="details">
+        <h2>
+          KI und Prokrastination: Warum Studenten lieber mit ChatGPT reden als
+          zu lernen
+        </h2>
+
+        <div class="meta">
+          Schmidt, L., Koch, M. (2022)<br />
+          Journal of Suspicious Student Behavior, 4(2), 12–99
+        </div>
+
+        <div class="abstract">
+          <strong>Abstract</strong><br /><br />
+          Diese Studie untersucht das Phänomen, dass Studenten durchschnittlich
+          4,7 Stunden täglich mit KI-Systemen chatten, davon 0,3 Stunden zu
+          studiumsrelevanten Themen. Die restliche Zeit wird genutzt um zu
+          fragen ob Hotdogs als Sandwiches zählen. Die Autoren empfehlen
+          dringend eine Abgabefrist.
+        </div>
       </div>
 
-      <div class="absender">sentAI</div>
-      <div class="nachricht von-ki">
-        Gern. Schlaf danach mal bitte.
-      </div>
+      <!-- RECHTE SPALTE: AI Chat -->
+      <div class="chat-panel">
+        <!-- Kopf -->
+        <div class="chat-kopf">sentAI Assistent</div>
 
+        <!-- Suchleiste -->
+        <div class="suche">
+          <label>Literatur suchen</label>
+          <div class="suche-zeile">
+            <input type="text" value="warum ist alles so schwer" />
+            <button>Suchen</button>
+          </div>
+        </div>
+
+        <!-- Nachrichten -->
+        <div class="nachrichten">
+          <div class="absender">sentAI</div>
+          <div class="nachricht von-ki">
+            Hallo! Ich helfe dir bei deiner Literaturrecherche. Abgabe wann? 😬
+          </div>
+
+          <div class="absender rechts">Du</div>
+          <div class="nachricht von-user">
+            morgen um 8 uhr. ich hab noch nix
+          </div>
+
+          <div class="absender">sentAI</div>
+          <div class="nachricht von-ki">
+            Okay kein Stress. Welches Thema? Ich suche Quellen, du machst
+            Kaffee.
+          </div>
+
+          <div class="absender rechts">Du</div>
+          <div class="nachricht von-user">
+            KI in der Literaturrecherche, 15 Seiten
+          </div>
+
+          <div class="absender">sentAI</div>
+          <div class="nachricht von-ki">
+            Gefunden! Hier zwei gute Artikel:
+
+            <!-- Suchergebnis-Karte 1 -->
+            <div class="ergebnis-karte">
+              <div class="karte-titel">
+                AI-assisted Literature Review Methods
+              </div>
+              <div class="karte-meta">Wang et al., 2023 · 847 Zitierungen</div>
+              <button>+ Speichern</button>
+              <button>Details</button>
+            </div>
+
+            <!-- Suchergebnis-Karte 2 -->
+            <div class="ergebnis-karte">
+              <div class="karte-titel">Why Students Use AI at 2am</div>
+              <div class="karte-meta">Hoffmann, 2024 · sehr relevant</div>
+              <button>+ Speichern</button>
+              <button>Details</button>
+            </div>
+          </div>
+
+          <div class="absender rechts">Du</div>
+          <div class="nachricht von-user">du rettest mein leben danke</div>
+
+          <div class="absender">sentAI</div>
+          <div class="nachricht von-ki">Gern. Schlaf danach mal bitte.</div>
+        </div>
+
+        <!-- Eingabe unten -->
+        <div class="eingabe">
+          <div class="kontext-chip">Aktiver Artikel: Schmidt & Koch, 2022</div>
+          <div class="eingabe-zeile">
+            <textarea
+              placeholder="Frage eingeben… (z.B. 'hilf mir')"
+            ></textarea>
+            <button>➤</button>
+          </div>
+          <div class="hinweis">Enter = Senden</div>
+        </div>
+      </div>
     </div>
-
-    <!-- Eingabe unten -->
-    <div class="eingabe">
-      <div class="kontext-chip">Aktiver Artikel: Schmidt & Koch, 2022</div>
-      <div class="eingabe-zeile">
-        <textarea placeholder="Frage eingeben… (z.B. 'hilf mir')"></textarea>
-        <button>➤</button>
-      </div>
-      <div class="hinweis">Enter = Senden</div>
-    </div>
-
-  </div>
-
-</div>
-
-</body>
+  </body>
 </html>

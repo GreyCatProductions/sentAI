@@ -8,7 +8,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-4B6BFB?style=for-the-badge)](https://www.gnu.org/licenses/agpl-3.0)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 
-*Stop ctrl+F-ing through papers. Ask your library what it knows.*
+_Stop ctrl+F-ing through papers. Ask your library what it knows._
 
 </div>
 
@@ -86,19 +86,19 @@ sentAI is a Zotero 9 plugin that indexes your PDFs as semantic vectors and lets 
 
 ## Features
 
-| | |
-|---|---|
-| **Auto-indexing** | Every PDF you add is chunked and embedded automatically |
-| **Auto-attach** | Items without a PDF trigger a download attempt before indexing |
-| **Semantic search** | Cosine similarity over your full library, surfacing the most relevant passages |
-| **RAG answers** | Chat tab calls Gemini 2.5 Flash, answering from retrieved chunks with inline paper citations |
-| **Keyword extraction** | A lightweight Gemini Flash Lite call distils your question into search terms before embedding — better retrieval signal |
-| **Collection filter** | Restrict any search to a specific Zotero collection via a dropdown in the Search tab |
-| **Similarity threshold** | Configurable minimum score (default 10 %) — chunks below it never reach the LLM |
-| **References filtering** | Indexing stops at "References" / "Bibliography" headings — no citation lists in the index |
-| **Two-tab UI** | **Search** tab for direct semantic search with scored result cards; **Chat** tab for RAG answers |
-| **Result cards** | Title, match score %, 2-line snippet, author / year / journal chips |
-| **Fully local storage** | Vectors live in your Zotero data directory — only embedding and LLM requests hit the cloud |
+|                          |                                                                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| **Auto-indexing**        | Every PDF you add is chunked and embedded automatically                                                                 |
+| **Auto-attach**          | Items without a PDF trigger a download attempt before indexing                                                          |
+| **Semantic search**      | Cosine similarity over your full library, surfacing the most relevant passages                                          |
+| **RAG answers**          | Chat tab calls Gemini 2.5 Flash, answering from retrieved chunks with inline paper citations                            |
+| **Keyword extraction**   | A lightweight Gemini Flash Lite call distils your question into search terms before embedding — better retrieval signal |
+| **Collection filter**    | Restrict any search to a specific Zotero collection via a dropdown in the Search tab                                    |
+| **Similarity threshold** | Configurable minimum score (default 10 %) — chunks below it never reach the LLM                                         |
+| **References filtering** | Indexing stops at "References" / "Bibliography" headings — no citation lists in the index                               |
+| **Two-tab UI**           | **Search** tab for direct semantic search with scored result cards; **Chat** tab for RAG answers                        |
+| **Result cards**         | Title, match score %, 2-line snippet, author / year / journal chips                                                     |
+| **Fully local storage**  | Vectors live in your Zotero data directory — only embedding and LLM requests hit the cloud                              |
 
 ## Requirements
 
@@ -120,13 +120,13 @@ cp .env.example .env
 
 **2. Configure `.env`**
 
-| Variable | Description |
-|---|---|
-| `ZOTERO_PLUGIN_ZOTERO_BIN_PATH` | Path to your Zotero binary |
-| `ZOTERO_PLUGIN_PROFILE_PATH` | Path to your Zotero dev profile |
-| `AZURE_EMBEDDING_ENDPOINT` | Full Azure endpoint URL (incl. deployment + api-version) |
-| `AZURE_API_KEY` | Azure Cognitive Services API key |
-| `GEMINI_API_KEY` | Google Gemini API key (used by the RAG answer step) |
+| Variable                        | Description                                              |
+| ------------------------------- | -------------------------------------------------------- |
+| `ZOTERO_PLUGIN_ZOTERO_BIN_PATH` | Path to your Zotero binary                               |
+| `ZOTERO_PLUGIN_PROFILE_PATH`    | Path to your Zotero dev profile                          |
+| `AZURE_EMBEDDING_ENDPOINT`      | Full Azure endpoint URL (incl. deployment + api-version) |
+| `AZURE_API_KEY`                 | Azure Cognitive Services API key                         |
+| `GEMINI_API_KEY`                | Google Gemini API key (used by the RAG answer step)      |
 
 **3. Start the embedding server**
 
@@ -163,25 +163,25 @@ npm run release    # Bump version, commit, tag, push → GitHub Actions release
 
 ## Status
 
-| Feature | |
-|---|---|
-| PDF detection on upload | `done` |
-| Auto-attach PDF for items without an attachment | `done` |
-| Text extraction | `done` |
-| References / bibliography section filtering | `done` |
-| Paragraph-aware chunking | `done` |
-| Embedding via Azure `text-embedding-3-small` | `done` |
-| Local vector storage (SQLite) | `done` |
-| Cosine similarity search | `done` |
-| Two-tab UI (Search + Chat) | `done` |
-| Scored result cards with metadata chips | `done` |
-| Collection filter for scoped search | `done` |
-| Keyword extraction pre-pass (Gemini Flash Lite) | `done` |
-| Similarity threshold filter | `done` |
-| RAG answers via Gemini 2.5 Flash with inline citations | `done` |
-| Hybrid search (semantic + keyword via RRF) | `planned` |
-| Conversation history (multi-turn follow-ups) | `planned` |
-| Streaming responses | `planned` |
+| Feature                                                |           |
+| ------------------------------------------------------ | --------- |
+| PDF detection on upload                                | `done`    |
+| Auto-attach PDF for items without an attachment        | `done`    |
+| Text extraction                                        | `done`    |
+| References / bibliography section filtering            | `done`    |
+| Paragraph-aware chunking                               | `done`    |
+| Embedding via Azure `text-embedding-3-small`           | `done`    |
+| Local vector storage (SQLite)                          | `done`    |
+| Cosine similarity search                               | `done`    |
+| Two-tab UI (Search + Chat)                             | `done`    |
+| Scored result cards with metadata chips                | `done`    |
+| Collection filter for scoped search                    | `done`    |
+| Keyword extraction pre-pass (Gemini Flash Lite)        | `done`    |
+| Similarity threshold filter                            | `done`    |
+| RAG answers via Gemini 2.5 Flash with inline citations | `done`    |
+| Hybrid search (semantic + keyword via RRF)             | `planned` |
+| Conversation history (multi-turn follow-ups)           | `planned` |
+| Streaming responses                                    | `planned` |
 
 ---
 

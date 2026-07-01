@@ -13,7 +13,8 @@ function makeItem(opts: {
     key: "ATTACH01",
     isAttachment: () => opts.isAttachment ?? false,
     isNote: () => opts.isNote ?? false,
-    isRegularItem: () => !(opts.isAttachment ?? false) && !(opts.isNote ?? false),
+    isRegularItem: () =>
+      !(opts.isAttachment ?? false) && !(opts.isNote ?? false),
     getAttachments: () => (opts.attachments ?? []).map((a) => a.id),
   } as unknown as Zotero.Item;
 }
@@ -74,10 +75,16 @@ describe("autoAttachPdf", function () {
     const existingPdfId = 77771;
     (Zotero.Items as any).get = (id: number) =>
       id === existingPdfId
-        ? ({ attachmentContentType: "application/pdf" } as unknown as Zotero.Item)
+        ? ({
+            attachmentContentType: "application/pdf",
+          } as unknown as Zotero.Item)
         : originalGet(id);
 
-    await autoAttachPdfCore(makeItem({ attachments: [{ id: existingPdfId, contentType: "application/pdf" }] }));
+    await autoAttachPdfCore(
+      makeItem({
+        attachments: [{ id: existingPdfId, contentType: "application/pdf" }],
+      }),
+    );
     assert.equal(addFileCallCount, 0);
   });
 
@@ -97,10 +104,14 @@ describe("autoAttachPdf", function () {
     const pdfId = 77772;
     (Zotero.Items as any).get = (id: number) =>
       id === pdfId
-        ? ({ attachmentContentType: "application/pdf" } as unknown as Zotero.Item)
+        ? ({
+            attachmentContentType: "application/pdf",
+          } as unknown as Zotero.Item)
         : originalGet(id);
 
-    const item = makeItem({ attachments: [{ id: pdfId, contentType: "application/pdf" }] });
+    const item = makeItem({
+      attachments: [{ id: pdfId, contentType: "application/pdf" }],
+    });
     await autoAttachPdfCore(item);
     await autoAttachPdfCore(item);
     assert.equal(addFileCallCount, 0);

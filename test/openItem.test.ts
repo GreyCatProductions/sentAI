@@ -34,13 +34,16 @@ describe("openItem / itemId in search results", function () {
   before(async function () {
     this.timeout(30000);
     const text = Array(3)
-      .fill("Jump to paper navigation allows users to locate a paper in the Zotero library pane.")
+      .fill(
+        "Jump to paper navigation allows users to locate a paper in the Zotero library pane.",
+      )
       .join("\n\n");
     await indexFakeText(makeFakeParent(ITEM_ID, ITEM_KEY, "Jump Paper"), text);
 
     origGetByLibraryAndKey = Zotero.Items.getByLibraryAndKey;
     (Zotero.Items as any).getByLibraryAndKey = (libId: number, key: string) => {
-      if (key === ITEM_KEY) return makeFakeParent(ITEM_ID, ITEM_KEY, "Jump Paper");
+      if (key === ITEM_KEY)
+        return makeFakeParent(ITEM_ID, ITEM_KEY, "Jump Paper");
       return origGetByLibraryAndKey?.(libId, key) ?? false;
     };
   });
@@ -56,7 +59,11 @@ describe("openItem / itemId in search results", function () {
     assert.isArray(results);
     assert.isAbove(results.length, 0);
     const withId = results.filter((r) => r.itemId != null);
-    assert.isAbove(withId.length, 0, "Expected at least one result with itemId");
+    assert.isAbove(
+      withId.length,
+      0,
+      "Expected at least one result with itemId",
+    );
     assert.strictEqual(withId[0].itemId, ITEM_ID);
   });
 
@@ -71,13 +78,17 @@ describe("openItem / itemId in search results", function () {
   });
 
   it("api.openItem() calls ZoteroPane.selectItem with the given id", function () {
-    const api = (Zotero as any).SentAI.api as { openItem: (id: number) => void };
+    const api = (Zotero as any).SentAI.api as {
+      openItem: (id: number) => void;
+    };
     let calledWith: number | undefined;
 
     const mainWin = Zotero.getMainWindow() as any;
     const origSelectItem = mainWin?.ZoteroPane?.selectItem;
     if (mainWin?.ZoteroPane) {
-      mainWin.ZoteroPane.selectItem = (id: number) => { calledWith = id; };
+      mainWin.ZoteroPane.selectItem = (id: number) => {
+        calledWith = id;
+      };
     }
 
     try {

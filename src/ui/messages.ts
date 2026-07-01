@@ -1,7 +1,9 @@
 /// <reference lib="dom" />
 
 function setInlineMarkdown(el: HTMLElement, text: string): void {
-  const parts = text.split(/(\*\*\*[^*]+\*\*\*|\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\])/);
+  const parts = text.split(
+    /(\*\*\*[^*]+\*\*\*|\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\])/,
+  );
   for (const part of parts) {
     if (part.startsWith("***") && part.endsWith("***")) {
       const s = document.createElement("strong");
@@ -34,7 +36,7 @@ function renderMarkdown(raw: string, container: HTMLElement): void {
 
   for (const line of lines) {
     const trimmed = line.trim();
-    const bullet = trimmed.match(/^[*\-]\s+(.+)/);
+    const bullet = trimmed.match(/^[*-]\s+(.+)/);
     const numbered = trimmed.match(/^\d+\.\s+(.+)/);
 
     if (bullet || numbered) {
@@ -59,7 +61,11 @@ function renderMarkdown(raw: string, container: HTMLElement): void {
   }
 }
 
-export function addMessage(sender: string, text: string, fromUser = false): HTMLElement {
+export function addMessage(
+  sender: string,
+  text: string,
+  fromUser = false,
+): HTMLElement {
   const container = document.getElementById("sentai-nachrichten")!;
 
   const senderEl = document.createElement("div");

@@ -17,7 +17,8 @@ function embeddingToBase64(embedding: number[]): string {
   const f32 = new Float32Array(embedding);
   const bytes = new Uint8Array(f32.buffer);
   let binary = "";
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  for (let i = 0; i < bytes.length; i++)
+    binary += String.fromCharCode(bytes[i]);
   return btoa(binary);
 }
 
@@ -45,7 +46,12 @@ function rowToRecord(row: any): EmbeddingRecord {
     embedding: base64ToEmbedding(row.embedding as string),
     textHash: row.text_hash as string,
   };
-  if (row.meta_title || row.meta_authors || row.meta_year || row.meta_abstract) {
+  if (
+    row.meta_title ||
+    row.meta_authors ||
+    row.meta_year ||
+    row.meta_abstract
+  ) {
     record.metadata = {
       title: row.meta_title ?? undefined,
       authors: row.meta_authors ?? undefined,
@@ -70,9 +76,7 @@ class EmbeddingStorage {
     Zotero.File.createDirectoryIfMissing(this.sentaiDir);
 
     try {
-      await Zotero.DB.queryAsync(
-        `ATTACH DATABASE '${this.dbPath}' AS sentai`,
-      );
+      await Zotero.DB.queryAsync(`ATTACH DATABASE '${this.dbPath}' AS sentai`);
     } catch (_e) {
       // Already attached (e.g. plugin reload) — ignore
     }
@@ -151,10 +155,9 @@ class EmbeddingStorage {
   }
 
   async remove(itemId: number): Promise<void> {
-    await Zotero.DB.queryAsync(
-      "DELETE FROM sentai.chunks WHERE item_id = ?",
-      [itemId],
-    );
+    await Zotero.DB.queryAsync("DELETE FROM sentai.chunks WHERE item_id = ?", [
+      itemId,
+    ]);
   }
 
   async removeAll(): Promise<void> {
@@ -206,7 +209,6 @@ class EmbeddingStorage {
       // Already detached or never attached — ignore
     }
   }
-
 }
 
 export const embeddingStorage = new EmbeddingStorage();
