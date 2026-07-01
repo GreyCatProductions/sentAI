@@ -2,13 +2,15 @@
 
 import { addMessage, updateMessage } from "./ui/messages";
 import type { SearchResult } from "./modules/searchService";
+import type { SearchFilters } from "./types";
 
 type Api = {
-  search: (query: string, collectionId?: number) => Promise<SearchResult[]>;
+  search: (query: string, filters?: SearchFilters) => Promise<SearchResult[]>;
   ask: (query: string) => Promise<{ answer: string; sources: SearchResult[] }>;
   getPref: (key: string) => unknown;
   setPref: (key: string, value: unknown) => void;
   getCollections: () => { id: number; name: string }[];
+  getTags: () => Promise<string[]>;
   healthCheck: () => Promise<{ embedder: boolean; hasIndex: boolean }>;
   openItem: (itemId: number) => void;
 };
@@ -176,6 +178,132 @@ document.addEventListener("click", () => {
   colBtn.classList.remove("open");
 });;
 
+// ===== Filter bar =====
+const filterToggle = document.getElementById("sentai-filter-toggle") as HTMLButtonElement;
+const filterPanel = document.getElementById("sentai-filter-panel")!;
+const filterCountBadge = document.getElementById("sentai-filter-count")!;
+const tagChipsContainer = document.getElementById("sentai-tag-chips")!;
+const tagInput = document.getElementById("sentai-tag-input") as HTMLInputElement;
+const tagDatalist = document.getElementById("sentai-tag-datalist")!;
+const yearFromInput = document.getElementById("sentai-year-from") as HTMLInputElement;
+const yearToInput = document.getElementById("sentai-year-to") as HTMLInputElement;
+const itemTypeBtn = document.getElementById("sentai-item-type-btn") as HTMLButtonElement;
+const itemTypeBtnLabel = document.getElementById("sentai-item-type-label")!;
+const itemTypeDropdown = document.getElementById("sentai-item-type-dropdown")!;
+
+let selectedTags: string[] = [];
+let selectedItemType = "";
+
+const ITEM_TYPES: { value: string; label: string }[] = [
+  { value: "", label: "Any" },
+  { value: "journalArticle", label: "Journal Article" },
+  { value: "book", label: "Book" },
+  { value: "bookSection", label: "Book Chapter" },
+  { value: "thesis", label: "Thesis" },
+  { value: "conferencePaper", label: "Conference Paper" },
+  { value: "preprint", label: "Preprint" },
+  { value: "report", label: "Report" },
+];
+
+function buildTypeOption(value: string, label: string, active: boolean): HTMLElement {
+  const el = document.createElement("div");
+  el.className = "s-type-option" + (active ? " selected" : "");
+  el.textContent = label;
+  el.addEventListener("click", () => {
+    selectedItemType = value;
+    itemTypeBtnLabel.textContent = label;
+    itemTypeDropdown.querySelectorAll(".s-type-option").forEach((o) => o.classList.remove("selected"));
+    el.classList.add("selected");
+    itemTypeDropdown.classList.remove("open");
+    itemTypeBtn.classList.remove("open");
+    updateFilterCount();
+  });
+  return el;
+}
+
+for (const { value, label } of ITEM_TYPES) {
+  itemTypeDropdown.appendChild(buildTypeOption(value, label, value === ""));
+}
+
+itemTypeBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const isOpen = itemTypeDropdown.classList.toggle("open");
+  itemTypeBtn.classList.toggle("open", isOpen);
+});
+
+document.addEventListener("click", () => {
+  itemTypeDropdown.classList.remove("open");
+  itemTypeBtn.classList.remove("open");
+});
+
+function updateFilterCount() {
+  const yearFrom = yearFromInput.value.trim();
+  const yearTo = yearToInput.value.trim();
+  const count = selectedTags.length + (yearFrom || yearTo ? 1 : 0) + (selectedItemType ? 1 : 0);
+  filterCountBadge.textContent = String(count);
+  (filterCountBadge as HTMLElement).hidden = count === 0;
+}
+
+function addTagChip(tag: string) {
+  if (!tag || selectedTags.includes(tag)) return;
+  selectedTags.push(tag);
+
+  const chip = document.createElement("span");
+  chip.className = "s-tag-chip";
+  chip.textContent = tag;
+
+  const removeBtn = document.createElement("button");
+  removeBtn.className = "s-tag-chip-remove";
+  removeBtn.textContent = "×";
+  removeBtn.title = "Remove";
+  removeBtn.addEventListener("click", () => {
+    selectedTags = selectedTags.filter((t) => t !== tag);
+    chip.remove();
+    updateFilterCount();
+  });
+
+  chip.appendChild(removeBtn);
+  tagChipsContainer.appendChild(chip);
+  updateFilterCount();
+}
+
+tagInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    const val = tagInput.value.trim();
+    if (val) {
+      addTagChip(val);
+      tagInput.value = "";
+    }
+  }
+});
+
+tagInput.addEventListener("change", () => {
+  const val = tagInput.value.trim();
+  if (val) {
+    addTagChip(val);
+    tagInput.value = "";
+  }
+});
+
+yearFromInput.addEventListener("change", updateFilterCount);
+yearToInput.addEventListener("change", updateFilterCount);
+
+filterToggle.addEventListener("click", () => {
+  const isOpen = filterPanel.classList.toggle("open");
+  filterToggle.classList.toggle("open", isOpen);
+});
+
+if (api) {
+  api.getTags().then((tags) => {
+    for (const tag of tags) {
+      const option = document.createElement("option");
+      option.value = tag;
+      tagDatalist.appendChild(option);
+    }
+  });
+}
+
 function highlightKeywords(text: string, query: string): DocumentFragment {
   const words = query
     .split(/\s+/)
@@ -295,7 +423,19 @@ async function runSearch() {
   searchResults.appendChild(loading);
 
   try {
-    const results = await api.search(query, selectedCollectionId);
+    const yearFrom = yearFromInput.value.trim() ? parseInt(yearFromInput.value.trim(), 10) : undefined;
+    const yearTo = yearToInput.value.trim() ? parseInt(yearToInput.value.trim(), 10) : undefined;
+    const itemType = selectedItemType || undefined;
+
+    const filters: SearchFilters = {
+      collectionId: selectedCollectionId,
+      tags: selectedTags.length > 0 ? [...selectedTags] : undefined,
+      yearFrom,
+      yearTo,
+      itemType,
+    };
+
+    const results = await api.search(query, filters);
     const threshold = ((api.getPref("minSimilarity") as number) ?? 10) / 100;
     const filtered = results.filter((r) => r.similarity >= threshold);
     renderResultCards(filtered, query);

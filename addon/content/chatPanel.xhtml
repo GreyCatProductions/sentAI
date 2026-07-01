@@ -66,6 +66,37 @@
         </button>
         <div id="sentai-collection-dropdown"></div>
       </div>
+      <div id="sentai-filter-bar">
+        <button id="sentai-filter-toggle" type="button">
+          <span>Filters</span>
+          <span id="sentai-filter-count" class="s-filter-count" hidden="hidden">0</span>
+          <span class="s-col-arrow" style="margin-left:auto;">&#x25BE;</span>
+        </button>
+        <div id="sentai-filter-panel">
+          <div class="s-filter-section">
+            <label class="s-filter-label">Tags</label>
+            <div id="sentai-tag-chips" class="s-tag-chips"></div>
+            <input type="text" id="sentai-tag-input" list="sentai-tag-datalist" placeholder="Type a tag and press Enter…" autocomplete="off" />
+            <datalist id="sentai-tag-datalist"></datalist>
+          </div>
+          <div class="s-filter-section s-filter-row">
+            <label class="s-filter-label">Year</label>
+            <div class="s-filter-year-inputs">
+              <input type="number" id="sentai-year-from" placeholder="From" min="1900" max="2100" />
+              <span class="s-filter-sep">–</span>
+              <input type="number" id="sentai-year-to" placeholder="To" min="1900" max="2100" />
+            </div>
+          </div>
+          <div class="s-filter-section s-filter-row s-type-wrap">
+            <label class="s-filter-label">Type</label>
+            <button id="sentai-item-type-btn" type="button" class="s-type-btn">
+              <span id="sentai-item-type-label">Any</span>
+              <span class="s-col-arrow">&#x25BE;</span>
+            </button>
+            <div id="sentai-item-type-dropdown"></div>
+          </div>
+        </div>
+      </div>
       <div id="sentai-search-results">
         <div class="s-empty">Type a query to search your indexed papers.</div>
       </div>

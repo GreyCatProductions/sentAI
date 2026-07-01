@@ -24,7 +24,20 @@ async function onStartup() {
     ask,
     getPref: (key: string) => getPref(key as any),
     setPref: (key: string, value: any) => setPref(key as any, value),
-    serverReachable: async (): Promise<{ reachable: boolean; }> => {
+    getTags: async (): Promise<string[]> => {
+      const libID = Zotero.Libraries.userLibraryID;
+      try {
+        const tags = await (Zotero.Tags.getAll as any)(libID);
+        return ((tags as any[]) ?? [])
+          .filter((t: any) => (t.type ?? 0) === 0)
+          .map((t: any) => (t.name ?? t.tag ?? "") as string)
+          .filter(Boolean)
+          .sort() as string[];
+      } catch {
+        return [];
+      }
+    },
+    serverReachable: async (): Promise<{ reachable: boolean }> => {
       let reachable = false;
       try {
         const timeout = new Promise<never>((_, reject) =>
@@ -35,8 +48,21 @@ async function onStartup() {
       } catch {
         reachable = false;
       }
-
-      return { reachable: reachable };
+      return { reachable };
+    },
+    healthCheck: async (): Promise<{ embedder: boolean; hasIndex: boolean }> => {
+      let embedder = false;
+      try {
+        const timeout = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("timeout")), 5000),
+        );
+        await Promise.race([fetch(`${__server_url__}/health`), timeout]);
+        embedder = true;
+      } catch {
+        embedder = false;
+      }
+      const hasIndex = embedder ? await embeddingStorage.hasAny() : false;
+      return { embedder, hasIndex };
     },
     openItem: (itemId: number): void => {
       Zotero.getMainWindow()?.ZoteroPane?.selectItem(itemId);

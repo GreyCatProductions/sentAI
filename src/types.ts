@@ -14,3 +14,11 @@ export interface EmbeddingRecord {
     textHash: string;
     metadata?: ItemMetadata;
 }
+
+export interface SearchFilters {
+    collectionId?: number;
+    tags?: string[];
+    yearFrom?: number;
+    yearTo?: number;
+    itemType?: string;
+}

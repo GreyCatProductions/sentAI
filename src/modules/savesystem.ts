@@ -192,6 +192,13 @@ class EmbeddingStorage {
     return result;
   }
 
+  async getIndexedItemIds(): Promise<number[]> {
+    const rows = await Zotero.DB.queryAsync(
+      "SELECT DISTINCT item_id FROM sentai.chunks",
+    );
+    return (rows as any[]).map((r) => r.item_id as number);
+  }
+
   async close(): Promise<void> {
     try {
       await Zotero.DB.queryAsync("DETACH DATABASE sentai");

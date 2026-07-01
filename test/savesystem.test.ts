@@ -170,4 +170,40 @@ describe("EmbeddingStorage", function () {
     await embeddingStorage.close();
     await embeddingStorage.init(); // re-attach so the rest of the suite keeps working
   });
+
+  // getIndexedItemIds
+  it("getIndexedItemIds: returns empty array when no items are indexed", async function () {
+    const ids = await embeddingStorage.getIndexedItemIds();
+    assert.notInclude(ids, testItemId);
+    assert.notInclude(ids, testItemId2);
+  });
+
+  it("getIndexedItemIds: returns id of indexed item", async function () {
+    await embeddingStorage.save(testItemId, testRecords);
+    const ids = await embeddingStorage.getIndexedItemIds();
+    assert.include(ids, testItemId);
+  });
+
+  it("getIndexedItemIds: each item id appears exactly once regardless of chunk count", async function () {
+    await embeddingStorage.save(testItemId, testRecords); // 2 chunks
+    const ids = await embeddingStorage.getIndexedItemIds();
+    const occurrences = ids.filter((id) => id === testItemId).length;
+    assert.equal(occurrences, 1, "item id should appear only once");
+  });
+
+  it("getIndexedItemIds: returns ids for all indexed items", async function () {
+    const record2: EmbeddingRecord[] = [{ ...testRecords[0], paperId: "paper2" }];
+    await embeddingStorage.save(testItemId, testRecords);
+    await embeddingStorage.save(testItemId2, record2);
+    const ids = await embeddingStorage.getIndexedItemIds();
+    assert.include(ids, testItemId);
+    assert.include(ids, testItemId2);
+  });
+
+  it("getIndexedItemIds: does not include id after removal", async function () {
+    await embeddingStorage.save(testItemId, testRecords);
+    await embeddingStorage.remove(testItemId);
+    const ids = await embeddingStorage.getIndexedItemIds();
+    assert.notInclude(ids, testItemId);
+  });
 });

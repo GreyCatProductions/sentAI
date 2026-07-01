@@ -71,7 +71,7 @@ describe("search — collection filter", function () {
 
   it("with collectionId only returns results from that collection's items", async function () {
     this.timeout(15000);
-    const results = await search("machine learning quantum physics", COL_ML_ID);
+    const results = await search("machine learning quantum physics", { collectionId: COL_ML_ID });
     assert.isArray(results);
     for (const r of results) {
       assert.strictEqual(r.title, "ML Paper", `Got result from outside collection: "${r.title}"`);
@@ -80,7 +80,7 @@ describe("search — collection filter", function () {
 
   it("with QP collection only returns QP results", async function () {
     this.timeout(15000);
-    const results = await search("machine learning quantum physics", COL_QP_ID);
+    const results = await search("machine learning quantum physics", { collectionId: COL_QP_ID });
     assert.isArray(results);
     for (const r of results) {
       assert.strictEqual(r.title, "QP Paper", `Got result from outside collection: "${r.title}"`);
@@ -96,7 +96,7 @@ describe("search — collection filter", function () {
       return prev?.(id);
     };
     try {
-      const results = await search("machine learning", EMPTY_COL);
+      const results = await search("machine learning", { collectionId: EMPTY_COL });
       assert.deepEqual(results, []);
     } finally {
       (Zotero.Collections as any).get = prev;
