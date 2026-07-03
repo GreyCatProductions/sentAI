@@ -47,6 +47,30 @@
             step="5"
           />
         </div>
+        <div class="sentai-settings-divider"></div>
+        <div class="sentai-settings-row">
+          <label for="sentai-llm-api-key">LLM API Key</label>
+          <input type="password" id="sentai-llm-api-key" style="flex: 1" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-llm-endpoint">LLM Endpoint</label>
+          <input
+            type="text"
+            id="sentai-llm-endpoint"
+            placeholder="Leave blank for Gemini"
+            style="flex: 1"
+          />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-llm-model">Model</label>
+          <input
+            type="text"
+            id="sentai-llm-model"
+            placeholder="gemini-2.5-flash"
+            style="flex: 1"
+          />
+        </div>
+        <button id="sentai-settings-save" type="button">Save</button>
       </div>
 
       <!-- Tab bar -->

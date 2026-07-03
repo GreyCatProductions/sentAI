@@ -594,12 +594,24 @@ const autoAttachInput = document.getElementById(
 const minSimilarityInput = document.getElementById(
   "sentai-min-similarity",
 ) as HTMLInputElement;
+const llmApiKeyInput = document.getElementById(
+  "sentai-llm-api-key",
+) as HTMLInputElement;
+const llmEndpointInput = document.getElementById(
+  "sentai-llm-endpoint",
+) as HTMLInputElement;
+const llmModelInput = document.getElementById(
+  "sentai-llm-model",
+) as HTMLInputElement;
 
 if (api) {
   chunkInput.value = String(api.getPref("maxChunkTokens") ?? 500);
   topKInput.value = String(api.getPref("topK") ?? 5);
   autoAttachInput.checked = Boolean(api.getPref("autoAttachPdf") ?? false);
   minSimilarityInput.value = String(api.getPref("minSimilarity") ?? 10);
+  llmApiKeyInput.value = String(api.getPref("llmApiKey") ?? "");
+  llmEndpointInput.value = String(api.getPref("llmEndpoint") ?? "");
+  llmModelInput.value = String(api.getPref("llmModel") ?? "");
 }
 
 settingsToggle.addEventListener("click", () => {
@@ -607,24 +619,34 @@ settingsToggle.addEventListener("click", () => {
   settingsToggle.classList.toggle("active", isOpen);
 });
 
-chunkInput.addEventListener("change", () => {
-  const val = parseInt(chunkInput.value, 10);
-  if (!isNaN(val) && api) api.setPref("maxChunkTokens", val);
-});
 
-topKInput.addEventListener("change", () => {
-  const val = parseInt(topKInput.value, 10);
-  if (!isNaN(val) && api) api.setPref("topK", val);
-});
+const saveBtn = document.getElementById(
+  "sentai-settings-save",
+) as HTMLButtonElement;
 
-autoAttachInput.addEventListener("change", () => {
-  if (api) api.setPref("autoAttachPdf", autoAttachInput.checked);
-});
+saveBtn.addEventListener("click", () => {
+  if (!api) return;
 
-minSimilarityInput.addEventListener("change", () => {
-  const val = parseInt(minSimilarityInput.value, 10);
-  if (!isNaN(val) && api)
-    api.setPref("minSimilarity", Math.max(0, Math.min(100, val)));
+  const chunkVal = parseInt(chunkInput.value, 10);
+  if (!isNaN(chunkVal)) api.setPref("maxChunkTokens", chunkVal);
+
+  const topKVal = parseInt(topKInput.value, 10);
+  if (!isNaN(topKVal)) api.setPref("topK", topKVal);
+
+  api.setPref("autoAttachPdf", autoAttachInput.checked);
+
+  const simVal = parseInt(minSimilarityInput.value, 10);
+  if (!isNaN(simVal))
+    api.setPref("minSimilarity", Math.max(0, Math.min(100, simVal)));
+
+  api.setPref("llmApiKey", llmApiKeyInput.value.trim());
+  api.setPref("llmEndpoint", llmEndpointInput.value.trim());
+  api.setPref("llmModel", llmModelInput.value.trim());
+
+  saveBtn.textContent = "Saved ✓";
+  setTimeout(() => {
+    saveBtn.textContent = "Save";
+  }, 1500);
 });
 
 // ===== Skills bar =====
