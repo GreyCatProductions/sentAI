@@ -5,3 +5,6 @@ pref("maxChunkTokens", 500);
 pref("topK", 5);
 pref("autoAttachPdf", false);
 pref("minSimilarity", 10);
+pref("llmApiKey", "");
+pref("llmEndpoint", "");
+pref("llmModel", "");

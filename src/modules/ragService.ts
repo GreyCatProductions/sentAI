@@ -1,6 +1,10 @@
 import { search, SearchResult } from "./searchService";
 import { extractKeywords } from "./keywordExtractor";
+import { callLLM } from "./serverConfig";
 import { getPref } from "../utils/prefs";
+import type { SearchFilters } from "../types";
+
+const _getPref = getPref as (key: string) => unknown;
 
 const SYSTEM_PROMPT = `You are an academic research assistant. Answer the user's question using only the paper excerpts provided below.
 
@@ -16,15 +20,14 @@ Rules:
 const ERROR_TEXT =
   "Something went wrong. If you have stable internet connection, the issue is likely on our side. Please try again later.";
 
-type GeminiPart = { text?: string; thought?: boolean };
-type GeminiResponse = { candidates?: { content?: { parts?: GeminiPart[] } }[] };
-
 export async function ask(
   query: string,
+  filters: SearchFilters = {},
 ): Promise<{ answer: string; sources: SearchResult[] }> {
   const searchQuery = await extractKeywords(query);
-  const threshold = ((getPref("minSimilarity") as number) ?? 10) / 100;
-  const allResults = await search(searchQuery);
+  const threshold =
+    ((_getPref("minSimilarity") as number | undefined) ?? 10) / 100;
+  const allResults = await search(searchQuery, filters);
   const results = allResults.filter((r) => r.similarity >= threshold);
 
   if (results.length === 0) {
@@ -39,32 +42,7 @@ export async function ask(
     .map((r) => `[${r.title}]\n${r.chunkText}`)
     .join("\n\n---\n\n");
 
-  const prompt = `${SYSTEM_PROMPT}\n\nExcerpts from my library:\n\n${context}\n\nQuestion: ${query}`;
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${__gemini_api_key__}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
-      }),
-    },
-  );
-
-  const rawText = await response.text();
-
-  if (!response.ok) {
-    return { answer: ERROR_TEXT, sources: [] };
-  }
-
-  const data: GeminiResponse = JSON.parse(rawText);
-  const parts = data.candidates?.[0]?.content?.parts ?? [];
-  const text = parts
-    .filter((p) => !p.thought)
-    .map((p) => p.text ?? "")
-    .join("");
-
+  const userMessage = `Excerpts from my library:\n\n${context}\n\nQuestion: ${query}`;
+  const text = await callLLM(SYSTEM_PROMPT, userMessage);
   return { answer: text || ERROR_TEXT, sources: results };
 }
