@@ -1,13 +1,4 @@
-function getServerUrl(): string {
-  const url = Zotero.Prefs.get("extensions.zotero.sentai.serverUrl", true) as
-    | string
-    | undefined;
-  if (!url)
-    throw new Error(
-      "sentAI: Server URL is not configured. Set it in sentAI settings.",
-    );
-  return url.replace(/\/$/, "");
-}
+import { getServerUrl } from "./serverConfig";
 
 export async function embedText(text: string): Promise<number[]> {
   const serverUrl = getServerUrl();

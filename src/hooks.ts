@@ -4,6 +4,7 @@ import { embeddingStorage } from "./modules/savesystem";
 import { PdfIndexer } from "./modules/pdfIndexer";
 import { search } from "./modules/searchService";
 import { ask } from "./modules/ragService";
+import { getServerUrl } from "./modules/serverConfig";
 import { getPref, setPref } from "./utils/prefs";
 import { autoAttachPdf } from "./modules/autoAttach";
 import {
@@ -46,7 +47,7 @@ async function onStartup() {
         const timeout = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error("timeout")), 5000),
         );
-        await Promise.race([fetch(`${__server_url__}/health`), timeout]);
+        await Promise.race([fetch(`${getServerUrl()}/health`), timeout]);
         reachable = true;
       } catch {
         reachable = false;
@@ -62,7 +63,7 @@ async function onStartup() {
         const timeout = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error("timeout")), 5000),
         );
-        await Promise.race([fetch(`${__server_url__}/health`), timeout]);
+        await Promise.race([fetch(`${getServerUrl()}/health`), timeout]);
         embedder = true;
       } catch {
         embedder = false;
