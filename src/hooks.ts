@@ -83,6 +83,61 @@ async function onStartup() {
         .map((c: any) => ({ id: c.id as number, name: c.name as string }))
         .sort((a, b) => a.name.localeCompare(b.name));
     },
+    getIndexStats: () => embeddingStorage.getStats(),
+    reindexAll: async (
+      onProgress?: (done: number, total: number) => void,
+    ): Promise<void> => {
+      const libID = Zotero.Libraries.userLibraryID;
+      const s = new Zotero.Search();
+      s.addCondition("libraryID", "is", String(libID));
+      s.addCondition("itemType", "is", "attachment");
+      const ids = (await s.search()) as number[];
+      const pdfs = ids
+        .map((id) => Zotero.Items.get(id) as Zotero.Item | false)
+        .filter(
+          (item): item is Zotero.Item =>
+            !!item &&
+            (item as any).isAttachment() &&
+            (item as any).attachmentContentType === "application/pdf",
+        );
+      let done = 0;
+      for (const pdf of pdfs) {
+        await PdfIndexer.process(pdf);
+        onProgress?.(++done, pdfs.length);
+      }
+    },
+    reindexCollection: async (
+      collectionId: number,
+      onProgress?: (done: number, total: number) => void,
+    ): Promise<void> => {
+      const col = Zotero.Collections.get(collectionId) as any;
+      const items: Zotero.Item[] = col?.getChildItems(false) ?? [];
+      const pdfs: Zotero.Item[] = [];
+      for (const item of items) {
+        if (
+          (item as any).isAttachment() &&
+          (item as any).attachmentContentType === "application/pdf"
+        ) {
+          pdfs.push(item);
+        } else {
+          for (const attId of (item.getAttachments() as number[])) {
+            const att = Zotero.Items.get(attId) as Zotero.Item | false;
+            if (
+              att &&
+              (att as any).isAttachment() &&
+              (att as any).attachmentContentType === "application/pdf"
+            ) {
+              pdfs.push(att);
+            }
+          }
+        }
+      }
+      let done = 0;
+      for (const pdf of pdfs) {
+        await PdfIndexer.process(pdf);
+        onProgress?.(++done, pdfs.length);
+      }
+    },
   };
   addon.data.initialized = true;
 

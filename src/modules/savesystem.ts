@@ -202,6 +202,21 @@ class EmbeddingStorage {
     return (rows as any[]).map((r) => r.item_id as number);
   }
 
+  async getStats(): Promise<{ itemCount: number; sizeBytes: number }> {
+    const rows = await Zotero.DB.queryAsync(
+      "SELECT COUNT(DISTINCT item_id) AS cnt FROM sentai.chunks",
+    );
+    const itemCount = (rows as any[])[0]?.cnt ?? 0;
+    let sizeBytes = 0;
+    try {
+      const info = await (globalThis as any).IOUtils?.stat(this.dbPath);
+      sizeBytes = (info?.size as number | undefined) ?? 0;
+    } catch {
+      // file may not exist yet
+    }
+    return { itemCount, sizeBytes };
+  }
+
   async close(): Promise<void> {
     try {
       await Zotero.DB.queryAsync("DETACH DATABASE sentai");

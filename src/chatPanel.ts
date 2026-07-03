@@ -16,6 +16,9 @@ type Api = {
   openSkillsFolder: () => void;
   healthCheck: () => Promise<{ embedder: boolean; hasIndex: boolean }>;
   openItem: (itemId: number) => void;
+  getIndexStats: () => Promise<{ itemCount: number; sizeBytes: number }>;
+  reindexAll: (onProgress?: (done: number, total: number) => void) => Promise<void>;
+  reindexCollection: (collectionId: number, onProgress?: (done: number, total: number) => void) => Promise<void>;
 };
 
 const api: Api | undefined = (window as any).arguments?.[0];
@@ -225,6 +228,7 @@ document.addEventListener("click", () => {
     bar.dropdown.classList.remove("open");
     bar.btn.classList.remove("open");
   });
+  closeReindexDropdown();
 });
 
 // ===== Filter bar =====
@@ -637,6 +641,115 @@ if (api) {
   llmEndpointInput.value = String(api.getPref("llmEndpoint") ?? "");
   llmModelInput.value = String(api.getPref("llmModel") ?? "");
 }
+
+// ── Settings drawer inner tabs ───────────────────────────────────────────────
+const settingsTabs = document.querySelectorAll<HTMLButtonElement>(".sentai-settings-tab");
+const infoPanel = document.getElementById("info-panel")!;
+const settingsPanel = document.getElementById("settings-panel")!;
+const infoCountEl = document.getElementById("sentai-info-count")!;
+const infoSizeEl = document.getElementById("sentai-info-size")!;
+const reindexStatus = document.getElementById("sentai-reindex-status")!;
+const reindexColBtn = document.getElementById("sentai-reindex-collection-btn")!;
+const reindexColLabel = document.getElementById("sentai-reindex-collection-label")!;
+const reindexColDropdown = document.getElementById("sentai-reindex-collection-dropdown")!;
+const reindexColRun = document.getElementById("sentai-reindex-collection-run") as HTMLButtonElement;
+const reindexAllBtn = document.getElementById("sentai-reindex-all") as HTMLButtonElement;
+
+let reindexCollectionId: number | undefined = undefined;
+
+function buildReindexColOption(id: number | undefined, name: string, active: boolean): HTMLElement {
+  const el = document.createElement("div");
+  el.className = "s-col-option" + (active ? " selected" : "");
+  el.textContent = name;
+  el.dataset.id = String(id ?? "");
+  el.addEventListener("click", () => {
+    reindexCollectionId = id;
+    reindexColLabel.textContent = name;
+    reindexColDropdown.querySelectorAll(".s-col-option").forEach((o) =>
+      o.classList.toggle("selected", (o as HTMLElement).dataset.id === String(id ?? "")),
+    );
+    reindexColDropdown.classList.remove("open");
+    reindexColBtn.classList.remove("open");
+  });
+  return el;
+}
+
+reindexColDropdown.appendChild(buildReindexColOption(undefined, "All Collections", true));
+if (api) {
+  for (const col of api.getCollections()) {
+    reindexColDropdown.appendChild(buildReindexColOption(col.id, col.name, false));
+  }
+}
+
+reindexColBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const isOpen = reindexColDropdown.classList.toggle("open");
+  reindexColBtn.classList.toggle("open", isOpen);
+});
+
+function closeReindexDropdown() {
+  reindexColDropdown.classList.remove("open");
+  reindexColBtn.classList.remove("open");
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+async function refreshInfo() {
+  if (!api) return;
+  infoCountEl.textContent = "…";
+  infoSizeEl.textContent = "…";
+  const { itemCount, sizeBytes } = await api.getIndexStats();
+  infoCountEl.textContent = String(itemCount);
+  infoSizeEl.textContent = formatBytes(sizeBytes);
+}
+
+function setReindexBusy(busy: boolean) {
+  reindexColRun.disabled = busy;
+  reindexAllBtn.disabled = busy;
+}
+
+reindexColRun.addEventListener("click", async () => {
+  if (!api) return;
+  if (reindexCollectionId == null) {
+    reindexStatus.textContent = "Select a collection first.";
+    return;
+  }
+  setReindexBusy(true);
+  reindexStatus.textContent = "Starting…";
+  await api.reindexCollection(reindexCollectionId, (done, total) => {
+    reindexStatus.textContent = `Indexing ${done} / ${total}…`;
+  });
+  reindexStatus.textContent = "Done.";
+  setReindexBusy(false);
+  refreshInfo();
+});
+
+reindexAllBtn.addEventListener("click", async () => {
+  if (!api) return;
+  setReindexBusy(true);
+  reindexStatus.textContent = "Starting…";
+  await api.reindexAll((done, total) => {
+    reindexStatus.textContent = `Indexing ${done} / ${total}…`;
+  });
+  reindexStatus.textContent = "Done.";
+  setReindexBusy(false);
+  refreshInfo();
+});
+
+settingsTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    settingsTabs.forEach((t) => t.classList.remove("active"));
+    tab.classList.add("active");
+    const target = tab.dataset.panel;
+    settingsPanel.hidden = target !== "settings-panel";
+    infoPanel.hidden = target !== "info-panel";
+    if (target === "info-panel") refreshInfo();
+  });
+});
 
 settingsToggle.addEventListener("click", () => {
   const isOpen = settingsDrawer.classList.toggle("open");

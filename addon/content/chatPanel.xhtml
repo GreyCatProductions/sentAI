@@ -18,6 +18,12 @@
 
     <!-- Settings drawer -->
     <div id="sentai-settings">
+      <div id="sentai-settings-tabs">
+        <button class="sentai-settings-tab active" data-panel="settings-panel">Settings</button>
+        <button class="sentai-settings-tab" data-panel="info-panel">Info</button>
+      </div>
+
+      <div id="settings-panel">
       <div class="sentai-settings-row">
         <label for="sentai-chunk-size">Max Chunk Size (tokens)</label>
         <input type="number" id="sentai-chunk-size" min="100" max="2000" step="50" />
@@ -48,6 +54,31 @@
         <input type="text" id="sentai-llm-model" placeholder="e.g. claude-sonnet-4-6, gpt-4o" style="flex: 1" />
       </div>
       <button id="sentai-settings-save" type="button">Save</button>
+      </div><!-- /settings-panel -->
+
+      <div id="info-panel" hidden="hidden">
+        <div class="sentai-info-row">
+          <span class="sentai-info-label">Indexed papers</span>
+          <span id="sentai-info-count" class="sentai-info-value">—</span>
+        </div>
+        <div class="sentai-info-row">
+          <span class="sentai-info-label">Index size</span>
+          <span id="sentai-info-size" class="sentai-info-value">—</span>
+        </div>
+        <div class="sentai-settings-divider"></div>
+        <div id="sentai-reindex-collection-bar">
+          <button id="sentai-reindex-collection-btn" type="button">
+            <span id="sentai-reindex-collection-label">All Collections</span>
+            <span class="s-col-arrow">&#x25BE;</span>
+          </button>
+          <div id="sentai-reindex-collection-dropdown"></div>
+        </div>
+        <div id="sentai-reindex-status"></div>
+        <div class="sentai-reindex-actions">
+          <button id="sentai-reindex-collection-run" type="button">Index Collection</button>
+          <button id="sentai-reindex-all" type="button">Index All</button>
+        </div>
+      </div><!-- /info-panel -->
     </div>
 
     <!-- Tab bar -->
