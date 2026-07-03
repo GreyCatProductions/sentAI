@@ -544,6 +544,16 @@ body {
   border-bottom-left-radius: 6px;
 }
 
+/* RAG info bar below AI responses */
+.s-rag-info {
+  align-self: flex-start;
+  font-size: 10px;
+  color: var(--s-text-muted);
+  padding: 2px 8px 6px 8px;
+  opacity: 0.75;
+  letter-spacing: 0.02em;
+}
+
 /* User bubble — right */
 .von-user,
 .user {

@@ -591,6 +591,12 @@ async function sendMessage() {
     placeholder.classList.remove("loading");
     updateMessage(placeholder, answer);
     wireCitations(placeholder, sources);
+
+    const uniquePapers = new Set(sources.map((s) => s.title)).size;
+    const ragInfo = document.createElement("div");
+    ragInfo.className = "s-rag-info";
+    ragInfo.textContent = `${sources.length} chunk${sources.length !== 1 ? "s" : ""} · ${uniquePapers} paper${uniquePapers !== 1 ? "s" : ""}`;
+    placeholder.insertAdjacentElement("afterend", ragInfo);
   } catch (e: any) {
     placeholder.classList.remove("loading");
     placeholder.textContent = `Error: ${e?.message ?? "Unknown error"}`;
