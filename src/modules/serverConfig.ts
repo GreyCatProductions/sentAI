@@ -4,13 +4,11 @@ const _getPref = getPref as (key: string) => unknown;
 
 // ── Server URL (embed + health + default chat) ──────────────────────────────
 
+const DEFAULT_SERVER_URL = "http://141.89.241.146";
+
 export function getServerUrl(): string {
   const url = (_getPref("serverUrl") as string | undefined) ?? "";
-  if (!url)
-    throw new Error(
-      "sentAI: Server URL is not configured. Set it in sentAI settings.",
-    );
-  return url.replace(/\/$/, "");
+  return (url || DEFAULT_SERVER_URL).replace(/\/$/, "");
 }
 
 // ── LLM config (read fresh on every call) ───────────────────────────────────
