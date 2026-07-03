@@ -1,198 +1,144 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <title>sentAI Chat</title>
-    <link rel="stylesheet" href="zoteroPane.css" />
-  </head>
 
-  <body>
-    <div id="sentai-panel">
-      <!-- Header -->
-      <div id="sentai-header">
-        <span id="sentai-header-title">sentAI</span>
-        <span id="sentai-header-sub">Literature Assistant</span>
-        <button id="sentai-settings-toggle" title="Settings">&#x2699;</button>
+<head>
+  <title>sentAI Chat</title>
+  <link rel="stylesheet" href="zoteroPane.css" />
+</head>
+
+<body>
+  <div id="sentai-panel">
+    <!-- Header -->
+    <div id="sentai-header">
+      <span id="sentai-header-title">sentAI</span>
+      <span id="sentai-header-sub">Literature Assistant</span>
+      <button id="sentai-settings-toggle" title="Settings">&#x2699;</button>
+    </div>
+
+    <!-- Settings drawer -->
+    <div id="sentai-settings">
+      <div class="sentai-settings-row">
+        <label for="sentai-chunk-size">Max Chunk Size (tokens)</label>
+        <input type="number" id="sentai-chunk-size" min="100" max="2000" step="50" />
       </div>
-
-      <!-- Settings drawer -->
-      <div id="sentai-settings">
-        <div class="sentai-settings-row">
-          <label for="sentai-chunk-size">Max Chunk Size (tokens)</label>
-          <input
-            type="number"
-            id="sentai-chunk-size"
-            min="100"
-            max="2000"
-            step="50"
-          />
-        </div>
-        <div class="sentai-settings-row">
-          <label for="sentai-top-k">Top-K Results</label>
-          <input type="number" id="sentai-top-k" min="1" max="50" />
-        </div>
-        <div class="sentai-settings-row">
-          <label for="sentai-auto-attach-pdf" style="flex: 1"
-            >Auto-download PDF (DOI/ISBN)</label
-          >
-          <input type="checkbox" id="sentai-auto-attach-pdf" />
-        </div>
-        <div class="sentai-settings-row">
-          <label for="sentai-min-similarity">Min. Similarity (%)</label>
-          <input
-            type="number"
-            id="sentai-min-similarity"
-            min="0"
-            max="100"
-            step="5"
-          />
-        </div>
-        <div class="sentai-settings-divider"></div>
-        <div class="sentai-settings-row">
-          <label for="sentai-llm-api-key">LLM API Key</label>
-          <input type="password" id="sentai-llm-api-key" style="flex: 1" />
-        </div>
-        <div class="sentai-settings-row">
-          <label for="sentai-llm-endpoint">LLM Endpoint</label>
-          <input
-            type="text"
-            id="sentai-llm-endpoint"
-            placeholder="Leave blank for Gemini"
-            style="flex: 1"
-          />
-        </div>
-        <div class="sentai-settings-row">
-          <label for="sentai-llm-model">Model</label>
-          <input
-            type="text"
-            id="sentai-llm-model"
-            placeholder="gemini-2.5-flash"
-            style="flex: 1"
-          />
-        </div>
-        <button id="sentai-settings-save" type="button">Save</button>
+      <div class="sentai-settings-row">
+        <label for="sentai-top-k">Top-K Results</label>
+        <input type="number" id="sentai-top-k" min="1" max="50" />
       </div>
-
-      <!-- Tab bar -->
-      <div id="sentai-tabs">
-        <button class="sentai-tab active" data-tab="search">Search</button>
-        <button class="sentai-tab" data-tab="chat">Chat</button>
+      <div class="sentai-settings-row">
+        <label for="sentai-auto-attach-pdf" style="flex: 1">Auto-download PDF (DOI/ISBN)</label>
+        <input type="checkbox" id="sentai-auto-attach-pdf" />
       </div>
-
-      <!-- Status overlay (shown when embedder unreachable) -->
-      <div id="sentai-status-overlay" class="sentai-view active">
-        <div id="sentai-status-content">
-          <div id="sentai-status-icon">⚠</div>
-          <div id="sentai-status-message">Checking connection…</div>
-          <button id="sentai-retry-btn" type="button">Retry</button>
-        </div>
+      <div class="sentai-settings-row">
+        <label for="sentai-min-similarity">Min. Similarity (%)</label>
+        <input type="number" id="sentai-min-similarity" min="0" max="100" step="5" />
       </div>
-
-      <!-- Search panel -->
-      <div id="sentai-search-panel" class="sentai-view">
-        <div id="sentai-search-bar">
-          <input
-            type="text"
-            id="sentai-search-input"
-            placeholder="Search your library..."
-          />
-          <button id="sentai-search-btn">&#x27A4;</button>
-        </div>
-        <div id="sentai-collection-bar">
-          <button id="sentai-collection-btn" type="button">
-            <span id="sentai-collection-label">All Collections</span>
-            <span class="s-col-arrow">&#x25BE;</span>
-          </button>
-          <div id="sentai-collection-dropdown"></div>
-        </div>
-        <div id="sentai-filter-bar">
-          <button id="sentai-filter-toggle" type="button">
-            <span>Filters</span>
-            <span
-              id="sentai-filter-count"
-              class="s-filter-count"
-              hidden="hidden"
-              >0</span
-            >
-            <span class="s-col-arrow" style="margin-left: auto">&#x25BE;</span>
-          </button>
-          <div id="sentai-filter-panel">
-            <div class="s-filter-section">
-              <label class="s-filter-label">Tags</label>
-              <div id="sentai-tag-chips" class="s-tag-chips"></div>
-              <input
-                type="text"
-                id="sentai-tag-input"
-                list="sentai-tag-datalist"
-                placeholder="Type a tag and press Enter…"
-                autocomplete="off"
-              />
-              <datalist id="sentai-tag-datalist"></datalist>
-            </div>
-            <div class="s-filter-section s-filter-row">
-              <label class="s-filter-label">Year</label>
-              <div class="s-filter-year-inputs">
-                <input
-                  type="number"
-                  id="sentai-year-from"
-                  placeholder="From"
-                  min="1900"
-                  max="2100"
-                />
-                <span class="s-filter-sep">–</span>
-                <input
-                  type="number"
-                  id="sentai-year-to"
-                  placeholder="To"
-                  min="1900"
-                  max="2100"
-                />
-              </div>
-            </div>
-            <div class="s-filter-section s-filter-row s-type-wrap">
-              <label class="s-filter-label">Type</label>
-              <button
-                id="sentai-item-type-btn"
-                type="button"
-                class="s-type-btn"
-              >
-                <span id="sentai-item-type-label">Any</span>
-                <span class="s-col-arrow">&#x25BE;</span>
-              </button>
-              <div id="sentai-item-type-dropdown"></div>
-            </div>
-          </div>
-        </div>
-        <div id="sentai-search-results">
-          <div class="s-empty">Type a query to search your indexed papers.</div>
-        </div>
+      <div class="sentai-settings-divider"></div>
+      <div class="sentai-settings-row">
+        <label for="sentai-llm-api-key">LLM API Key</label>
+        <input type="password" id="sentai-llm-api-key" style="flex: 1" />
       </div>
+      <div class="sentai-settings-row">
+        <label for="sentai-llm-endpoint">LLM Endpoint</label>
+        <input type="text" id="sentai-llm-endpoint" placeholder="Leave blank for default server" style="flex: 1" />
+      </div>
+      <div class="sentai-settings-row">
+        <label for="sentai-llm-model">Model</label>
+        <input type="text" id="sentai-llm-model" placeholder="e.g. claude-sonnet-4-6, gpt-4o" style="flex: 1" />
+      </div>
+      <button id="sentai-settings-save" type="button">Save</button>
+    </div>
 
-      <!-- Chat panel -->
-      <div id="sentai-chat-panel" class="sentai-view">
-        <div id="sentai-nachrichten">
-          <div class="sender">sentAI</div>
-          <div class="message sentAI">Hello! Ask me anything about your library. I will find arguments, counterarguments, and evidence from your papers.</div>
-        </div>
+    <!-- Tab bar -->
+    <div id="sentai-tabs">
+      <button class="sentai-tab active" data-tab="search">Search</button>
+      <button class="sentai-tab" data-tab="chat">Chat</button>
+    </div>
 
-        <!-- Skills bar: prompt chips + folder link -->
-        <div id="sentai-skills-bar">
-          <div id="sentai-skills-chips"></div>
-          <button id="sentai-skills-open" type="button">Open skills folder &#x2197;</button>
-        </div>
-
-        <div id="sentai-eingabe">
-          <div id="sentai-eingabe-zeile">
-            <textarea
-              id="sentai-eingabe-text"
-              placeholder="Ask a question..."
-            ></textarea>
-            <button id="sentai-senden-button">&#x27A4;</button>
-          </div>
-        </div>
+    <!-- Status overlay (shown when embedder unreachable) -->
+    <div id="sentai-status-overlay" class="sentai-view active">
+      <div id="sentai-status-content">
+        <div id="sentai-status-icon">⚠</div>
+        <div id="sentai-status-message">Checking connection…</div>
+        <button id="sentai-retry-btn" type="button">Retry</button>
       </div>
     </div>
 
-    <script src="scripts/chatPanel.js"></script>
-  </body>
+    <!-- Search panel -->
+    <div id="sentai-search-panel" class="sentai-view">
+      <div id="sentai-search-bar">
+        <input type="text" id="sentai-search-input" placeholder="Search your library..." />
+        <button id="sentai-search-btn">&#x27A4;</button>
+      </div>
+      <div id="sentai-collection-bar">
+        <button id="sentai-collection-btn" type="button">
+          <span id="sentai-collection-label">All Collections</span>
+          <span class="s-col-arrow">&#x25BE;</span>
+        </button>
+        <div id="sentai-collection-dropdown"></div>
+      </div>
+      <div id="sentai-filter-bar">
+        <button id="sentai-filter-toggle" type="button">
+          <span>Filters</span>
+          <span id="sentai-filter-count" class="s-filter-count" hidden="hidden">0</span>
+          <span class="s-col-arrow" style="margin-left: auto">&#x25BE;</span>
+        </button>
+        <div id="sentai-filter-panel">
+          <div class="s-filter-section">
+            <label class="s-filter-label">Tags</label>
+            <div id="sentai-tag-chips" class="s-tag-chips"></div>
+            <input type="text" id="sentai-tag-input" list="sentai-tag-datalist"
+              placeholder="Type a tag and press Enter…" autocomplete="off" />
+            <datalist id="sentai-tag-datalist"></datalist>
+          </div>
+          <div class="s-filter-section s-filter-row">
+            <label class="s-filter-label">Year</label>
+            <div class="s-filter-year-inputs">
+              <input type="number" id="sentai-year-from" placeholder="From" min="1900" max="2100" />
+              <span class="s-filter-sep">–</span>
+              <input type="number" id="sentai-year-to" placeholder="To" min="1900" max="2100" />
+            </div>
+          </div>
+          <div class="s-filter-section s-filter-row s-type-wrap">
+            <label class="s-filter-label">Type</label>
+            <button id="sentai-item-type-btn" type="button" class="s-type-btn">
+              <span id="sentai-item-type-label">Any</span>
+              <span class="s-col-arrow">&#x25BE;</span>
+            </button>
+            <div id="sentai-item-type-dropdown"></div>
+          </div>
+        </div>
+      </div>
+      <div id="sentai-search-results">
+        <div class="s-empty">Type a query to search your indexed papers.</div>
+      </div>
+    </div>
+
+    <!-- Chat panel -->
+    <div id="sentai-chat-panel" class="sentai-view">
+      <div id="sentai-nachrichten">
+        <div class="sender">sentAI</div>
+        <div class="message sentAI">Hello! Ask me anything about your library. I will find arguments, counterarguments,
+          and evidence from your papers.</div>
+      </div>
+
+      <!-- Skills bar: prompt chips + folder link -->
+      <div id="sentai-skills-bar">
+        <div id="sentai-skills-chips"></div>
+        <button id="sentai-skills-open" type="button">Open skills folder &#x2197;</button>
+      </div>
+
+      <div id="sentai-eingabe">
+        <div id="sentai-eingabe-zeile">
+          <textarea id="sentai-eingabe-text" placeholder="Ask a question..."></textarea>
+          <button id="sentai-senden-button">&#x27A4;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="scripts/chatPanel.js"></script>
+</body>
+
 </html>
