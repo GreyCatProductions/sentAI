@@ -7,7 +7,7 @@ import type { SkillDef } from "./modules/skillsLoader";
 
 type Api = {
   search: (query: string, filters?: SearchFilters) => Promise<SearchResult[]>;
-  ask: (query: string) => Promise<{ answer: string; sources: SearchResult[] }>;
+  ask: (query: string, filters?: SearchFilters) => Promise<{ answer: string; sources: SearchResult[] }>;
   getPref: (key: string) => unknown;
   setPref: (key: string, value: unknown) => void;
   getCollections: () => { id: number; name: string }[];
@@ -157,10 +157,38 @@ const searchBtn = document.getElementById(
 const searchResults = document.getElementById("sentai-search-results")!;
 
 // Collection dropdown (custom — native <select> renders ghost labels in Gecko)
-const colBtn = document.getElementById("sentai-collection-btn")!;
-const colLabel = document.getElementById("sentai-collection-label")!;
-const colDropdown = document.getElementById("sentai-collection-dropdown")!;
+// ── Shared collection state ──────────────────────────────────────────────────
 let selectedCollectionId: number | undefined = undefined;
+
+interface ColBar {
+  btn: HTMLElement;
+  label: HTMLElement;
+  dropdown: HTMLElement;
+}
+
+const searchColBar: ColBar = {
+  btn: document.getElementById("sentai-collection-btn")!,
+  label: document.getElementById("sentai-collection-label")!,
+  dropdown: document.getElementById("sentai-collection-dropdown")!,
+};
+
+const chatColBar: ColBar = {
+  btn: document.getElementById("sentai-chat-collection-btn")!,
+  label: document.getElementById("sentai-chat-collection-label")!,
+  dropdown: document.getElementById("sentai-chat-collection-dropdown")!,
+};
+
+function setCollection(id: number | undefined, name: string) {
+  selectedCollectionId = id;
+  [searchColBar, chatColBar].forEach((bar) => {
+    bar.label.textContent = name;
+    bar.dropdown.querySelectorAll(".s-col-option").forEach((o) => {
+      o.classList.toggle("selected", (o as HTMLElement).dataset.id === String(id ?? ""));
+    });
+    bar.dropdown.classList.remove("open");
+    bar.btn.classList.remove("open");
+  });
+}
 
 function buildCollectionOption(
   id: number | undefined,
@@ -170,37 +198,33 @@ function buildCollectionOption(
   const el = document.createElement("div");
   el.className = "s-col-option" + (active ? " selected" : "");
   el.textContent = name;
-  el.addEventListener("click", () => {
-    selectedCollectionId = id;
-    colLabel.textContent = name;
-    colDropdown
-      .querySelectorAll(".s-col-option")
-      .forEach((o) => o.classList.remove("selected"));
-    el.classList.add("selected");
-    colDropdown.classList.remove("open");
-    colBtn.classList.remove("open");
-  });
+  el.dataset.id = String(id ?? "");
+  el.addEventListener("click", () => setCollection(id, name));
   return el;
 }
 
-if (api) {
-  colDropdown.appendChild(
-    buildCollectionOption(undefined, "All Collections", true),
-  );
-  for (const col of api.getCollections()) {
-    colDropdown.appendChild(buildCollectionOption(col.id, col.name, false));
+function populateColBar(bar: ColBar) {
+  bar.dropdown.appendChild(buildCollectionOption(undefined, "All Collections", true));
+  if (api) {
+    for (const col of api.getCollections()) {
+      bar.dropdown.appendChild(buildCollectionOption(col.id, col.name, false));
+    }
   }
+  bar.btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = bar.dropdown.classList.toggle("open");
+    bar.btn.classList.toggle("open", isOpen);
+  });
 }
 
-colBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  const isOpen = colDropdown.classList.toggle("open");
-  colBtn.classList.toggle("open", isOpen);
-});
+populateColBar(searchColBar);
+populateColBar(chatColBar);
 
 document.addEventListener("click", () => {
-  colDropdown.classList.remove("open");
-  colBtn.classList.remove("open");
+  [searchColBar, chatColBar].forEach((bar) => {
+    bar.dropdown.classList.remove("open");
+    bar.btn.classList.remove("open");
+  });
 });
 
 // ===== Filter bar =====
@@ -559,7 +583,7 @@ async function sendMessage() {
   });
 
   try {
-    const { answer, sources } = await api.ask(text);
+    const { answer, sources } = await api.ask(text, { collectionId: selectedCollectionId });
     placeholder.classList.remove("loading");
     updateMessage(placeholder, answer);
     wireCitations(placeholder, sources);
