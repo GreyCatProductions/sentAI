@@ -726,24 +726,30 @@ reindexColRun.addEventListener("click", async () => {
   }
   setReindexBusy(true);
   reindexStatus.textContent = "Starting…";
+  infoCountEl.textContent = "0";
+  infoSizeEl.textContent = "…";
   await api.reindexCollection(reindexCollectionId, (done, total, title) => {
     reindexStatus.textContent = `Indexing ${done + 1} / ${total}: ${title}`;
+    infoCountEl.textContent = String(done);
   });
   reindexStatus.textContent = "Done.";
   setReindexBusy(false);
-  refreshInfo();
+  await refreshInfo();
 });
 
 reindexAllBtn.addEventListener("click", async () => {
   if (!api) return;
   setReindexBusy(true);
   reindexStatus.textContent = "Starting…";
+  infoCountEl.textContent = "0";
+  infoSizeEl.textContent = "…";
   await api.reindexAll((done, total, title) => {
     reindexStatus.textContent = `Indexing ${done + 1} / ${total}: ${title}`;
+    infoCountEl.textContent = String(done);
   });
   reindexStatus.textContent = "Done.";
   setReindexBusy(false);
-  refreshInfo();
+  await refreshInfo();
 });
 
 settingsTabs.forEach((tab) => {

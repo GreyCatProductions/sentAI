@@ -203,16 +203,19 @@ class EmbeddingStorage {
   }
 
   async getStats(): Promise<{ itemCount: number; sizeBytes: number }> {
-    const rows = await Zotero.DB.queryAsync(
+    const countRows = await Zotero.DB.queryAsync(
       "SELECT COUNT(DISTINCT item_id) AS cnt FROM sentai.chunks",
     );
-    const itemCount = (rows as any[])[0]?.cnt ?? 0;
+    const itemCount = (countRows as any[])[0]?.cnt ?? 0;
     let sizeBytes = 0;
     try {
-      const info = await (globalThis as any).IOUtils?.stat(this.dbPath);
-      sizeBytes = (info?.size as number | undefined) ?? 0;
+      const pcRows = await Zotero.DB.queryAsync("PRAGMA sentai.page_count");
+      const psRows = await Zotero.DB.queryAsync("PRAGMA sentai.page_size");
+      const pageCount = (pcRows as any[])[0]?.page_count ?? 0;
+      const pageSize = (psRows as any[])[0]?.page_size ?? 0;
+      sizeBytes = pageCount * pageSize;
     } catch {
-      // file may not exist yet
+      // DB not yet attached
     }
     return { itemCount, sizeBytes };
   }
