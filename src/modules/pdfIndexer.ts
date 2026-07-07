@@ -4,6 +4,8 @@ import { embedText } from "../modules/embedder";
 import { hashString } from "../utils/hash";
 import { getPref } from "../utils/prefs";
 
+export const INDEXED_TAG = "sentai-indexed";
+
 const MIN_CHUNK_CHARS = 100;
 
 // Below this length an "abstract" is usually a truncated stub or a stray
@@ -250,5 +252,9 @@ export class PdfIndexer {
     Zotero.debug(
       `sentAI: saved ${records.length} embeddings for item ${item.id}`,
     );
+
+    const parent = item.parentItem ?? item;
+    parent.addTag(INDEXED_TAG);
+    await parent.saveTx();
   }
 }
