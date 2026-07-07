@@ -124,9 +124,34 @@ async function onStartup() {
             (item as any).attachmentContentType === "application/pdf",
         );
       const uniquePdfs: Zotero.Item[] = [];
+      const coveredParentIds = new Set<number>();
       for (const pdf of pdfs) {
-        if (!(await hasSizeSibling(pdf))) uniquePdfs.push(pdf);
+        if (!(await hasSizeSibling(pdf))) {
+          uniquePdfs.push(pdf);
+          const parent = (pdf as any).parentItem;
+          if (parent) coveredParentIds.add(parent.id as number);
+        }
       }
+      const abstractOnly: Zotero.Item[] = [];
+      for (const lib of libraries) {
+        const s = new Zotero.Search();
+        s.addCondition("libraryID", "is", String(lib.libraryID as number));
+        s.addCondition("itemType", "isNot", "attachment");
+        s.addCondition("itemType", "isNot", "note");
+        const regularIds = (await s.search()) as number[];
+        for (const id of regularIds) {
+          if (coveredParentIds.has(id)) continue;
+          const item = Zotero.Items.get(id) as Zotero.Item | false;
+          if (
+            item &&
+            (item as any).isRegularItem() &&
+            !!((item.getField("abstractNote") as string) || "").trim()
+          ) {
+            abstractOnly.push(item);
+          }
+        }
+      }
+      const total = uniquePdfs.length + abstractOnly.length;
       let done = 0;
       let totalChunks = 0;
       for (const pdf of uniquePdfs) {
@@ -134,7 +159,13 @@ async function onStartup() {
         const title = (parent.getField("title") as string) || "Untitled";
         totalChunks += await PdfIndexer.process(pdf);
         done++;
-        onProgress?.(done, uniquePdfs.length, title, totalChunks, await embeddingStorage.getUsedBytes());
+        onProgress?.(done, total, title, totalChunks, await embeddingStorage.getUsedBytes());
+      }
+      for (const item of abstractOnly) {
+        const title = (item.getField("title") as string) || "Untitled";
+        totalChunks += await PdfIndexer.processMetadataOnly(item);
+        done++;
+        onProgress?.(done, total, title, totalChunks, await embeddingStorage.getUsedBytes());
       }
     },
     reindexCollection: async (
@@ -144,12 +175,15 @@ async function onStartup() {
       const col = Zotero.Collections.get(collectionId) as any;
       const items: Zotero.Item[] = col?.getChildItems(false) ?? [];
       const pdfs: Zotero.Item[] = [];
+      const coveredParentIds = new Set<number>();
       for (const item of items) {
         if (
           (item as any).isAttachment() &&
           (item as any).attachmentContentType === "application/pdf"
         ) {
           pdfs.push(item);
+          const parent = (item as any).parentItem;
+          if (parent) coveredParentIds.add(parent.id as number);
         } else {
           for (const attId of (item.getAttachments() as number[])) {
             const att = Zotero.Items.get(attId) as Zotero.Item | false;
@@ -159,6 +193,7 @@ async function onStartup() {
               (att as any).attachmentContentType === "application/pdf"
             ) {
               pdfs.push(att);
+              coveredParentIds.add(item.id);
             }
           }
         }
@@ -167,6 +202,13 @@ async function onStartup() {
       for (const pdf of pdfs) {
         if (!(await hasSizeSibling(pdf))) uniquePdfs.push(pdf);
       }
+      const abstractOnly = items.filter(
+        (item) =>
+          (item as any).isRegularItem() &&
+          !coveredParentIds.has(item.id) &&
+          !!((item.getField("abstractNote") as string) || "").trim(),
+      );
+      const total = uniquePdfs.length + abstractOnly.length;
       let done = 0;
       let totalChunks = 0;
       for (const pdf of uniquePdfs) {
@@ -174,7 +216,13 @@ async function onStartup() {
         const title = (parent.getField("title") as string) || "Untitled";
         totalChunks += await PdfIndexer.process(pdf);
         done++;
-        onProgress?.(done, uniquePdfs.length, title, totalChunks, await embeddingStorage.getUsedBytes());
+        onProgress?.(done, total, title, totalChunks, await embeddingStorage.getUsedBytes());
+      }
+      for (const item of abstractOnly) {
+        const title = (item.getField("title") as string) || "Untitled";
+        totalChunks += await PdfIndexer.processMetadataOnly(item);
+        done++;
+        onProgress?.(done, total, title, totalChunks, await embeddingStorage.getUsedBytes());
       }
     },
     deleteIndex: async (collectionId?: number): Promise<void> => {
