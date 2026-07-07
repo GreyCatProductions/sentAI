@@ -202,11 +202,12 @@ class EmbeddingStorage {
     return (rows as any[]).map((r) => r.item_id as number);
   }
 
-  async getStats(): Promise<{ itemCount: number; sizeBytes: number }> {
+  async getStats(): Promise<{ itemCount: number; chunkCount: number; sizeBytes: number }> {
     const countRows = await Zotero.DB.queryAsync(
-      "SELECT COUNT(DISTINCT item_id) AS cnt FROM sentai.chunks",
+      "SELECT COUNT(DISTINCT item_id) AS items, COUNT(*) AS chunks FROM sentai.chunks",
     );
-    const itemCount = (countRows as any[])[0]?.cnt ?? 0;
+    const itemCount = (countRows as any[])[0]?.items ?? 0;
+    const chunkCount = (countRows as any[])[0]?.chunks ?? 0;
     let sizeBytes = 0;
     try {
       const pcRows = await Zotero.DB.queryAsync("PRAGMA sentai.page_count");
@@ -217,7 +218,7 @@ class EmbeddingStorage {
     } catch {
       // DB not yet attached
     }
-    return { itemCount, sizeBytes };
+    return { itemCount, chunkCount, sizeBytes };
   }
 
   async close(): Promise<void> {

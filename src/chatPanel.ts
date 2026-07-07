@@ -16,7 +16,7 @@ type Api = {
   openSkillsFolder: () => void;
   healthCheck: () => Promise<{ embedder: boolean; hasIndex: boolean }>;
   openItem: (itemId: number) => void;
-  getIndexStats: () => Promise<{ itemCount: number; sizeBytes: number }>;
+  getIndexStats: () => Promise<{ itemCount: number; chunkCount: number; sizeBytes: number }>;
   reindexAll: (onProgress?: (done: number, total: number, title: string) => void) => Promise<void>;
   reindexCollection: (collectionId: number, onProgress?: (done: number, total: number, title: string) => void) => Promise<void>;
 };
@@ -653,6 +653,7 @@ const settingsTabs = document.querySelectorAll<HTMLButtonElement>(".sentai-setti
 const infoPanel = document.getElementById("info-panel")!;
 const settingsPanel = document.getElementById("settings-panel")!;
 const infoCountEl = document.getElementById("sentai-info-count")!;
+const infoChunksEl = document.getElementById("sentai-info-chunks")!;
 const infoSizeEl = document.getElementById("sentai-info-size")!;
 const reindexStatus = document.getElementById("sentai-reindex-status")!;
 const reindexColBtn = document.getElementById("sentai-reindex-collection-btn")!;
@@ -707,9 +708,11 @@ function formatBytes(bytes: number): string {
 async function refreshInfo() {
   if (!api) return;
   infoCountEl.textContent = "…";
+  infoChunksEl.textContent = "…";
   infoSizeEl.textContent = "…";
-  const { itemCount, sizeBytes } = await api.getIndexStats();
+  const { itemCount, chunkCount, sizeBytes } = await api.getIndexStats();
   infoCountEl.textContent = String(itemCount);
+  infoChunksEl.textContent = String(chunkCount);
   infoSizeEl.textContent = formatBytes(sizeBytes);
 }
 
@@ -727,6 +730,7 @@ reindexColRun.addEventListener("click", async () => {
   setReindexBusy(true);
   reindexStatus.textContent = "Starting…";
   infoCountEl.textContent = "0";
+  infoChunksEl.textContent = "0";
   infoSizeEl.textContent = "…";
   await api.reindexCollection(reindexCollectionId, (done, total, title) => {
     reindexStatus.textContent = `Indexing ${done + 1} / ${total}: ${title}`;
@@ -742,6 +746,7 @@ reindexAllBtn.addEventListener("click", async () => {
   setReindexBusy(true);
   reindexStatus.textContent = "Starting…";
   infoCountEl.textContent = "0";
+  infoChunksEl.textContent = "0";
   infoSizeEl.textContent = "…";
   await api.reindexAll((done, total, title) => {
     reindexStatus.textContent = `Indexing ${done + 1} / ${total}: ${title}`;
