@@ -428,49 +428,60 @@ function renderResultCards(results: SearchResult[], query: string) {
     return;
   }
 
-  results.forEach((r, i) => {
+  // Group chunks by paper (itemId preferred, title as fallback key)
+  const groups = new Map<string | number, SearchResult[]>();
+  for (const r of results) {
+    const key = r.itemId ?? r.title;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(r);
+  }
+
+  let groupIdx = 0;
+  for (const chunks of groups.values()) {
+    chunks.sort((a, b) => b.similarity - a.similarity);
+    const best = chunks[0];
+
     const card = document.createElement("div");
-    card.className = "s-result-card";
-    card.style.animationDelay = `${i * 40}ms`;
+    card.className = "s-paper-group";
+    card.style.animationDelay = `${groupIdx * 40}ms`;
+
+    // Paper header
+    const header = document.createElement("div");
+    header.className = "s-paper-group-header";
 
     const row1 = document.createElement("div");
     row1.className = "s-result-row1";
 
     const title = document.createElement("span");
     title.className = "s-result-title";
-    title.textContent = r.title;
+    title.textContent = best.title;
+    title.title = best.title;
 
     const score = document.createElement("span");
     score.className = "s-result-score";
-    score.textContent = `${Math.round(r.similarity * 100)}%`;
+    score.textContent = `${Math.round(best.similarity * 100)}%`;
 
     row1.appendChild(title);
     row1.appendChild(score);
 
-    if (r.itemId != null && api) {
+    if (best.itemId != null && api) {
       const jumpBtn = document.createElement("button");
       jumpBtn.className = "s-jump-btn";
       jumpBtn.title = "Show in Zotero";
       jumpBtn.textContent = "↗";
       jumpBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        api.openItem(r.itemId!);
+        api!.openItem(best.itemId!);
       });
       row1.appendChild(jumpBtn);
     }
 
-    const snippet = document.createElement("div");
-    snippet.className = "s-result-snippet";
-    snippet.textContent = r.chunkText;
+    header.appendChild(row1);
 
-    card.appendChild(row1);
-    card.appendChild(snippet);
-
-    const authorDisplay = formatAuthors(r.authors);
-    const footerItems = [authorDisplay, r.year, r.journal].filter(
+    const authorDisplay = formatAuthors(best.authors);
+    const footerItems = [authorDisplay, best.year, best.journal].filter(
       Boolean,
     ) as string[];
-
     if (footerItems.length) {
       const footer = document.createElement("div");
       footer.className = "s-result-footer";
@@ -480,11 +491,49 @@ function renderResultCards(results: SearchResult[], query: string) {
         chip.textContent = text;
         footer.appendChild(chip);
       }
-      card.appendChild(footer);
+      header.appendChild(footer);
     }
 
+    card.appendChild(header);
+
+    // Chunks container (expanded by default)
+    const chunksEl = document.createElement("div");
+    chunksEl.className = "s-paper-chunks open";
+
+    for (const chunk of chunks) {
+      const chunkEl = document.createElement("div");
+      chunkEl.className = "s-chunk";
+
+      if (chunks.length > 1) {
+        const chunkScore = document.createElement("span");
+        chunkScore.className = "s-chunk-score";
+        chunkScore.textContent = `${Math.round(chunk.similarity * 100)}%`;
+        chunkEl.appendChild(chunkScore);
+      }
+
+      const snippet = document.createElement("div");
+      snippet.className = "s-result-snippet";
+      snippet.appendChild(highlightKeywords(chunk.chunkText, query));
+      chunkEl.appendChild(snippet);
+
+      chunksEl.appendChild(chunkEl);
+    }
+
+    // Toggle button
+    const label = chunks.length === 1 ? "1 chunk" : `${chunks.length} chunks`;
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = "s-chunks-toggle open";
+    toggleBtn.innerHTML = `<span class="s-chunks-arrow">▾</span>${label}`;
+    toggleBtn.addEventListener("click", () => {
+      const isOpen = chunksEl.classList.toggle("open");
+      toggleBtn.classList.toggle("open", isOpen);
+    });
+
+    card.appendChild(toggleBtn);
+    card.appendChild(chunksEl);
     searchResults.appendChild(card);
-  });
+    groupIdx++;
+  }
 }
 
 async function runSearch() {

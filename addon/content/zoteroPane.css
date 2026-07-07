@@ -1029,6 +1029,96 @@ body {
   transform: scale(0.98);
 }
 
+/* Grouped paper result cards */
+.s-paper-group {
+  background: var(--s-surface);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--s-card-shadow);
+  animation: card-in 200ms var(--ease-out) both;
+  overflow: hidden;
+  transition: box-shadow 180ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .s-paper-group:hover {
+    box-shadow: var(--s-card-shadow-hover);
+  }
+}
+
+.s-paper-group-header {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.s-chunks-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--s-border);
+  font-size: 11px;
+  font-family: inherit;
+  color: var(--s-text-muted);
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .s-chunks-toggle:hover {
+    background: var(--s-accent-bg);
+    color: var(--s-accent);
+  }
+}
+
+.s-chunks-arrow {
+  font-size: 9px;
+  transition: transform 150ms var(--ease-out);
+  display: inline-block;
+}
+
+.s-chunks-toggle.open .s-chunks-arrow {
+  transform: rotate(0deg);
+}
+
+.s-chunks-toggle:not(.open) .s-chunks-arrow {
+  transform: rotate(-90deg);
+}
+
+.s-paper-chunks {
+  display: none;
+  flex-direction: column;
+}
+
+.s-paper-chunks.open {
+  display: flex;
+}
+
+.s-chunk {
+  padding: 8px 14px;
+  border-top: 1px solid var(--s-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.s-chunk-score {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--s-accent);
+  background: var(--s-accent-bg);
+  padding: 1px 6px;
+  border-radius: 8px;
+  align-self: flex-start;
+  letter-spacing: 0.02em;
+}
+
 .s-result-row1 {
   display: flex;
   align-items: center;
