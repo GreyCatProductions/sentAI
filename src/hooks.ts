@@ -1,7 +1,7 @@
 import { initLocale } from "./utils/locale";
 import { createZToolkit } from "./utils/ztoolkit";
 import { embeddingStorage } from "./modules/savesystem";
-import { PdfIndexer } from "./modules/pdfIndexer";
+import { PdfIndexer, INDEXED_TAG } from "./modules/pdfIndexer";
 import { search } from "./modules/searchService";
 import { ask } from "./modules/ragService";
 import { getServerUrl } from "./modules/serverConfig";
@@ -211,12 +211,29 @@ async function onNotify(
     for (const id of ids as number[]) {
       Zotero.log(`sentAI: ${event} fired for item ${id}`);
       await embeddingStorage.remove(id);
+
       if (event === "trash") {
         const item = Zotero.Items.get(id);
-        const attachments = item?.getAttachments() ?? [];
-        Zotero.log(`sentAI: child attachments: [${attachments.join(", ")}]`);
-        for (const attId of attachments) {
-          await embeddingStorage.remove(attId);
+        if (item?.isAttachment()) {
+          const parent = item.parentItem;
+          if (parent) {
+            const siblings = parent.getAttachments().filter((attId) => attId !== id);
+            const anyIndexed = (
+              await Promise.all(siblings.map((attId) => embeddingStorage.isIndexed(attId)))
+            ).some(Boolean);
+            if (!anyIndexed) {
+              parent.removeTag(INDEXED_TAG);
+              await parent.saveTx();
+            }
+          }
+        } else if (item) {
+          const attachments = item.getAttachments() ?? [];
+          Zotero.log(`sentAI: child attachments: [${attachments.join(", ")}]`);
+          for (const attId of attachments) {
+            await embeddingStorage.remove(attId);
+          }
+          item.removeTag(INDEXED_TAG);
+          await item.saveTx();
         }
       }
     }
