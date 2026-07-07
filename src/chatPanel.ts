@@ -17,8 +17,8 @@ type Api = {
   healthCheck: () => Promise<{ embedder: boolean; hasIndex: boolean }>;
   openItem: (itemId: number) => void;
   getIndexStats: () => Promise<{ itemCount: number; sizeBytes: number }>;
-  reindexAll: (onProgress?: (done: number, total: number) => void) => Promise<void>;
-  reindexCollection: (collectionId: number, onProgress?: (done: number, total: number) => void) => Promise<void>;
+  reindexAll: (onProgress?: (done: number, total: number, title: string) => void) => Promise<void>;
+  reindexCollection: (collectionId: number, onProgress?: (done: number, total: number, title: string) => void) => Promise<void>;
 };
 
 const api: Api | undefined = (window as any).arguments?.[0];
@@ -726,8 +726,8 @@ reindexColRun.addEventListener("click", async () => {
   }
   setReindexBusy(true);
   reindexStatus.textContent = "Starting…";
-  await api.reindexCollection(reindexCollectionId, (done, total) => {
-    reindexStatus.textContent = `Indexing ${done} / ${total}…`;
+  await api.reindexCollection(reindexCollectionId, (done, total, title) => {
+    reindexStatus.textContent = `Indexing ${done + 1} / ${total}: ${title}`;
   });
   reindexStatus.textContent = "Done.";
   setReindexBusy(false);
@@ -738,8 +738,8 @@ reindexAllBtn.addEventListener("click", async () => {
   if (!api) return;
   setReindexBusy(true);
   reindexStatus.textContent = "Starting…";
-  await api.reindexAll((done, total) => {
-    reindexStatus.textContent = `Indexing ${done} / ${total}…`;
+  await api.reindexAll((done, total, title) => {
+    reindexStatus.textContent = `Indexing ${done + 1} / ${total}: ${title}`;
   });
   reindexStatus.textContent = "Done.";
   setReindexBusy(false);
