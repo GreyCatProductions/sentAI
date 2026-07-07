@@ -85,7 +85,7 @@ async function onStartup() {
     },
     getIndexStats: () => embeddingStorage.getStats(),
     reindexAll: async (
-      onProgress?: (done: number, total: number, title: string, totalChunks: number) => void,
+      onProgress?: (done: number, total: number, title: string, totalChunks: number, sizeBytes: number) => void,
     ): Promise<void> => {
       const libID = Zotero.Libraries.userLibraryID;
       const s = new Zotero.Search();
@@ -111,12 +111,12 @@ async function onStartup() {
         const title = (parent.getField("title") as string) || "Untitled";
         totalChunks += await PdfIndexer.process(pdf);
         done++;
-        onProgress?.(done, uniquePdfs.length, title, totalChunks);
+        onProgress?.(done, uniquePdfs.length, title, totalChunks, await embeddingStorage.getUsedBytes());
       }
     },
     reindexCollection: async (
       collectionId: number,
-      onProgress?: (done: number, total: number, title: string, totalChunks: number) => void,
+      onProgress?: (done: number, total: number, title: string, totalChunks: number, sizeBytes: number) => void,
     ): Promise<void> => {
       const col = Zotero.Collections.get(collectionId) as any;
       const items: Zotero.Item[] = col?.getChildItems(false) ?? [];
@@ -151,7 +151,7 @@ async function onStartup() {
         const title = (parent.getField("title") as string) || "Untitled";
         totalChunks += await PdfIndexer.process(pdf);
         done++;
-        onProgress?.(done, uniquePdfs.length, title, totalChunks);
+        onProgress?.(done, uniquePdfs.length, title, totalChunks, await embeddingStorage.getUsedBytes());
       }
     },
     deleteIndex: async (collectionId?: number): Promise<void> => {

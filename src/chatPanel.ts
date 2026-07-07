@@ -17,8 +17,8 @@ type Api = {
   healthCheck: () => Promise<{ embedder: boolean; hasIndex: boolean }>;
   openItem: (itemId: number) => void;
   getIndexStats: () => Promise<{ itemCount: number; chunkCount: number; sizeBytes: number }>;
-  reindexAll: (onProgress?: (done: number, total: number, title: string, totalChunks: number) => void) => Promise<void>;
-  reindexCollection: (collectionId: number, onProgress?: (done: number, total: number, title: string, totalChunks: number) => void) => Promise<void>;
+  reindexAll: (onProgress?: (done: number, total: number, title: string, totalChunks: number, sizeBytes: number) => void) => Promise<void>;
+  reindexCollection: (collectionId: number, onProgress?: (done: number, total: number, title: string, totalChunks: number, sizeBytes: number) => void) => Promise<void>;
   deleteIndex: (collectionId?: number) => Promise<void>;
 };
 
@@ -735,10 +735,11 @@ reindexColRun.addEventListener("click", async () => {
   infoCountEl.textContent = "0";
   infoChunksEl.textContent = "0";
   infoSizeEl.textContent = "…";
-  await api.reindexCollection(reindexCollectionId, (done, total, title, totalChunks) => {
+  await api.reindexCollection(reindexCollectionId, (done, total, title, totalChunks, sizeBytes) => {
     reindexStatus.textContent = `Indexed ${done} / ${total}: ${title}`;
     infoCountEl.textContent = String(done);
     infoChunksEl.textContent = String(totalChunks);
+    infoSizeEl.textContent = formatBytes(sizeBytes);
   });
   reindexStatus.textContent = "Done.";
   setReindexBusy(false);
@@ -752,10 +753,11 @@ reindexAllBtn.addEventListener("click", async () => {
   infoCountEl.textContent = "0";
   infoChunksEl.textContent = "0";
   infoSizeEl.textContent = "…";
-  await api.reindexAll((done, total, title, totalChunks) => {
+  await api.reindexAll((done, total, title, totalChunks, sizeBytes) => {
     reindexStatus.textContent = `Indexed ${done} / ${total}: ${title}`;
     infoCountEl.textContent = String(done);
     infoChunksEl.textContent = String(totalChunks);
+    infoSizeEl.textContent = formatBytes(sizeBytes);
   });
   reindexStatus.textContent = "Done.";
   setReindexBusy(false);
