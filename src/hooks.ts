@@ -91,6 +91,8 @@ async function onStartup() {
   // UI-dependent setup: wait for the main window before touching the DOM
   await Zotero.uiReadyPromise;
 
+  registerIndexColumn();
+
   Zotero.PreferencePanes.register({
     pluginID: addon.data.config.addonID,
     src: `chrome://${addon.data.config.addonRef}/content/preferences.xhtml`,
@@ -112,6 +114,37 @@ async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
   );
 
   registerToolbarButton(win);
+}
+
+function registerIndexColumn() {
+  const iconUrl = `chrome://${addon.data.config.addonRef}/content/icons/favicon@0.5x.png`;
+  Zotero.ItemTreeManager.registerColumn({
+    dataKey: "sentai-indexed",
+    label: "sentAI",
+    pluginID: addon.data.config.addonID,
+    fixedWidth: true,
+    width: "26",
+    iconPath: iconUrl,
+    showInColumnPicker: true,
+    columnPickerSubMenu: true,
+    dataProvider: (item: Zotero.Item) => {
+      const tags = item.getTags() as Array<{ tag: string }>;
+      return tags.some((t) => t.tag === INDEXED_TAG) ? "1" : "";
+    },
+    renderCell: (_index, data, column, _isFirstColumn, doc) => {
+      const cell = doc.createElement("span");
+      cell.className = `cell ${column.className}`;
+      cell.style.cssText = "display:flex;align-items:center;justify-content:center;";
+      if (data === "1") {
+        const img = doc.createElement("img");
+        img.src = iconUrl;
+        img.setAttribute("title", "Indexed by sentAI");
+        img.style.cssText = "width:12px;height:12px;opacity:0.75;pointer-events:none;";
+        cell.appendChild(img);
+      }
+      return cell;
+    },
+  });
 }
 
 function registerToolbarButton(win: _ZoteroTypes.MainWindow) {
