@@ -18,6 +18,12 @@ const MAX_CHUNK_TOKENS = 500;
 // Section headings that mark the start of non-content tail material
 const REFERENCES_HEADING =
   /^(references|bibliography|quellen|literatur|works cited|literaturverzeichnis)\s*$/i;
+const ABSTRACT_HEADING =
+  /(?:^|\n)\s*abstract\s*[:.\-–—]?\s+|(?:^|\s)abstract\s*[:.\-–—]\s+|(?:^|\s)abstract\s+(?=(?:this|we|the|in\s+this|background|objective|purpose|methods?|results?|conclusions?)\b)/i;
+const ABSTRACT_STOP_HEADING =
+  /\s+(keywords?|index terms|introduction|background|related work|methods?|materials and methods|1\.?\s+introduction|i\.?\s+introduction)\b[:.\-–—]?\s*/gi;
+const ABSTRACT_SEARCH_WINDOW_CHARS = 8000;
+const MAX_ABSTRACT_CHARS = 3500;
 
 // Short boilerplate lines that survive the length filter
 const BOILERPLATE =
@@ -120,6 +126,31 @@ export function chunkText(
   return chunks;
 }
 
+export function extractAbstractFromText(text: string): string | undefined {
+  const firstPages = text.slice(0, ABSTRACT_SEARCH_WINDOW_CHARS);
+  const marker = ABSTRACT_HEADING.exec(firstPages);
+  if (!marker) return undefined;
+
+  const start = marker.index + marker[0].length;
+  let candidate = firstPages.slice(start, start + MAX_ABSTRACT_CHARS).trim();
+
+  ABSTRACT_STOP_HEADING.lastIndex = 0;
+  let stop: RegExpExecArray | null;
+  while ((stop = ABSTRACT_STOP_HEADING.exec(candidate)) !== null) {
+    if (stop.index >= MIN_ABSTRACT_CHARS / 2) {
+      candidate = candidate.slice(0, stop.index).trim();
+      break;
+    }
+  }
+
+  candidate = candidate
+    .replace(/\s+/g, " ")
+    .replace(/^(abstract|summary)\s*[:.\-–—]?\s*/i, "")
+    .trim();
+
+  return candidate.length >= MIN_ABSTRACT_CHARS ? candidate : undefined;
+}
+
 function extractMetadata(item: Zotero.Item): ItemMetadata {
   const parent = item.parentItem ?? item;
   const creators = parent.getCreators();
@@ -171,12 +202,14 @@ export class PdfIndexer {
     const { text: rawText } = await Zotero.PDFWorker.getFullText(item.id, 0);
     const maxChunkTokens =
       (getPref("maxChunkTokens") as number) || MAX_CHUNK_TOKENS;
-    const bodyChunks: string[] = chunkText(cleanText(rawText), maxChunkTokens);
+    const cleanPdfText = cleanText(rawText);
+    const bodyChunks: string[] = chunkText(cleanPdfText, maxChunkTokens);
 
     // A dedicated abstract chunk (when we have one) gives every paper a single
     // paper-level representation, so retrieval can rank papers by their abstract
     // instead of by whichever body chunk happens to match — see semanticSearch.
-    const abstract = metadata.abstract?.trim();
+    const abstract =
+      metadata.abstract?.trim() || extractAbstractFromText(cleanPdfText);
     const hasAbstractChunk =
       !!abstract && abstract.length >= MIN_ABSTRACT_CHARS;
     Zotero.debug(
