@@ -19,6 +19,7 @@ type Api = {
   getIndexStats: () => Promise<{ itemCount: number; chunkCount: number; sizeBytes: number }>;
   reindexAll: (onProgress?: (done: number, total: number, title: string) => void) => Promise<void>;
   reindexCollection: (collectionId: number, onProgress?: (done: number, total: number, title: string) => void) => Promise<void>;
+  deleteIndex: (collectionId?: number) => Promise<void>;
 };
 
 const api: Api | undefined = (window as any).arguments?.[0];
@@ -661,6 +662,7 @@ const reindexColLabel = document.getElementById("sentai-reindex-collection-label
 const reindexColDropdown = document.getElementById("sentai-reindex-collection-dropdown")!;
 const reindexColRun = document.getElementById("sentai-reindex-collection-run") as HTMLButtonElement;
 const reindexAllBtn = document.getElementById("sentai-reindex-all") as HTMLButtonElement;
+const deleteIndexBtn = document.getElementById("sentai-delete-index") as HTMLButtonElement;
 
 let reindexCollectionId: number | undefined = undefined;
 
@@ -719,6 +721,7 @@ async function refreshInfo() {
 function setReindexBusy(busy: boolean) {
   reindexColRun.disabled = busy;
   reindexAllBtn.disabled = busy;
+  deleteIndexBtn.disabled = busy;
 }
 
 reindexColRun.addEventListener("click", async () => {
@@ -753,6 +756,20 @@ reindexAllBtn.addEventListener("click", async () => {
     infoCountEl.textContent = String(done);
   });
   reindexStatus.textContent = "Done.";
+  setReindexBusy(false);
+  await refreshInfo();
+});
+
+deleteIndexBtn.addEventListener("click", async () => {
+  if (!api) return;
+  const label = reindexCollectionId == null ? "all" : "collection";
+  reindexStatus.textContent = `Deleting ${label} index…`;
+  setReindexBusy(true);
+  infoCountEl.textContent = "0";
+  infoChunksEl.textContent = "0";
+  infoSizeEl.textContent = "…";
+  await api.deleteIndex(reindexCollectionId);
+  reindexStatus.textContent = "Deleted.";
   setReindexBusy(false);
   await refreshInfo();
 });

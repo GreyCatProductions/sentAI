@@ -152,6 +152,23 @@ async function onStartup() {
         done++;
       }
     },
+    deleteIndex: async (collectionId?: number): Promise<void> => {
+      if (collectionId == null) {
+        await embeddingStorage.removeAll();
+      } else {
+        const col = Zotero.Collections.get(collectionId) as any;
+        const items: Zotero.Item[] = col?.getChildItems(false) ?? [];
+        for (const item of items) {
+          if ((item as any).isAttachment()) {
+            await embeddingStorage.remove(item.id);
+          } else {
+            for (const attId of item.getAttachments() as number[]) {
+              await embeddingStorage.remove(attId);
+            }
+          }
+        }
+      }
+    },
   };
   addon.data.initialized = true;
 
