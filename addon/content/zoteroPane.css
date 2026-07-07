@@ -985,6 +985,7 @@ body {
 
 #sentai-search-results {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 4px 14px 14px;
   display: flex;
@@ -1005,6 +1006,7 @@ body {
 
 /* Result cards */
 .s-result-card {
+  min-height: 32px;
   padding: 12px 14px;
   background: var(--s-surface);
   border-radius: 12px;
@@ -1035,6 +1037,7 @@ body {
   border-radius: 12px;
   display: flex;
   flex-direction: column;
+  min-height: 80px;
   box-shadow: var(--s-card-shadow);
   animation: card-in 200ms var(--ease-out) both;
   overflow: hidden;

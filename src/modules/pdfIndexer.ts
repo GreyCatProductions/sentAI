@@ -193,6 +193,33 @@ function buildAbstractInput(abstract: string, meta: ItemMetadata): string {
 }
 
 export class PdfIndexer {
+  // Indexes a regular item (no PDF) using only its abstract and metadata.
+  // Returns 0 if the abstract is too short to be useful.
+  static async processMetadataOnly(item: Zotero.Item): Promise<number> {
+    const metadata = extractMetadata(item);
+    const abstract = metadata.abstract?.trim() ?? "";
+    if (abstract.length < MIN_ABSTRACT_CHARS) return 0;
+
+    const embedding = await embedText(buildAbstractInput(abstract, metadata));
+    const record: EmbeddingRecord = {
+      paperId: item.key,
+      chunkIndex: 0,
+      chunkText: abstract,
+      chunkKind: "abstract",
+      embedding,
+      textHash: hashString(abstract),
+      metadata,
+    };
+
+    await embeddingStorage.save(item.id, [record]);
+    const lib = (Zotero.Libraries.get(item.libraryID) as any);
+    if (lib?.editable) {
+      item.addTag(INDEXED_TAG);
+      await (item as any).saveTx();
+    }
+    return 1;
+  }
+
   // Entry point — called by hooks.ts whenever a new PDF is added to Zotero
   static async process(item: Zotero.Item): Promise<number> {
     const path = await item.getFilePathAsync();
@@ -254,8 +281,11 @@ export class PdfIndexer {
     );
 
     const parent = item.parentItem ?? item;
-    parent.addTag(INDEXED_TAG);
-    await parent.saveTx();
+    const lib = (Zotero.Libraries.get(parent.libraryID) as any);
+    if (lib?.editable) {
+      parent.addTag(INDEXED_TAG);
+      await parent.saveTx();
+    }
     return records.length;
   }
 }

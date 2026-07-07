@@ -29,8 +29,6 @@ export async function search(
   options: RetrievalOptions = {},
 ): Promise<SearchResult[]> {
   const queryEmbedding = await embedText(query);
-  const libID = Zotero.Libraries.userLibraryID;
-
   const { collectionId, tags, yearFrom, yearTo, itemType } = filters;
   const hasMetaFilter =
     (tags && tags.length > 0) ||
@@ -52,7 +50,8 @@ export async function search(
     const filtered: number[] = [];
 
     for (const id of baseIds) {
-      const item = Zotero.Items.get(id) as Zotero.Item | false;
+      let item: Zotero.Item | false = false;
+      try { item = Zotero.Items.get(id) as Zotero.Item | false; } catch { continue; }
       const target =
         item && (item as any).isAttachment?.() && (item as any).parentItem
           ? ((item as any).parentItem as Zotero.Item)
@@ -111,9 +110,17 @@ export async function search(
   return top.map((result) => {
     const { chunkText, similarity } = result;
 
-    const item = Zotero.Items.getByLibraryAndKey(libID, result.paperId) as
-      | Zotero.Item
-      | false;
+    // Search all libraries — items from group libraries won't be found by userLibraryID
+    const libraries = (Zotero.Libraries.getAll() as any[]).filter(
+      (lib: any) => lib.libraryType !== "feeds",
+    );
+    let item: Zotero.Item | false = false;
+    for (const lib of libraries) {
+      try {
+        const found = Zotero.Items.getByLibraryAndKey(lib.libraryID, result.paperId) as Zotero.Item | false;
+        if (found) { item = found; break; }
+      } catch { /* item not yet loaded in memory — skip */ }
+    }
     const parent =
       item && (item as any).parentItem
         ? (item as any).parentItem
