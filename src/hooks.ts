@@ -83,6 +83,94 @@ async function onStartup() {
         .map((c: any) => ({ id: c.id as number, name: c.name as string }))
         .sort((a, b) => a.name.localeCompare(b.name));
     },
+    getIndexStats: () => embeddingStorage.getStats(),
+    reindexAll: async (
+      onProgress?: (done: number, total: number, title: string, totalChunks: number, sizeBytes: number) => void,
+    ): Promise<void> => {
+      const libID = Zotero.Libraries.userLibraryID;
+      const s = new Zotero.Search();
+      s.addCondition("libraryID", "is", String(libID));
+      s.addCondition("itemType", "is", "attachment");
+      const ids = (await s.search()) as number[];
+      const pdfs = ids
+        .map((id) => Zotero.Items.get(id) as Zotero.Item | false)
+        .filter(
+          (item): item is Zotero.Item =>
+            !!item &&
+            (item as any).isAttachment() &&
+            (item as any).attachmentContentType === "application/pdf",
+        );
+      const uniquePdfs: Zotero.Item[] = [];
+      for (const pdf of pdfs) {
+        if (!(await hasSizeSibling(pdf))) uniquePdfs.push(pdf);
+      }
+      let done = 0;
+      let totalChunks = 0;
+      for (const pdf of uniquePdfs) {
+        const parent = (pdf as any).parentItem ?? pdf;
+        const title = (parent.getField("title") as string) || "Untitled";
+        totalChunks += await PdfIndexer.process(pdf);
+        done++;
+        onProgress?.(done, uniquePdfs.length, title, totalChunks, await embeddingStorage.getUsedBytes());
+      }
+    },
+    reindexCollection: async (
+      collectionId: number,
+      onProgress?: (done: number, total: number, title: string, totalChunks: number, sizeBytes: number) => void,
+    ): Promise<void> => {
+      const col = Zotero.Collections.get(collectionId) as any;
+      const items: Zotero.Item[] = col?.getChildItems(false) ?? [];
+      const pdfs: Zotero.Item[] = [];
+      for (const item of items) {
+        if (
+          (item as any).isAttachment() &&
+          (item as any).attachmentContentType === "application/pdf"
+        ) {
+          pdfs.push(item);
+        } else {
+          for (const attId of (item.getAttachments() as number[])) {
+            const att = Zotero.Items.get(attId) as Zotero.Item | false;
+            if (
+              att &&
+              (att as any).isAttachment() &&
+              (att as any).attachmentContentType === "application/pdf"
+            ) {
+              pdfs.push(att);
+            }
+          }
+        }
+      }
+      const uniquePdfs: Zotero.Item[] = [];
+      for (const pdf of pdfs) {
+        if (!(await hasSizeSibling(pdf))) uniquePdfs.push(pdf);
+      }
+      let done = 0;
+      let totalChunks = 0;
+      for (const pdf of uniquePdfs) {
+        const parent = (pdf as any).parentItem ?? pdf;
+        const title = (parent.getField("title") as string) || "Untitled";
+        totalChunks += await PdfIndexer.process(pdf);
+        done++;
+        onProgress?.(done, uniquePdfs.length, title, totalChunks, await embeddingStorage.getUsedBytes());
+      }
+    },
+    deleteIndex: async (collectionId?: number): Promise<void> => {
+      if (collectionId == null) {
+        await embeddingStorage.removeAll();
+      } else {
+        const col = Zotero.Collections.get(collectionId) as any;
+        const items: Zotero.Item[] = col?.getChildItems(false) ?? [];
+        for (const item of items) {
+          if ((item as any).isAttachment()) {
+            await embeddingStorage.remove(item.id);
+          } else {
+            for (const attId of item.getAttachments() as number[]) {
+              await embeddingStorage.remove(attId);
+            }
+          }
+        }
+      }
+    },
   };
   addon.data.initialized = true;
 
@@ -145,6 +233,43 @@ function registerIndexColumn() {
       return cell;
     },
   });
+}
+
+async function hasSizeSibling(pdf: Zotero.Item): Promise<boolean> {
+  const parent = (pdf as any).parentItem as Zotero.Item | undefined;
+  if (!parent) return false;
+
+  const path = (await pdf.getFilePathAsync()) as string | false;
+  if (!path) return false;
+
+  let size: number;
+  try {
+    const info = await (globalThis as any).IOUtils.stat(path);
+    size = info.size as number;
+  } catch {
+    return false;
+  }
+  if (size === 0) return false;
+
+  for (const sibId of parent.getAttachments() as number[]) {
+    if (sibId >= pdf.id) continue;
+    const sib = Zotero.Items.get(sibId) as Zotero.Item | false;
+    if (
+      !sib ||
+      !(sib as any).isAttachment() ||
+      (sib as any).attachmentContentType !== "application/pdf"
+    )
+      continue;
+    const sibPath = (await sib.getFilePathAsync()) as string | false;
+    if (!sibPath) continue;
+    try {
+      const sibInfo = await (globalThis as any).IOUtils.stat(sibPath);
+      if ((sibInfo.size as number) === size) return true;
+    } catch {
+      continue;
+    }
+  }
+  return false;
 }
 
 function registerToolbarButton(win: _ZoteroTypes.MainWindow) {
@@ -233,6 +358,7 @@ async function onNotify(
         item.attachmentContentType === "application/pdf"
       ) {
         if (await embeddingStorage.isIndexed(item.id)) continue;
+        if (await hasSizeSibling(item)) continue;
         await PdfIndexer.process(item);
       } else {
         await autoAttachPdf(item);

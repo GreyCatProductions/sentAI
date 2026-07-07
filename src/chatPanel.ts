@@ -7,7 +7,7 @@ import type { SkillDef } from "./modules/skillsLoader";
 
 type Api = {
   search: (query: string, filters?: SearchFilters) => Promise<SearchResult[]>;
-  ask: (query: string) => Promise<{ answer: string; sources: SearchResult[] }>;
+  ask: (query: string, filters?: SearchFilters) => Promise<{ answer: string; sources: SearchResult[] }>;
   getPref: (key: string) => unknown;
   setPref: (key: string, value: unknown) => void;
   getCollections: () => { id: number; name: string }[];
@@ -16,6 +16,10 @@ type Api = {
   openSkillsFolder: () => void;
   healthCheck: () => Promise<{ embedder: boolean; hasIndex: boolean }>;
   openItem: (itemId: number) => void;
+  getIndexStats: () => Promise<{ itemCount: number; chunkCount: number; sizeBytes: number }>;
+  reindexAll: (onProgress?: (done: number, total: number, title: string, totalChunks: number, sizeBytes: number) => void) => Promise<void>;
+  reindexCollection: (collectionId: number, onProgress?: (done: number, total: number, title: string, totalChunks: number, sizeBytes: number) => void) => Promise<void>;
+  deleteIndex: (collectionId?: number) => Promise<void>;
 };
 
 const api: Api | undefined = (window as any).arguments?.[0];
@@ -157,10 +161,38 @@ const searchBtn = document.getElementById(
 const searchResults = document.getElementById("sentai-search-results")!;
 
 // Collection dropdown (custom — native <select> renders ghost labels in Gecko)
-const colBtn = document.getElementById("sentai-collection-btn")!;
-const colLabel = document.getElementById("sentai-collection-label")!;
-const colDropdown = document.getElementById("sentai-collection-dropdown")!;
+// ── Shared collection state ──────────────────────────────────────────────────
 let selectedCollectionId: number | undefined = undefined;
+
+interface ColBar {
+  btn: HTMLElement;
+  label: HTMLElement;
+  dropdown: HTMLElement;
+}
+
+const searchColBar: ColBar = {
+  btn: document.getElementById("sentai-collection-btn")!,
+  label: document.getElementById("sentai-collection-label")!,
+  dropdown: document.getElementById("sentai-collection-dropdown")!,
+};
+
+const chatColBar: ColBar = {
+  btn: document.getElementById("sentai-chat-collection-btn")!,
+  label: document.getElementById("sentai-chat-collection-label")!,
+  dropdown: document.getElementById("sentai-chat-collection-dropdown")!,
+};
+
+function setCollection(id: number | undefined, name: string) {
+  selectedCollectionId = id;
+  [searchColBar, chatColBar].forEach((bar) => {
+    bar.label.textContent = name;
+    bar.dropdown.querySelectorAll(".s-col-option").forEach((o) => {
+      o.classList.toggle("selected", (o as HTMLElement).dataset.id === String(id ?? ""));
+    });
+    bar.dropdown.classList.remove("open");
+    bar.btn.classList.remove("open");
+  });
+}
 
 function buildCollectionOption(
   id: number | undefined,
@@ -170,37 +202,34 @@ function buildCollectionOption(
   const el = document.createElement("div");
   el.className = "s-col-option" + (active ? " selected" : "");
   el.textContent = name;
-  el.addEventListener("click", () => {
-    selectedCollectionId = id;
-    colLabel.textContent = name;
-    colDropdown
-      .querySelectorAll(".s-col-option")
-      .forEach((o) => o.classList.remove("selected"));
-    el.classList.add("selected");
-    colDropdown.classList.remove("open");
-    colBtn.classList.remove("open");
-  });
+  el.dataset.id = String(id ?? "");
+  el.addEventListener("click", () => setCollection(id, name));
   return el;
 }
 
-if (api) {
-  colDropdown.appendChild(
-    buildCollectionOption(undefined, "All Collections", true),
-  );
-  for (const col of api.getCollections()) {
-    colDropdown.appendChild(buildCollectionOption(col.id, col.name, false));
+function populateColBar(bar: ColBar) {
+  bar.dropdown.appendChild(buildCollectionOption(undefined, "All Collections", true));
+  if (api) {
+    for (const col of api.getCollections()) {
+      bar.dropdown.appendChild(buildCollectionOption(col.id, col.name, false));
+    }
   }
+  bar.btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = bar.dropdown.classList.toggle("open");
+    bar.btn.classList.toggle("open", isOpen);
+  });
 }
 
-colBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  const isOpen = colDropdown.classList.toggle("open");
-  colBtn.classList.toggle("open", isOpen);
-});
+populateColBar(searchColBar);
+populateColBar(chatColBar);
 
 document.addEventListener("click", () => {
-  colDropdown.classList.remove("open");
-  colBtn.classList.remove("open");
+  [searchColBar, chatColBar].forEach((bar) => {
+    bar.dropdown.classList.remove("open");
+    bar.btn.classList.remove("open");
+  });
+  closeReindexDropdown();
 });
 
 // ===== Filter bar =====
@@ -399,49 +428,60 @@ function renderResultCards(results: SearchResult[], query: string) {
     return;
   }
 
-  results.forEach((r, i) => {
+  // Group chunks by paper (itemId preferred, title as fallback key)
+  const groups = new Map<string | number, SearchResult[]>();
+  for (const r of results) {
+    const key = r.itemId ?? r.title;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(r);
+  }
+
+  let groupIdx = 0;
+  for (const chunks of groups.values()) {
+    chunks.sort((a, b) => b.similarity - a.similarity);
+    const best = chunks[0];
+
     const card = document.createElement("div");
-    card.className = "s-result-card";
-    card.style.animationDelay = `${i * 40}ms`;
+    card.className = "s-paper-group";
+    card.style.animationDelay = `${groupIdx * 40}ms`;
+
+    // Paper header
+    const header = document.createElement("div");
+    header.className = "s-paper-group-header";
 
     const row1 = document.createElement("div");
     row1.className = "s-result-row1";
 
     const title = document.createElement("span");
     title.className = "s-result-title";
-    title.textContent = r.title;
+    title.textContent = best.title;
+    title.title = best.title;
 
     const score = document.createElement("span");
     score.className = "s-result-score";
-    score.textContent = `${Math.round(r.similarity * 100)}%`;
+    score.textContent = `${Math.round(best.similarity * 100)}%`;
 
     row1.appendChild(title);
     row1.appendChild(score);
 
-    if (r.itemId != null && api) {
+    if (best.itemId != null && api) {
       const jumpBtn = document.createElement("button");
       jumpBtn.className = "s-jump-btn";
       jumpBtn.title = "Show in Zotero";
       jumpBtn.textContent = "↗";
       jumpBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        api.openItem(r.itemId!);
+        api!.openItem(best.itemId!);
       });
       row1.appendChild(jumpBtn);
     }
 
-    const snippet = document.createElement("div");
-    snippet.className = "s-result-snippet";
-    snippet.textContent = r.chunkText;
+    header.appendChild(row1);
 
-    card.appendChild(row1);
-    card.appendChild(snippet);
-
-    const authorDisplay = formatAuthors(r.authors);
-    const footerItems = [authorDisplay, r.year, r.journal].filter(
+    const authorDisplay = formatAuthors(best.authors);
+    const footerItems = [authorDisplay, best.year, best.journal].filter(
       Boolean,
     ) as string[];
-
     if (footerItems.length) {
       const footer = document.createElement("div");
       footer.className = "s-result-footer";
@@ -451,11 +491,49 @@ function renderResultCards(results: SearchResult[], query: string) {
         chip.textContent = text;
         footer.appendChild(chip);
       }
-      card.appendChild(footer);
+      header.appendChild(footer);
     }
 
+    card.appendChild(header);
+
+    // Chunks container (expanded by default)
+    const chunksEl = document.createElement("div");
+    chunksEl.className = "s-paper-chunks open";
+
+    for (const chunk of chunks) {
+      const chunkEl = document.createElement("div");
+      chunkEl.className = "s-chunk";
+
+      if (chunks.length > 1) {
+        const chunkScore = document.createElement("span");
+        chunkScore.className = "s-chunk-score";
+        chunkScore.textContent = `${Math.round(chunk.similarity * 100)}%`;
+        chunkEl.appendChild(chunkScore);
+      }
+
+      const snippet = document.createElement("div");
+      snippet.className = "s-result-snippet";
+      snippet.appendChild(highlightKeywords(chunk.chunkText, query));
+      chunkEl.appendChild(snippet);
+
+      chunksEl.appendChild(chunkEl);
+    }
+
+    // Toggle button
+    const label = chunks.length === 1 ? "1 chunk" : `${chunks.length} chunks`;
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = "s-chunks-toggle open";
+    toggleBtn.innerHTML = `<span class="s-chunks-arrow">▾</span>${label}`;
+    toggleBtn.addEventListener("click", () => {
+      const isOpen = chunksEl.classList.toggle("open");
+      toggleBtn.classList.toggle("open", isOpen);
+    });
+
+    card.appendChild(toggleBtn);
+    card.appendChild(chunksEl);
     searchResults.appendChild(card);
-  });
+    groupIdx++;
+  }
 }
 
 async function runSearch() {
@@ -559,10 +637,16 @@ async function sendMessage() {
   });
 
   try {
-    const { answer, sources } = await api.ask(text);
+    const { answer, sources } = await api.ask(text, { collectionId: selectedCollectionId });
     placeholder.classList.remove("loading");
     updateMessage(placeholder, answer);
     wireCitations(placeholder, sources);
+
+    const uniquePapers = new Set(sources.map((s) => s.title)).size;
+    const ragInfo = document.createElement("div");
+    ragInfo.className = "s-rag-info";
+    ragInfo.textContent = `${sources.length} chunk${sources.length !== 1 ? "s" : ""} · ${uniquePapers} paper${uniquePapers !== 1 ? "s" : ""}`;
+    placeholder.insertAdjacentElement("afterend", ragInfo);
   } catch (e: any) {
     placeholder.classList.remove("loading");
     placeholder.textContent = `Error: ${e?.message ?? "Unknown error"}`;
@@ -621,6 +705,146 @@ if (api) {
   llmEndpointInput.value = String(api.getPref("llmEndpoint") ?? "");
   llmModelInput.value = String(api.getPref("llmModel") ?? "");
 }
+
+// ── Settings drawer inner tabs ───────────────────────────────────────────────
+const settingsTabs = document.querySelectorAll<HTMLButtonElement>(".sentai-settings-tab");
+const infoPanel = document.getElementById("info-panel")!;
+const settingsPanel = document.getElementById("settings-panel")!;
+const infoCountEl = document.getElementById("sentai-info-count")!;
+const infoChunksEl = document.getElementById("sentai-info-chunks")!;
+const infoSizeEl = document.getElementById("sentai-info-size")!;
+const reindexStatus = document.getElementById("sentai-reindex-status")!;
+const reindexColBtn = document.getElementById("sentai-reindex-collection-btn")!;
+const reindexColLabel = document.getElementById("sentai-reindex-collection-label")!;
+const reindexColDropdown = document.getElementById("sentai-reindex-collection-dropdown")!;
+const reindexColRun = document.getElementById("sentai-reindex-collection-run") as HTMLButtonElement;
+const reindexAllBtn = document.getElementById("sentai-reindex-all") as HTMLButtonElement;
+const deleteIndexBtn = document.getElementById("sentai-delete-index") as HTMLButtonElement;
+
+let reindexCollectionId: number | undefined = undefined;
+
+function buildReindexColOption(id: number | undefined, name: string, active: boolean): HTMLElement {
+  const el = document.createElement("div");
+  el.className = "s-col-option" + (active ? " selected" : "");
+  el.textContent = name;
+  el.dataset.id = String(id ?? "");
+  el.addEventListener("click", () => {
+    reindexCollectionId = id;
+    reindexColLabel.textContent = name;
+    reindexColDropdown.querySelectorAll(".s-col-option").forEach((o) =>
+      o.classList.toggle("selected", (o as HTMLElement).dataset.id === String(id ?? "")),
+    );
+    reindexColDropdown.classList.remove("open");
+    reindexColBtn.classList.remove("open");
+  });
+  return el;
+}
+
+reindexColDropdown.appendChild(buildReindexColOption(undefined, "All Collections", true));
+if (api) {
+  for (const col of api.getCollections()) {
+    reindexColDropdown.appendChild(buildReindexColOption(col.id, col.name, false));
+  }
+}
+
+reindexColBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const isOpen = reindexColDropdown.classList.toggle("open");
+  reindexColBtn.classList.toggle("open", isOpen);
+});
+
+function closeReindexDropdown() {
+  reindexColDropdown.classList.remove("open");
+  reindexColBtn.classList.remove("open");
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+async function refreshInfo() {
+  if (!api) return;
+  infoCountEl.textContent = "…";
+  infoChunksEl.textContent = "…";
+  infoSizeEl.textContent = "…";
+  const { itemCount, chunkCount, sizeBytes } = await api.getIndexStats();
+  infoCountEl.textContent = String(itemCount);
+  infoChunksEl.textContent = String(chunkCount);
+  infoSizeEl.textContent = formatBytes(sizeBytes);
+}
+
+function setReindexBusy(busy: boolean) {
+  reindexColRun.disabled = busy;
+  reindexAllBtn.disabled = busy;
+  deleteIndexBtn.disabled = busy;
+}
+
+reindexColRun.addEventListener("click", async () => {
+  if (!api) return;
+  if (reindexCollectionId == null) {
+    reindexStatus.textContent = "Select a collection first.";
+    return;
+  }
+  setReindexBusy(true);
+  reindexStatus.textContent = "Starting…";
+  infoCountEl.textContent = "0";
+  infoChunksEl.textContent = "0";
+  infoSizeEl.textContent = "…";
+  await api.reindexCollection(reindexCollectionId, (done, total, title, totalChunks, sizeBytes) => {
+    reindexStatus.textContent = `Indexed ${done} / ${total}: ${title}`;
+    infoCountEl.textContent = String(done);
+    infoChunksEl.textContent = String(totalChunks);
+    infoSizeEl.textContent = formatBytes(sizeBytes);
+  });
+  reindexStatus.textContent = "Done.";
+  setReindexBusy(false);
+  await refreshInfo();
+});
+
+reindexAllBtn.addEventListener("click", async () => {
+  if (!api) return;
+  setReindexBusy(true);
+  reindexStatus.textContent = "Starting…";
+  infoCountEl.textContent = "0";
+  infoChunksEl.textContent = "0";
+  infoSizeEl.textContent = "…";
+  await api.reindexAll((done, total, title, totalChunks, sizeBytes) => {
+    reindexStatus.textContent = `Indexed ${done} / ${total}: ${title}`;
+    infoCountEl.textContent = String(done);
+    infoChunksEl.textContent = String(totalChunks);
+    infoSizeEl.textContent = formatBytes(sizeBytes);
+  });
+  reindexStatus.textContent = "Done.";
+  setReindexBusy(false);
+  await refreshInfo();
+});
+
+deleteIndexBtn.addEventListener("click", async () => {
+  if (!api) return;
+  const label = reindexCollectionId == null ? "all" : "collection";
+  reindexStatus.textContent = `Deleting ${label} index…`;
+  setReindexBusy(true);
+  infoCountEl.textContent = "0";
+  infoChunksEl.textContent = "0";
+  infoSizeEl.textContent = "…";
+  await api.deleteIndex(reindexCollectionId);
+  reindexStatus.textContent = "Deleted.";
+  setReindexBusy(false);
+  await refreshInfo();
+});
+
+settingsTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    settingsTabs.forEach((t) => t.classList.remove("active"));
+    tab.classList.add("active");
+    const target = tab.dataset.panel;
+    settingsPanel.hidden = target !== "settings-panel";
+    infoPanel.hidden = target !== "info-panel";
+    if (target === "info-panel") refreshInfo();
+  });
+});
 
 settingsToggle.addEventListener("click", () => {
   const isOpen = settingsDrawer.classList.toggle("open");

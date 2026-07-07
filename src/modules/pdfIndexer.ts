@@ -194,7 +194,7 @@ function buildAbstractInput(abstract: string, meta: ItemMetadata): string {
 
 export class PdfIndexer {
   // Entry point — called by hooks.ts whenever a new PDF is added to Zotero
-  static async process(item: Zotero.Item) {
+  static async process(item: Zotero.Item): Promise<number> {
     const path = await item.getFilePathAsync();
     Zotero.debug(`sentAI: New PDF uploaded: ${path}`);
 
@@ -256,5 +256,6 @@ export class PdfIndexer {
     const parent = item.parentItem ?? item;
     parent.addTag(INDEXED_TAG);
     await parent.saveTx();
+    return records.length;
   }
 }

@@ -18,44 +18,83 @@
 
     <!-- Settings drawer -->
     <div id="sentai-settings">
-      <div class="sentai-settings-row">
-        <label for="sentai-chunk-size">Max Chunk Size (tokens)</label>
-        <input type="number" id="sentai-chunk-size" min="100" max="2000" step="50" />
+
+      <div id="sentai-settings-tabs">
+        <button class="sentai-settings-tab active" data-panel="settings-panel">Settings</button>
+        <button class="sentai-settings-tab" data-panel="info-panel">Info</button>
       </div>
-      <div class="sentai-settings-row">
-        <label for="sentai-top-k">Top-K Results</label>
-        <input type="number" id="sentai-top-k" min="1" max="50" />
-      </div>
-      <div class="sentai-settings-row">
-        <label for="sentai-rag-top-papers">Chat: Papers per Answer</label>
-        <input type="number" id="sentai-rag-top-papers" min="1" max="20" />
-      </div>
-      <div class="sentai-settings-row">
-        <label for="sentai-rag-chunks-per-paper">Chat: Excerpts per Paper</label>
-        <input type="number" id="sentai-rag-chunks-per-paper" min="1" max="10" />
-      </div>
-      <div class="sentai-settings-row">
-        <label for="sentai-auto-attach-pdf" style="flex: 1">Auto-download PDF (DOI/ISBN)</label>
-        <input type="checkbox" id="sentai-auto-attach-pdf" />
-      </div>
-      <div class="sentai-settings-row">
-        <label for="sentai-min-similarity">Min. Similarity (%)</label>
-        <input type="number" id="sentai-min-similarity" min="0" max="100" step="5" />
-      </div>
-      <div class="sentai-settings-divider"></div>
-      <div class="sentai-settings-row">
-        <label for="sentai-llm-api-key">LLM API Key</label>
-        <input type="password" id="sentai-llm-api-key" style="flex: 1" />
-      </div>
-      <div class="sentai-settings-row">
-        <label for="sentai-llm-endpoint">LLM Endpoint</label>
-        <input type="text" id="sentai-llm-endpoint" placeholder="Leave blank for default server" style="flex: 1" />
-      </div>
-      <div class="sentai-settings-row">
-        <label for="sentai-llm-model">Model</label>
-        <input type="text" id="sentai-llm-model" placeholder="e.g. claude-sonnet-4-6, gpt-4o" style="flex: 1" />
-      </div>
-      <button id="sentai-settings-save" type="button">Save</button>
+
+      <div id="settings-panel">
+        <div class="sentai-settings-row">
+          <label for="sentai-chunk-size">Max Chunk Size (tokens)</label>
+          <input type="number" id="sentai-chunk-size" min="100" max="2000" step="50" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-top-k">Top-K Results</label>
+          <input type="number" id="sentai-top-k" min="1" max="50" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-rag-top-papers">Chat: Papers per Answer</label>
+          <input type="number" id="sentai-rag-top-papers" min="1" max="20" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-rag-chunks-per-paper">Chat: Excerpts per Paper</label>
+          <input type="number" id="sentai-rag-chunks-per-paper" min="1" max="10" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-auto-attach-pdf" style="flex: 1">Auto-download PDF (DOI/ISBN)</label>
+          <input type="checkbox" id="sentai-auto-attach-pdf" />
+        </div>
+        <div class="sentai-settings-row">
+
+
+          <label for="sentai-min-similarity">Min. Similarity (%)</label>
+          <input type="number" id="sentai-min-similarity" min="0" max="100" step="5" />
+        </div>
+        <div class="sentai-settings-divider"></div>
+        <div class="sentai-settings-row">
+          <label for="sentai-llm-api-key">LLM API Key</label>
+          <input type="password" id="sentai-llm-api-key" style="flex: 1" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-llm-endpoint">LLM Endpoint</label>
+          <input type="text" id="sentai-llm-endpoint" placeholder="Leave blank for default server" style="flex: 1" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-llm-model">Model</label>
+          <input type="text" id="sentai-llm-model" placeholder="e.g. claude-sonnet-4-6, gpt-4o" style="flex: 1" />
+        </div>
+        <button id="sentai-settings-save" type="button">Save</button>
+      </div><!-- /settings-panel -->
+
+      <div id="info-panel" hidden="hidden">
+        <div class="sentai-info-row">
+          <span class="sentai-info-label">Indexed papers</span>
+          <span id="sentai-info-count" class="sentai-info-value">—</span>
+        </div>
+        <div class="sentai-info-row">
+          <span class="sentai-info-label">Total chunks</span>
+          <span id="sentai-info-chunks" class="sentai-info-value">—</span>
+        </div>
+        <div class="sentai-info-row">
+          <span class="sentai-info-label">Index size</span>
+          <span id="sentai-info-size" class="sentai-info-value">—</span>
+        </div>
+        <div class="sentai-settings-divider"></div>
+        <div id="sentai-reindex-collection-bar">
+          <button id="sentai-reindex-collection-btn" type="button">
+            <span id="sentai-reindex-collection-label">All Collections</span>
+            <span class="s-col-arrow">&#x25BE;</span>
+          </button>
+          <div id="sentai-reindex-collection-dropdown"></div>
+        </div>
+        <div id="sentai-reindex-status"></div>
+        <div class="sentai-reindex-actions">
+          <button id="sentai-reindex-collection-run" type="button">Index Collection</button>
+          <button id="sentai-reindex-all" type="button">Index All</button>
+          <button id="sentai-delete-index" type="button">Delete Index</button>
+        </div>
+      </div><!-- /info-panel -->
     </div>
 
     <!-- Tab bar -->
@@ -135,6 +174,14 @@
       <div id="sentai-skills-bar">
         <div id="sentai-skills-chips"></div>
         <button id="sentai-skills-open" type="button">Open skills folder &#x2197;</button>
+      </div>
+
+      <div id="sentai-chat-collection-bar">
+        <button id="sentai-chat-collection-btn" type="button">
+          <span id="sentai-chat-collection-label">All Collections</span>
+          <span class="s-col-arrow">&#x25BE;</span>
+        </button>
+        <div id="sentai-chat-collection-dropdown"></div>
       </div>
 
       <div id="sentai-eingabe">

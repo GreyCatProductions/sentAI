@@ -224,6 +224,41 @@ class EmbeddingStorage {
     return (rows as any[]).map((r) => r.item_id as number);
   }
 
+  async getUsedBytes(): Promise<number> {
+    try {
+      const pcRows = await Zotero.DB.queryAsync("PRAGMA sentai.page_count");
+      const flRows = await Zotero.DB.queryAsync("PRAGMA sentai.freelist_count");
+      const psRows = await Zotero.DB.queryAsync("PRAGMA sentai.page_size");
+      const pageCount = (pcRows as any[])[0]?.page_count ?? 0;
+      const freeCount = (flRows as any[])[0]?.freelist_count ?? 0;
+      const pageSize = (psRows as any[])[0]?.page_size ?? 0;
+      return (pageCount - freeCount) * pageSize;
+    } catch {
+      return 0;
+    }
+  }
+
+  async getStats(): Promise<{ itemCount: number; chunkCount: number; sizeBytes: number }> {
+    const countRows = await Zotero.DB.queryAsync(
+      "SELECT COUNT(DISTINCT item_id) AS items, COUNT(*) AS chunks FROM sentai.chunks",
+    );
+    const itemCount = (countRows as any[])[0]?.items ?? 0;
+    const chunkCount = (countRows as any[])[0]?.chunks ?? 0;
+    let sizeBytes = 0;
+    try {
+      const pcRows = await Zotero.DB.queryAsync("PRAGMA sentai.page_count");
+      const flRows = await Zotero.DB.queryAsync("PRAGMA sentai.freelist_count");
+      const psRows = await Zotero.DB.queryAsync("PRAGMA sentai.page_size");
+      const pageCount = (pcRows as any[])[0]?.page_count ?? 0;
+      const freeCount = (flRows as any[])[0]?.freelist_count ?? 0;
+      const pageSize = (psRows as any[])[0]?.page_size ?? 0;
+      sizeBytes = (pageCount - freeCount) * pageSize;
+    } catch {
+      // DB not yet attached
+    }
+    return { itemCount, chunkCount, sizeBytes };
+  }
+
   async close(): Promise<void> {
     try {
       await Zotero.DB.queryAsync("DETACH DATABASE sentai");
