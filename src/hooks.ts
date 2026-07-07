@@ -77,22 +77,45 @@ async function onStartup() {
       Zotero.getMainWindow()?.ZoteroPane?.selectItem(itemId);
     },
     getCollections: (): { id: number; name: string }[] => {
-      const libID = Zotero.Libraries.userLibraryID;
-      const cols = Zotero.Collections.getByLibrary(libID) as any[];
-      return cols
-        .map((c: any) => ({ id: c.id as number, name: c.name as string }))
-        .sort((a, b) => a.name.localeCompare(b.name));
+      const result: { id: number; name: string }[] = [];
+      const libraries = (Zotero.Libraries.getAll() as any[]).filter(
+        (lib: any) => lib.libraryType !== "feeds",
+      );
+
+      const collectRecursive = (col: any, prefix: string) => {
+        const name = prefix ? `${prefix} / ${col.name as string}` : (col.name as string);
+        result.push({ id: col.id as number, name });
+        for (const child of col.getChildCollections() as any[]) {
+          collectRecursive(child, name);
+        }
+      };
+
+      for (const lib of libraries) {
+        const isGroup = lib.libraryType === "group";
+        const libPrefix = isGroup ? (lib.name as string) : "";
+        const topLevel = (Zotero.Collections.getByLibrary(lib.libraryID) as any[])
+          .filter((c: any) => !c.parentID);
+        for (const c of topLevel) {
+          collectRecursive(c, libPrefix);
+        }
+      }
+      return result.sort((a, b) => a.name.localeCompare(b.name));
     },
     getIndexStats: () => embeddingStorage.getStats(),
     reindexAll: async (
       onProgress?: (done: number, total: number, title: string, totalChunks: number, sizeBytes: number) => void,
     ): Promise<void> => {
-      const libID = Zotero.Libraries.userLibraryID;
-      const s = new Zotero.Search();
-      s.addCondition("libraryID", "is", String(libID));
-      s.addCondition("itemType", "is", "attachment");
-      const ids = (await s.search()) as number[];
-      const pdfs = ids
+      const libraries = (Zotero.Libraries.getAll() as any[]).filter(
+        (lib: any) => lib.libraryType !== "feeds",
+      );
+      const allIds: number[] = [];
+      for (const lib of libraries) {
+        const s = new Zotero.Search();
+        s.addCondition("libraryID", "is", String(lib.libraryID as number));
+        s.addCondition("itemType", "is", "attachment");
+        allIds.push(...((await s.search()) as number[]));
+      }
+      const pdfs = allIds
         .map((id) => Zotero.Items.get(id) as Zotero.Item | false)
         .filter(
           (item): item is Zotero.Item =>
