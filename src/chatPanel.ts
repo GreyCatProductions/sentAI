@@ -17,8 +17,8 @@ type Api = {
   healthCheck: () => Promise<{ embedder: boolean; hasIndex: boolean }>;
   openItem: (itemId: number) => void;
   getIndexStats: () => Promise<{ itemCount: number; chunkCount: number; sizeBytes: number }>;
-  reindexAll: (onProgress?: (done: number, total: number, title: string) => void) => Promise<void>;
-  reindexCollection: (collectionId: number, onProgress?: (done: number, total: number, title: string) => void) => Promise<void>;
+  reindexAll: (onProgress?: (done: number, total: number, title: string, totalChunks: number) => void) => Promise<void>;
+  reindexCollection: (collectionId: number, onProgress?: (done: number, total: number, title: string, totalChunks: number) => void) => Promise<void>;
   deleteIndex: (collectionId?: number) => Promise<void>;
 };
 
@@ -735,9 +735,10 @@ reindexColRun.addEventListener("click", async () => {
   infoCountEl.textContent = "0";
   infoChunksEl.textContent = "0";
   infoSizeEl.textContent = "…";
-  await api.reindexCollection(reindexCollectionId, (done, total, title) => {
-    reindexStatus.textContent = `Indexing ${done + 1} / ${total}: ${title}`;
+  await api.reindexCollection(reindexCollectionId, (done, total, title, totalChunks) => {
+    reindexStatus.textContent = `Indexed ${done} / ${total}: ${title}`;
     infoCountEl.textContent = String(done);
+    infoChunksEl.textContent = String(totalChunks);
   });
   reindexStatus.textContent = "Done.";
   setReindexBusy(false);
@@ -751,9 +752,10 @@ reindexAllBtn.addEventListener("click", async () => {
   infoCountEl.textContent = "0";
   infoChunksEl.textContent = "0";
   infoSizeEl.textContent = "…";
-  await api.reindexAll((done, total, title) => {
-    reindexStatus.textContent = `Indexing ${done + 1} / ${total}: ${title}`;
+  await api.reindexAll((done, total, title, totalChunks) => {
+    reindexStatus.textContent = `Indexed ${done} / ${total}: ${title}`;
     infoCountEl.textContent = String(done);
+    infoChunksEl.textContent = String(totalChunks);
   });
   reindexStatus.textContent = "Done.";
   setReindexBusy(false);

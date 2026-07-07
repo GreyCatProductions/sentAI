@@ -211,10 +211,12 @@ class EmbeddingStorage {
     let sizeBytes = 0;
     try {
       const pcRows = await Zotero.DB.queryAsync("PRAGMA sentai.page_count");
+      const flRows = await Zotero.DB.queryAsync("PRAGMA sentai.freelist_count");
       const psRows = await Zotero.DB.queryAsync("PRAGMA sentai.page_size");
       const pageCount = (pcRows as any[])[0]?.page_count ?? 0;
+      const freeCount = (flRows as any[])[0]?.freelist_count ?? 0;
       const pageSize = (psRows as any[])[0]?.page_size ?? 0;
-      sizeBytes = pageCount * pageSize;
+      sizeBytes = (pageCount - freeCount) * pageSize;
     } catch {
       // DB not yet attached
     }

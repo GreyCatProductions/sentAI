@@ -85,7 +85,7 @@ async function onStartup() {
     },
     getIndexStats: () => embeddingStorage.getStats(),
     reindexAll: async (
-      onProgress?: (done: number, total: number, title: string) => void,
+      onProgress?: (done: number, total: number, title: string, totalChunks: number) => void,
     ): Promise<void> => {
       const libID = Zotero.Libraries.userLibraryID;
       const s = new Zotero.Search();
@@ -105,17 +105,18 @@ async function onStartup() {
         if (!(await hasSizeSibling(pdf))) uniquePdfs.push(pdf);
       }
       let done = 0;
+      let totalChunks = 0;
       for (const pdf of uniquePdfs) {
         const parent = (pdf as any).parentItem ?? pdf;
         const title = (parent.getField("title") as string) || "Untitled";
-        onProgress?.(done, uniquePdfs.length, title);
-        await PdfIndexer.process(pdf);
+        totalChunks += await PdfIndexer.process(pdf);
         done++;
+        onProgress?.(done, uniquePdfs.length, title, totalChunks);
       }
     },
     reindexCollection: async (
       collectionId: number,
-      onProgress?: (done: number, total: number, title: string) => void,
+      onProgress?: (done: number, total: number, title: string, totalChunks: number) => void,
     ): Promise<void> => {
       const col = Zotero.Collections.get(collectionId) as any;
       const items: Zotero.Item[] = col?.getChildItems(false) ?? [];
@@ -144,12 +145,13 @@ async function onStartup() {
         if (!(await hasSizeSibling(pdf))) uniquePdfs.push(pdf);
       }
       let done = 0;
+      let totalChunks = 0;
       for (const pdf of uniquePdfs) {
         const parent = (pdf as any).parentItem ?? pdf;
         const title = (parent.getField("title") as string) || "Untitled";
-        onProgress?.(done, uniquePdfs.length, title);
-        await PdfIndexer.process(pdf);
+        totalChunks += await PdfIndexer.process(pdf);
         done++;
+        onProgress?.(done, uniquePdfs.length, title, totalChunks);
       }
     },
     deleteIndex: async (collectionId?: number): Promise<void> => {

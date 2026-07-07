@@ -142,7 +142,7 @@ function buildEmbeddingInput(chunk: string, meta: ItemMetadata): string {
 
 export class PdfIndexer {
   // Entry point — called by hooks.ts whenever a new PDF is added to Zotero
-  static async process(item: Zotero.Item) {
+  static async process(item: Zotero.Item): Promise<number> {
     const path = await item.getFilePathAsync();
     Zotero.debug(`sentAI: New PDF uploaded: ${path}`);
 
@@ -175,5 +175,6 @@ export class PdfIndexer {
     Zotero.debug(
       `sentAI: saved ${records.length} embeddings for item ${item.id}`,
     );
+    return records.length;
   }
 }
