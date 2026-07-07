@@ -6,6 +6,10 @@ import { getPref } from "../utils/prefs";
 
 const MIN_CHUNK_CHARS = 100;
 
+// Below this length an "abstract" is usually a truncated stub or a stray
+// sentence, not worth a dedicated paper-level chunk.
+const MIN_ABSTRACT_CHARS = 120;
+
 // ~4 chars per token for English academic prose — good enough without a tokenizer dep
 const CHARS_PER_TOKEN = 4;
 // text-embedding-3-small supports 8191 tokens; 500 is a practical sweet spot
@@ -131,13 +135,28 @@ function extractMetadata(item: Zotero.Item): ItemMetadata {
   };
 }
 
+// Prefixes a chunk with lightweight bibliographic context so the embedding
+// carries paper identity. The abstract is deliberately NOT included here: it now
+// lives in its own chunk, and repeating it in every body chunk smears the same
+// paper-level signal across all of a paper's chunks — which is what lets a single
+// paper dominate top-K retrieval.
 function buildEmbeddingInput(chunk: string, meta: ItemMetadata): string {
   const parts: string[] = [];
   if (meta.title) parts.push(`Title: ${meta.title}`);
   if (meta.authors) parts.push(`Authors: ${meta.authors}`);
   if (meta.year) parts.push(`Year: ${meta.year}`);
-  if (meta.abstract) parts.push(`Abstract: ${meta.abstract}`);
   return parts.length > 0 ? parts.join("\n") + "\n\n" + chunk : chunk;
+}
+
+// Embedding input for the dedicated abstract chunk: title/authors/year context
+// plus the abstract itself, so it ranks well for broad, thematic queries.
+function buildAbstractInput(abstract: string, meta: ItemMetadata): string {
+  const parts: string[] = [];
+  if (meta.title) parts.push(`Title: ${meta.title}`);
+  if (meta.authors) parts.push(`Authors: ${meta.authors}`);
+  if (meta.year) parts.push(`Year: ${meta.year}`);
+  parts.push(`Abstract: ${abstract}`);
+  return parts.join("\n");
 }
 
 export class PdfIndexer {
@@ -152,21 +171,44 @@ export class PdfIndexer {
     const { text: rawText } = await Zotero.PDFWorker.getFullText(item.id, 0);
     const maxChunkTokens =
       (getPref("maxChunkTokens") as number) || MAX_CHUNK_TOKENS;
-    const chunks: string[] = chunkText(cleanText(rawText), maxChunkTokens);
-    Zotero.debug(`sentAI: ${chunks.length} chunks to embed`);
+    const bodyChunks: string[] = chunkText(cleanText(rawText), maxChunkTokens);
+
+    // A dedicated abstract chunk (when we have one) gives every paper a single
+    // paper-level representation, so retrieval can rank papers by their abstract
+    // instead of by whichever body chunk happens to match — see semanticSearch.
+    const abstract = metadata.abstract?.trim();
+    const hasAbstractChunk =
+      !!abstract && abstract.length >= MIN_ABSTRACT_CHARS;
+    Zotero.debug(
+      `sentAI: ${bodyChunks.length} body chunks${hasAbstractChunk ? " + 1 abstract chunk" : ""} to embed`,
+    );
 
     const records: EmbeddingRecord[] = [];
-    for (let i = 0; i < chunks.length; i++) {
-      const text = chunks[i];
-      const embeddingInput = buildEmbeddingInput(text, metadata);
-      const embedding = await embedText(embeddingInput);
-      const textHash = hashString(text);
+    let chunkIndex = 0;
+
+    if (hasAbstractChunk) {
+      const embedding = await embedText(buildAbstractInput(abstract, metadata));
       records.push({
         paperId: item.key,
-        chunkIndex: i,
-        chunkText: text,
+        chunkIndex: chunkIndex++,
+        chunkText: abstract,
+        chunkKind: "abstract",
         embedding,
-        textHash,
+        textHash: hashString(abstract),
+        metadata,
+      });
+    }
+
+    for (const text of bodyChunks) {
+      const embeddingInput = buildEmbeddingInput(text, metadata);
+      const embedding = await embedText(embeddingInput);
+      records.push({
+        paperId: item.key,
+        chunkIndex: chunkIndex++,
+        chunkText: text,
+        chunkKind: "body",
+        embedding,
+        textHash: hashString(text),
         metadata,
       });
     }

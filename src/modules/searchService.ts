@@ -1,6 +1,6 @@
 import { embedText } from "./embedder";
 import { embeddingStorage } from "./savesystem";
-import { semanticSearch } from "./semanticSearch";
+import { semanticSearch, semanticSearchByPaper } from "./semanticSearch";
 import { getPref } from "../utils/prefs";
 import type { SearchFilters } from "../types";
 
@@ -15,9 +15,18 @@ export interface SearchResult {
   itemId?: number;
 }
 
+export interface RetrievalOptions {
+  // When true, retrieve paper-first (breadth across papers) instead of the flat
+  // top-K chunk ranking used by the Search tab. Used by RAG — see ragService.
+  byPaper?: boolean;
+  topPapers?: number;
+  perPaper?: number;
+}
+
 export async function search(
   query: string,
   filters: SearchFilters = {},
+  options: RetrievalOptions = {},
 ): Promise<SearchResult[]> {
   const queryEmbedding = await embedText(query);
   const libID = Zotero.Libraries.userLibraryID;
@@ -88,8 +97,16 @@ export async function search(
 
   if (allRecords.length === 0) return [];
 
-  const topK = (getPref("topK") as number) || 5;
-  const top = semanticSearch(queryEmbedding, allRecords, topK);
+  const top = options.byPaper
+    ? semanticSearchByPaper(queryEmbedding, allRecords, {
+        topPapers: options.topPapers,
+        perPaper: options.perPaper,
+      })
+    : semanticSearch(
+        queryEmbedding,
+        allRecords,
+        (getPref("topK") as number) || 5,
+      );
 
   return top.map((result) => {
     const { chunkText, similarity } = result;

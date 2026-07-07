@@ -27,6 +27,14 @@
         <input type="number" id="sentai-top-k" min="1" max="50" />
       </div>
       <div class="sentai-settings-row">
+        <label for="sentai-rag-top-papers">Chat: Papers per Answer</label>
+        <input type="number" id="sentai-rag-top-papers" min="1" max="20" />
+      </div>
+      <div class="sentai-settings-row">
+        <label for="sentai-rag-chunks-per-paper">Chat: Excerpts per Paper</label>
+        <input type="number" id="sentai-rag-chunks-per-paper" min="1" max="10" />
+      </div>
+      <div class="sentai-settings-row">
         <label for="sentai-auto-attach-pdf" style="flex: 1">Auto-download PDF (DOI/ISBN)</label>
         <input type="checkbox" id="sentai-auto-attach-pdf" />
       </div>

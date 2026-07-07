@@ -27,7 +27,16 @@ export async function ask(
   const searchQuery = await extractKeywords(query);
   const threshold =
     ((_getPref("minSimilarity") as number | undefined) ?? 10) / 100;
-  const allResults = await search(searchQuery, filters);
+
+  // Retrieve paper-first so the context spans several papers instead of being
+  // swamped by many chunks from one or two. topK stays the Search-tab knob.
+  const topPapers = (_getPref("ragTopPapers") as number | undefined) || 5;
+  const perPaper = (_getPref("ragChunksPerPaper") as number | undefined) || 2;
+  const allResults = await search(searchQuery, filters, {
+    byPaper: true,
+    topPapers,
+    perPaper,
+  });
   const results = allResults.filter((r) => r.similarity >= threshold);
 
   if (results.length === 0) {

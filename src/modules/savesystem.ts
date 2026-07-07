@@ -1,4 +1,4 @@
-import type { EmbeddingRecord } from "../types";
+import type { ChunkKind, EmbeddingRecord } from "../types";
 
 function getEmbeddingModel(): string {
   const model = Zotero.Prefs.get(
@@ -43,6 +43,8 @@ function rowToRecord(row: any): EmbeddingRecord {
     paperId: row.item_key as string,
     chunkIndex: row.chunk_index as number,
     chunkText: row.chunk_text as string,
+    // Rows indexed before chunk_kind existed are body chunks by definition.
+    chunkKind: (row.chunk_kind as ChunkKind | null) ?? "body",
     embedding: base64ToEmbedding(row.embedding as string),
     textHash: row.text_hash as string,
   };
@@ -87,6 +89,7 @@ class EmbeddingStorage {
         item_key      TEXT    NOT NULL,
         chunk_index   INTEGER NOT NULL,
         chunk_text    TEXT    NOT NULL,
+        chunk_kind    TEXT    NOT NULL DEFAULT 'body',
         embedding     TEXT    NOT NULL,
         text_hash     TEXT    NOT NULL,
         model_id      TEXT    NOT NULL,
@@ -98,7 +101,25 @@ class EmbeddingStorage {
       )
     `);
 
+    await this.migrate();
+
     Zotero.log(`sentAI: database ready at ${this.dbPath}`);
+  }
+
+  // Additive schema migrations for databases created by earlier versions.
+  // ALTER TABLE ADD COLUMN is a no-op we guard by inspecting the columns first,
+  // since SQLite has no "ADD COLUMN IF NOT EXISTS".
+  private async migrate(): Promise<void> {
+    const cols = (await Zotero.DB.queryAsync(
+      "PRAGMA sentai.table_info(chunks)",
+    )) as { name: string }[];
+    const names = new Set(cols.map((c) => c.name));
+    if (!names.has("chunk_kind")) {
+      await Zotero.DB.queryAsync(
+        "ALTER TABLE sentai.chunks ADD COLUMN chunk_kind TEXT NOT NULL DEFAULT 'body'",
+      );
+      Zotero.log("sentAI: migrated chunks table — added chunk_kind column");
+    }
   }
 
   async save(itemId: number, records: EmbeddingRecord[]): Promise<void> {
@@ -110,14 +131,15 @@ class EmbeddingStorage {
       for (const r of records) {
         await Zotero.DB.queryAsync(
           `INSERT INTO sentai.chunks
-             (item_id, item_key, chunk_index, chunk_text, embedding,
+             (item_id, item_key, chunk_index, chunk_text, chunk_kind, embedding,
               text_hash, model_id, meta_title, meta_authors, meta_year, meta_abstract)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
           [
             itemId,
             r.paperId,
             r.chunkIndex,
             r.chunkText,
+            r.chunkKind ?? "body",
             embeddingToBase64(r.embedding),
             r.textHash,
             getEmbeddingModel(),

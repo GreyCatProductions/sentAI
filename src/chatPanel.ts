@@ -588,6 +588,12 @@ const chunkInput = document.getElementById(
   "sentai-chunk-size",
 ) as HTMLInputElement;
 const topKInput = document.getElementById("sentai-top-k") as HTMLInputElement;
+const ragTopPapersInput = document.getElementById(
+  "sentai-rag-top-papers",
+) as HTMLInputElement;
+const ragChunksPerPaperInput = document.getElementById(
+  "sentai-rag-chunks-per-paper",
+) as HTMLInputElement;
 const autoAttachInput = document.getElementById(
   "sentai-auto-attach-pdf",
 ) as HTMLInputElement;
@@ -607,6 +613,8 @@ const llmModelInput = document.getElementById(
 if (api) {
   chunkInput.value = String(api.getPref("maxChunkTokens") ?? 500);
   topKInput.value = String(api.getPref("topK") ?? 5);
+  ragTopPapersInput.value = String(api.getPref("ragTopPapers") ?? 5);
+  ragChunksPerPaperInput.value = String(api.getPref("ragChunksPerPaper") ?? 2);
   autoAttachInput.checked = Boolean(api.getPref("autoAttachPdf") ?? false);
   minSimilarityInput.value = String(api.getPref("minSimilarity") ?? 10);
   llmApiKeyInput.value = String(api.getPref("llmApiKey") ?? "");
@@ -618,7 +626,6 @@ settingsToggle.addEventListener("click", () => {
   const isOpen = settingsDrawer.classList.toggle("open");
   settingsToggle.classList.toggle("active", isOpen);
 });
-
 
 const saveBtn = document.getElementById(
   "sentai-settings-save",
@@ -632,6 +639,14 @@ saveBtn.addEventListener("click", () => {
 
   const topKVal = parseInt(topKInput.value, 10);
   if (!isNaN(topKVal)) api.setPref("topK", topKVal);
+
+  const ragTopPapersVal = parseInt(ragTopPapersInput.value, 10);
+  if (!isNaN(ragTopPapersVal))
+    api.setPref("ragTopPapers", Math.max(1, ragTopPapersVal));
+
+  const ragChunksPerPaperVal = parseInt(ragChunksPerPaperInput.value, 10);
+  if (!isNaN(ragChunksPerPaperVal))
+    api.setPref("ragChunksPerPaper", Math.max(1, ragChunksPerPaperVal));
 
   api.setPref("autoAttachPdf", autoAttachInput.checked);
 
