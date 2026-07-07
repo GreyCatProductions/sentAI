@@ -440,6 +440,7 @@ function renderResultCards(results: SearchResult[], query: string) {
   for (const chunks of groups.values()) {
     chunks.sort((a, b) => b.similarity - a.similarity);
     const best = chunks[0];
+    console.log(`[sentAI] rendering group "${best.title}" — itemId=${best.itemId}, chunkText="${best.chunkText?.substring(0, 60)}"`);
 
     const card = document.createElement("div");
     card.className = "s-paper-group";
@@ -565,8 +566,17 @@ async function runSearch() {
     };
 
     const results = await api.search(query, filters);
+    console.log(`[sentAI] search returned ${results.length} raw results`, results.map(r => ({ title: r.title, itemId: r.itemId, similarity: r.similarity, chunkIndex: r.chunkIndex })));
     const threshold = ((api.getPref("minSimilarity") as number) ?? 10) / 100;
     const filtered = results.filter((r) => r.similarity >= threshold);
+    console.log(`[sentAI] ${filtered.length} results after threshold (${results.length - filtered.length} dropped)`);
+    const groups = new Map<string | number, typeof filtered>();
+    for (const r of filtered) {
+      const key = r.itemId ?? r.title;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(r);
+    }
+    console.log(`[sentAI] grouped into ${groups.size} papers:`, [...groups.entries()].map(([k, chunks]) => ({ key: k, chunks: chunks.length, bestScore: Math.round(chunks[0].similarity * 100) + "%" })));
     renderResultCards(filtered, query);
   } catch (e: any) {
     searchResults.innerHTML = "";
