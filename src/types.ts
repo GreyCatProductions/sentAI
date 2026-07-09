@@ -17,6 +17,7 @@ export interface EmbeddingRecord {
   chunkKind?: ChunkKind; // defaults to "body" for rows indexed before this field existed
   embedding: number[];
   textHash: string;
+  modelId?: string; // embedding model that produced `embedding`; used to keep incompatible vector spaces from being compared
   metadata?: ItemMetadata;
 }
 

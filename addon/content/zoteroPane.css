@@ -294,6 +294,13 @@ body {
   margin: 6px 0;
 }
 
+.sentai-settings-hint {
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--s-text-muted);
+  margin: -2px 0 4px;
+}
+
 #sentai-settings-save {
   align-self: flex-end;
   margin-top: 4px;

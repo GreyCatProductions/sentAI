@@ -13,7 +13,7 @@ export function getServerUrl(): string {
 
 // ── LLM config (read fresh on every call) ───────────────────────────────────
 
-export type Provider = "sentai" | "gemini" | "anthropic" | "openai";
+export type Provider = "sentai" | "gemini" | "anthropic" | "openai" | "ollama";
 
 export interface LlmConfig {
   provider: Provider;
@@ -22,8 +22,20 @@ export interface LlmConfig {
   model: string;
 }
 
+const OLLAMA_URL = "http://localhost:11434";
+
 export function getLlmConfig(): LlmConfig {
   const str = (key: string) => (_getPref(key) as string | undefined) ?? "";
+
+  if (_getPref("useLocalOllama")) {
+    return {
+      provider: "ollama",
+      endpoint: `${OLLAMA_URL}/v1/chat/completions`,
+      apiKey: "",
+      model: str("localChatModel") || "llama3.1:8b",
+    };
+  }
+
   const endpoint = str("llmEndpoint");
   return {
     provider: detectProvider(endpoint),
@@ -91,7 +103,12 @@ export async function callLLM(
     url = endpoint;
     headers["x-api-key"] = apiKey;
     headers["anthropic-version"] = "2023-06-01";
-    body = { model, max_tokens: maxTokens, system: systemPrompt, messages: [{ role: "user", content: userMessage }] };
+    body = {
+      model,
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userMessage }],
+    };
   } else {
     url = endpoint;
     if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;

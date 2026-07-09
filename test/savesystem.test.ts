@@ -12,15 +12,19 @@ describe("EmbeddingStorage", function () {
       paperId: "paper1",
       chunkIndex: 0,
       chunkText: "chunk1",
+      chunkKind: "body",
       embedding: [0.5, -0.5],
       textHash: "hash1",
+      modelId: "text-embedding-3-small",
     },
     {
       paperId: "paper1",
       chunkIndex: 1,
       chunkText: "chunk2",
+      chunkKind: "body",
       embedding: [0.25, -0.25],
       textHash: "hash2",
+      modelId: "text-embedding-3-small",
     },
   ];
 

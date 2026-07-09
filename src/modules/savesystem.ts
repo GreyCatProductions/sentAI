@@ -1,6 +1,19 @@
 import type { ChunkKind, EmbeddingRecord } from "../types";
 
-function getEmbeddingModel(): string {
+export function getEmbeddingModel(): string {
+  const useLocal = Zotero.Prefs.get(
+    "extensions.zotero.sentai.useLocalOllama",
+    true,
+  ) as boolean | undefined;
+
+  if (useLocal) {
+    const localModel = Zotero.Prefs.get(
+      "extensions.zotero.sentai.localEmbeddingModel",
+      true,
+    ) as string | undefined;
+    return `ollama:${localModel || "nomic-embed-text"}`;
+  }
+
   const model = Zotero.Prefs.get(
     "extensions.zotero.sentai.embeddingModel",
     true,
@@ -47,6 +60,7 @@ function rowToRecord(row: any): EmbeddingRecord {
     chunkKind: (row.chunk_kind as ChunkKind | null) ?? "body",
     embedding: base64ToEmbedding(row.embedding as string),
     textHash: row.text_hash as string,
+    modelId: row.model_id as string,
   };
   if (
     row.meta_title ||

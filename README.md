@@ -33,26 +33,31 @@ sentAI is a Zotero 9 plugin that indexes your PDFs as semantic vectors and lets 
            │
            ▼
   ┌─────────────────┐
-  │   Embedding      │  ← local server → Azure OpenAI
-  └────────┬────────┘       text-embedding-3-small
+  │   Embedding      │  ← local server → Azure text-embedding-3-small
+  └────────┬────────┘       OR local Ollama (nomic-embed-text), no cloud call
            │
            ▼
   ┌─────────────────┐
-  │  Local Storage   │  ← <Zotero data dir>/sentai/embeddings/
-  └─────────────────┘
+  │  Local Storage   │  ← SQLite at <Zotero data dir>/sentai/sentai.sqlite
+  └─────────────────┘       tagged with the embedding model that produced it
 
 
  Query typed in Chat tab
          │
          ▼
   ┌─────────────────┐
-  │ Keyword extract  │  ← gemini-2.0-flash-lite
-  └────────┬────────┘       distils question → search terms
+  │ Keyword extract  │  ← callLLM(): Gemini / Anthropic / OpenAI-shaped /
+  └────────┬────────┘       local Ollama — distils question → search terms
            │
            ▼
   ┌─────────────────┐
-  │  Embed keywords  │  ← local server → Azure OpenAI
+  │  Embed keywords  │  ← same embedding path as indexing (Azure or Ollama)
   └────────┬────────┘
+           │
+           ▼
+  ┌─────────────────┐
+  │ Model-id filter │  ← drop chunks from a different embedding model
+  └────────┬────────┘       (vectors from different models aren't comparable)
            │
            ▼
   ┌─────────────────┐
@@ -75,8 +80,8 @@ sentAI is a Zotero 9 plugin that indexes your PDFs as semantic vectors and lets 
            │
            ▼
   ┌─────────────────┐
-  │  Gemini 2.5     │  ← gemini-2.5-flash, temp 0.2
-  │  Flash          │
+  │   callLLM()     │  ← Gemini 2.5 Flash, Anthropic, OpenAI-shaped,
+  │                 │     or local Ollama (llama3.1:8b) — same code path
   └────────┬────────┘
            │
            ▼
@@ -104,8 +109,9 @@ sentAI is a Zotero 9 plugin that indexes your PDFs as semantic vectors and lets 
 
 - [Zotero 9](https://www.zotero.org)
 - [Node.js LTS](https://nodejs.org/en/)
-- An Azure AI / Cognitive Services API key with a `text-embedding-3-small` deployment
-- A Google Gemini API key (for RAG answer generation)
+- Either:
+  - An Azure AI / Cognitive Services API key with a `text-embedding-3-small` deployment, plus a Google Gemini API key (for RAG answer generation) — the cloud path, or
+  - [Ollama](https://ollama.com) running locally — no API keys needed, see [Local mode (Ollama)](#local-mode-ollama) below
 
 ## Setup
 
@@ -150,6 +156,45 @@ Builds the plugin, launches Zotero, and watches `src/` for hot reload.
 
 Each result shows the paper title, a similarity score, and the matching passage.
 
+## Local mode (Ollama)
+
+Run embeddings and/or chat entirely on your own machine instead of Azure/Gemini — no API keys, nothing leaves your computer.
+
+**1. Install Ollama**
+
+```sh
+brew install ollama
+```
+
+**2. Start it as a background service** (auto-starts on login, no need to run `ollama serve` yourself)
+
+```sh
+brew services start ollama
+```
+
+**3. Pull the models**
+
+```sh
+ollama pull nomic-embed-text   # embeddings
+ollama pull llama3.1:8b        # chat / RAG answers
+```
+
+**4. Enable it in sentAI**
+
+Open the Chat panel → ⚙️ Settings → check **"Use local Ollama (embeddings + chat)"** → Save.
+
+Confirm the dialog that appears — switching embedding models clears your search index (old and new embeddings live in incompatible vector spaces and can't be compared), so already-indexed PDFs need to be removed and re-added to be searchable again under the new model.
+
+Different Ollama models? Just change the "Local Embedding Model" / "Local Chat Model" fields to whatever you've pulled (`ollama list` shows what's available) before saving.
+
+**Useful commands**
+
+```sh
+brew services list | grep ollama    # check it's running
+brew services stop ollama           # stop the background service
+ollama list                         # see pulled models
+```
+
 ## Dev commands
 
 ```sh
@@ -179,6 +224,7 @@ npm run release    # Bump version, commit, tag, push → GitHub Actions release
 | Keyword extraction pre-pass (Gemini Flash Lite)        | `done`    |
 | Similarity threshold filter                            | `done`    |
 | RAG answers via Gemini 2.5 Flash with inline citations | `done`    |
+| Local mode via Ollama (embeddings + chat, no API keys) | `done`    |
 | Hybrid search (semantic + keyword via RRF)             | `planned` |
 | Conversation history (multi-turn follow-ups)           | `planned` |
 | Streaming responses                                    | `planned` |

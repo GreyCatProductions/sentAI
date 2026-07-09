@@ -1,5 +1,5 @@
 import { embedText } from "./embedder";
-import { embeddingStorage } from "./savesystem";
+import { embeddingStorage, getEmbeddingModel } from "./savesystem";
 import { semanticSearch, semanticSearchByPaper } from "./semanticSearch";
 import { getPref } from "../utils/prefs";
 import type { SearchFilters } from "../types";
@@ -93,6 +93,13 @@ export async function search(
     const allEmbeddings = await embeddingStorage.loadAll();
     allRecords = Array.from(allEmbeddings.values()).flat();
   }
+
+  // Vectors from different embedding models live in incompatible spaces —
+  // comparing them would silently produce meaningless similarity scores
+  // (see dotProduct in utils/vector.ts, which doesn't guard against mismatched
+  // dimensions). Only rank chunks embedded by the currently active model.
+  const activeModel = getEmbeddingModel();
+  allRecords = allRecords.filter((r) => r.modelId === activeModel);
 
   if (allRecords.length === 0) return [];
 

@@ -10,3 +10,6 @@ pref("minSimilarity", 10);
 pref("llmApiKey", "");
 pref("llmEndpoint", "");
 pref("llmModel", "");
+pref("useLocalOllama", false);
+pref("localEmbeddingModel", "nomic-embed-text");
+pref("localChatModel", "llama3.1:8b");

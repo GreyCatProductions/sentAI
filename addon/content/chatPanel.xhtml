@@ -64,6 +64,21 @@
           <label for="sentai-llm-model">Model</label>
           <input type="text" id="sentai-llm-model" placeholder="e.g. claude-sonnet-4-6, gpt-4o" style="flex: 1" />
         </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-use-local-ollama" style="flex: 1">Use local Ollama (embeddings + chat)</label>
+          <input type="checkbox" id="sentai-use-local-ollama" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-local-embedding-model">Local Embedding Model</label>
+          <input type="text" id="sentai-local-embedding-model" placeholder="nomic-embed-text" style="flex: 1" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-local-chat-model">Local Chat Model</label>
+          <input type="text" id="sentai-local-chat-model" placeholder="llama3.1:8b" style="flex: 1" />
+        </div>
+        <p class="sentai-settings-hint">
+          Requires Ollama running locally (ollama serve). Overrides the LLM Endpoint/Model fields above while enabled, and clears your entire search index on toggle — indexed PDFs will need to be re-added to search again.
+        </p>
         <button id="sentai-settings-save" type="button">Save</button>
       </div><!-- /settings-panel -->
 

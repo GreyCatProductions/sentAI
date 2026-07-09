@@ -1,6 +1,6 @@
 import { initLocale } from "./utils/locale";
 import { createZToolkit } from "./utils/ztoolkit";
-import { embeddingStorage } from "./modules/savesystem";
+import { embeddingStorage, getEmbeddingModel } from "./modules/savesystem";
 import { PdfIndexer, INDEXED_TAG } from "./modules/pdfIndexer";
 import { search } from "./modules/searchService";
 import { ask } from "./modules/ragService";
@@ -71,6 +71,8 @@ async function onStartup() {
       const hasIndex = embedder ? await embeddingStorage.hasAny() : false;
       return { embedder, hasIndex };
     },
+    getActiveEmbeddingModel: () => getEmbeddingModel(),
+    clearIndex: () => embeddingStorage.removeAll(),
     getSkills: () => loadSkills(),
     openSkillsFolder: () => openSkillsFolder(),
     openItem: (itemId: number): void => {

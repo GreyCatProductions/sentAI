@@ -20,6 +20,8 @@ type Api = {
   reindexAll: (onProgress?: (done: number, total: number, title: string, totalChunks: number, sizeBytes: number) => void) => Promise<void>;
   reindexCollection: (collectionId: number, onProgress?: (done: number, total: number, title: string, totalChunks: number, sizeBytes: number) => void) => Promise<void>;
   deleteIndex: (collectionId?: number) => Promise<void>;
+  getActiveEmbeddingModel: () => string;
+  clearIndex: () => Promise<void>;
 };
 
 const api: Api | undefined = (window as any).arguments?.[0];
@@ -703,6 +705,15 @@ const llmEndpointInput = document.getElementById(
 const llmModelInput = document.getElementById(
   "sentai-llm-model",
 ) as HTMLInputElement;
+const useLocalOllamaInput = document.getElementById(
+  "sentai-use-local-ollama",
+) as HTMLInputElement;
+const localEmbeddingModelInput = document.getElementById(
+  "sentai-local-embedding-model",
+) as HTMLInputElement;
+const localChatModelInput = document.getElementById(
+  "sentai-local-chat-model",
+) as HTMLInputElement;
 
 if (api) {
   chunkInput.value = String(api.getPref("maxChunkTokens") ?? 500);
@@ -714,6 +725,13 @@ if (api) {
   llmApiKeyInput.value = String(api.getPref("llmApiKey") ?? "");
   llmEndpointInput.value = String(api.getPref("llmEndpoint") ?? "");
   llmModelInput.value = String(api.getPref("llmModel") ?? "");
+  useLocalOllamaInput.checked = Boolean(api.getPref("useLocalOllama") ?? false);
+  localEmbeddingModelInput.value = String(
+    api.getPref("localEmbeddingModel") ?? "nomic-embed-text",
+  );
+  localChatModelInput.value = String(
+    api.getPref("localChatModel") ?? "llama3.1:8b",
+  );
 }
 
 // ── Settings drawer inner tabs ───────────────────────────────────────────────
@@ -865,8 +883,43 @@ const saveBtn = document.getElementById(
   "sentai-settings-save",
 ) as HTMLButtonElement;
 
-saveBtn.addEventListener("click", () => {
+saveBtn.addEventListener("click", async () => {
   if (!api) return;
+
+  const nextUseLocal = useLocalOllamaInput.checked;
+  const nextLocalModel =
+    localEmbeddingModelInput.value.trim() || "nomic-embed-text";
+  const embeddingConfigChanged =
+    nextUseLocal !== Boolean(api.getPref("useLocalOllama") ?? false) ||
+    (nextUseLocal &&
+      nextLocalModel !==
+        String(api.getPref("localEmbeddingModel") ?? "nomic-embed-text"));
+
+  if (embeddingConfigChanged) {
+    const confirmed = confirm(
+      "Switching Ollama on/off clears your entire search index — indexed PDFs will need to be re-added to search again. Continue?",
+    );
+    if (!confirmed) {
+      useLocalOllamaInput.checked = Boolean(
+        api.getPref("useLocalOllama") ?? false,
+      );
+      localEmbeddingModelInput.value = String(
+        api.getPref("localEmbeddingModel") ?? "nomic-embed-text",
+      );
+      return;
+    }
+  }
+
+  api.setPref("useLocalOllama", nextUseLocal);
+  api.setPref("localEmbeddingModel", nextLocalModel);
+  api.setPref(
+    "localChatModel",
+    localChatModelInput.value.trim() || "llama3.1:8b",
+  );
+
+  if (embeddingConfigChanged) {
+    await api.clearIndex();
+  }
 
   const chunkVal = parseInt(chunkInput.value, 10);
   if (!isNaN(chunkVal)) api.setPref("maxChunkTokens", chunkVal);
