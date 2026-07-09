@@ -708,6 +708,10 @@ const llmModelInput = document.getElementById(
 const useLocalOllamaInput = document.getElementById(
   "sentai-use-local-ollama",
 ) as HTMLInputElement;
+const ollamaHelpToggle = document.getElementById(
+  "sentai-ollama-help-toggle",
+) as HTMLButtonElement;
+const ollamaHelp = document.getElementById("sentai-ollama-help")!;
 const localEmbeddingModelInput = document.getElementById(
   "sentai-local-embedding-model",
 ) as HTMLInputElement;
@@ -733,6 +737,22 @@ if (api) {
     api.getPref("localChatModel") ?? "llama3.1:8b",
   );
 }
+
+function setOllamaHelpVisible(visible: boolean) {
+  ollamaHelp.hidden = !visible;
+  ollamaHelpToggle.classList.toggle("active", visible);
+  ollamaHelpToggle.setAttribute("aria-expanded", String(visible));
+}
+
+setOllamaHelpVisible(useLocalOllamaInput.checked);
+
+ollamaHelpToggle.addEventListener("click", () => {
+  setOllamaHelpVisible(ollamaHelp.hidden);
+});
+
+useLocalOllamaInput.addEventListener("change", () => {
+  if (useLocalOllamaInput.checked) setOllamaHelpVisible(true);
+});
 
 // ── Settings drawer inner tabs ───────────────────────────────────────────────
 const settingsTabs = document.querySelectorAll<HTMLButtonElement>(".sentai-settings-tab");

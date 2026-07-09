@@ -66,7 +66,18 @@
         </div>
         <div class="sentai-settings-row">
           <label for="sentai-use-local-ollama" style="flex: 1">Use local Ollama (embeddings + chat)</label>
+          <button id="sentai-ollama-help-toggle" class="sentai-info-button" type="button"
+            title="Show Ollama setup steps" aria-expanded="false" aria-controls="sentai-ollama-help">i</button>
           <input type="checkbox" id="sentai-use-local-ollama" />
+        </div>
+        <div id="sentai-ollama-help" class="sentai-ollama-help" hidden="hidden">
+          <div class="sentai-ollama-help-title">Local Ollama setup</div>
+          <ol>
+            <li>Install Ollama from ollama.com, or run <code>brew install ollama</code>.</li>
+            <li>Start it with <code>brew services start ollama</code> or <code>ollama serve</code>.</li>
+            <li>Pull models: <code>ollama pull nomic-embed-text</code> and <code>ollama pull llama3.1:8b</code>.</li>
+            <li>Enable this checkbox, save, then reindex your PDFs.</li>
+          </ol>
         </div>
         <div class="sentai-settings-row">
           <label for="sentai-local-embedding-model">Local Embedding Model</label>

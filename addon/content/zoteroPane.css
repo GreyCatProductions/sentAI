@@ -301,6 +301,69 @@ body {
   margin: -2px 0 4px;
 }
 
+.sentai-info-button {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--s-border);
+  border-radius: 50%;
+  background: var(--s-bg);
+  color: var(--s-text-muted);
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition:
+    border-color 120ms ease,
+    color 120ms ease,
+    background 120ms ease;
+}
+
+.sentai-info-button:hover,
+.sentai-info-button.active {
+  border-color: var(--s-accent);
+  background: var(--s-accent-bg);
+  color: var(--s-accent);
+}
+
+.sentai-ollama-help {
+  border: 1px solid var(--s-border);
+  border-radius: 8px;
+  background: var(--s-bg);
+  padding: 8px 10px;
+  color: var(--s-text-muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.sentai-ollama-help-title {
+  color: var(--s-text);
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.sentai-ollama-help ol {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.sentai-ollama-help li + li {
+  margin-top: 3px;
+}
+
+.sentai-ollama-help code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--s-surface);
+  color: var(--s-text);
+  font-size: 10px;
+}
+
 #sentai-settings-save {
   align-self: flex-end;
   margin-top: 4px;

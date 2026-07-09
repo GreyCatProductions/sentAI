@@ -18,75 +18,74 @@ sentAI is a Zotero 9 plugin that indexes your PDFs as semantic vectors and lets 
 
 ## How it works
 
+```mermaid
+flowchart TB
+  %% sentAI architecture
+  pdf["PDF added to Zotero"]:::event
+  item["Zotero item without PDF"]:::event
+  auto["Auto-attach PDF\nDOI / ISBN lookup"]:::process
+
+  extract["Text extraction\nZotero PDF worker"]:::process
+  clean["Clean + normalize text\nremove ligatures, boilerplate, refs"]:::process
+  chunk["Paragraph-aware chunking\nbody + abstract chunks"]:::process
+  embed{"Embedding provider"}:::decision
+  azure["Azure\ntext-embedding-3-small"]:::cloud
+  ollamaEmbed["Ollama\nnomic-embed-text"]:::local
+  store[("Local SQLite index\nsentai/sentai.sqlite\nmodel-id tagged vectors")]:::storage
+  tag["Zotero item tag\nsentai-indexed"]:::storage
+
+  query["Search or Chat query"]:::event
+  filters["Collection, tag, year,\ntype + similarity filters"]:::process
+  keywords["Keyword extraction\nLLM distills query"]:::process
+  qembed["Embed search intent\nsame provider as indexing"]:::process
+  guard["Model-id guard\nignore incompatible vectors"]:::process
+  cosine["Cosine similarity\npaper-first retrieval"]:::process
+  prompt["Grounded prompt\npaper excerpts + question"]:::process
+  chat{"Chat provider"}:::decision
+  gemini["Gemini / Anthropic /\nOpenAI-compatible"]:::cloud
+  ollamaChat["Ollama\nllama3.1:8b"]:::local
+  answer["Answer with inline citations\n[Paper Title]"]:::result
+
+  item --> auto --> pdf
+  pdf --> extract --> clean --> chunk --> embed
+  embed --> azure --> store
+  embed --> ollamaEmbed --> store
+  store --> tag
+
+  query --> filters --> keywords --> qembed --> guard --> cosine
+  store --> guard
+  cosine --> prompt --> chat
+  chat --> gemini --> answer
+  chat --> ollamaChat --> answer
+
+  classDef event fill:#111827,stroke:#4B6BFB,color:#F9FAFB,stroke-width:2px;
+  classDef process fill:#EEF2FF,stroke:#4B6BFB,color:#111827;
+  classDef decision fill:#FFF7ED,stroke:#F97316,color:#111827,stroke-width:2px;
+  classDef cloud fill:#ECFEFF,stroke:#0891B2,color:#111827;
+  classDef local fill:#ECFDF5,stroke:#059669,color:#111827;
+  classDef storage fill:#FDF2F8,stroke:#DB2777,color:#111827;
+  classDef result fill:#18181B,stroke:#22C55E,color:#FAFAFA,stroke-width:2px;
 ```
- PDF added to Zotero
-         │
-         ▼
-  ┌─────────────────┐
-  │  Text Extraction │  ← Zotero's built-in PDF worker
-  └────────┬────────┘
-           │
-           ▼
-  ┌─────────────────┐
-  │    Chunking      │  ← ~1000-char, paragraph-aware splits
-  └────────┬────────┘
-           │
-           ▼
-  ┌─────────────────┐
-  │   Embedding      │  ← local server → Azure text-embedding-3-small
-  └────────┬────────┘       OR local Ollama (nomic-embed-text), no cloud call
-           │
-           ▼
-  ┌─────────────────┐
-  │  Local Storage   │  ← SQLite at <Zotero data dir>/sentai/sentai.sqlite
-  └─────────────────┘       tagged with the embedding model that produced it
 
+```mermaid
+sequenceDiagram
+  autonumber
+  actor User
+  participant UI as sentAI Chat Panel
+  participant Search as Search Service
+  participant Index as Local SQLite Index
+  participant LLM as LLM Provider
 
- Query typed in Chat tab
-         │
-         ▼
-  ┌─────────────────┐
-  │ Keyword extract  │  ← callLLM(): Gemini / Anthropic / OpenAI-shaped /
-  └────────┬────────┘       local Ollama — distils question → search terms
-           │
-           ▼
-  ┌─────────────────┐
-  │  Embed keywords  │  ← same embedding path as indexing (Azure or Ollama)
-  └────────┬────────┘
-           │
-           ▼
-  ┌─────────────────┐
-  │ Model-id filter │  ← drop chunks from a different embedding model
-  └────────┬────────┘       (vectors from different models aren't comparable)
-           │
-           ▼
-  ┌─────────────────┐
-  │ Cosine search   │  ← top-K chunks from local storage
-  └────────┬────────┘       (optionally filtered by collection)
-           │
-           ▼
-  ┌─────────────────┐
-  │ Threshold filter │  ← drop chunks below min. similarity
-  └────────┬────────┘
-           │
-           ▼
-  ┌──────────────────────────────────┐
-  │  Build prompt                    │
-  │  [Paper Title]                   │
-  │  <chunk text>                    │  ← only high-relevance chunks
-  │  ...                             │
-  │  Question: <original query>      │
-  └────────┬─────────────────────────┘
-           │
-           ▼
-  ┌─────────────────┐
-  │   callLLM()     │  ← Gemini 2.5 Flash, Anthropic, OpenAI-shaped,
-  │                 │     or local Ollama (llama3.1:8b) — same code path
-  └────────┬────────┘
-           │
-           ▼
-  Answer with inline citations
-  e.g. "Memory consolidation occurs during sleep [Stickgold 2005]."
+  User->>UI: Ask a question
+  UI->>Search: Send query + filters
+  Search->>LLM: Extract retrieval keywords
+  LLM-->>Search: Focused search terms
+  Search->>Index: Load matching model-id vectors
+  Search->>Search: Rank by cosine similarity
+  Search-->>UI: Top paper excerpts
+  UI->>LLM: Build grounded prompt
+  LLM-->>UI: Answer using only excerpts
+  UI-->>User: Response with inline citations
 ```
 
 ## Features
