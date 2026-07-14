@@ -1,5 +1,10 @@
-pref-title = Addon Template Example
-pref-enable =
-    .label = Enable
-pref-input = Input
-pref-help = { $name } Build { $version } { $time }
+pref-title = sentAI Settings
+pref-model-label = Embedding Model
+pref-server-url-label = Server URL
+pref-max-chunk-tokens-label = Max Chunk Size
+pref-top-k-label = Top-K Results
+pref-llm-section = Language Model
+pref-llm-api-key-label = API Key
+pref-llm-endpoint-label = Endpoint URL
+pref-llm-model-label = Model
+pref-auto-attach-pdf-label = Auto-download PDF when adding item by DOI/ISBN

@@ -1,2 +1,15 @@
 pref("enable", true);
-pref("input", "This is input");
+pref("embeddingModel", "text-embedding-3-small");
+pref("serverUrl", "http://141.89.241.146/");
+pref("maxChunkTokens", 500);
+pref("topK", 5);
+pref("ragTopPapers", 5);
+pref("ragChunksPerPaper", 2);
+pref("autoAttachPdf", false);
+pref("minSimilarity", 10);
+pref("llmApiKey", "");
+pref("llmEndpoint", "");
+pref("llmModel", "");
+pref("useLocalOllama", false);
+pref("localEmbeddingModel", "nomic-embed-text");
+pref("localChatModel", "llama3.1:8b");

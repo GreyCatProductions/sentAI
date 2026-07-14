@@ -1,24 +1,24 @@
 {
-  "name": "zotero-plugin-template",
+  "name": "sentai",
   "type": "module",
-  "version": "3.1.0",
-  "description": "Zotero Plugin Template",
+  "version": "1.0.0",
+  "description": "",
   "config": {
-    "addonName": "Zotero Plugin Template",
-    "addonID": "addontemplate@euclpts.com",
-    "addonRef": "addontemplate",
-    "addonInstance": "AddonTemplate",
-    "prefsPrefix": "extensions.zotero.addontemplate"
+    "addonName": "sentAI",
+    "addonID": "sentai@greycat.productions",
+    "addonRef": "sentai",
+    "addonInstance": "SentAI",
+    "prefsPrefix": "extensions.zotero.${addonRef}"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/windingwind/zotero-plugin-template.git"
+    "url": "https://github.com/GreyCatProductions/sentAI.git"
   },
-  "author": "windingwind",
+  "author": "Bobocs, GreyCatProductions",
   "bugs": {
-    "url": "https://github.com/windingwind/zotero-plugin-template/issues"
+    "url": "https://github.com/GreyCatProductions/sentAI/issues"
   },
-  "homepage": "https://github.com/windingwind/zotero-plugin-template#readme",
+  "homepage": "https://github.com/GreyCatProductions/sentAI#readme",
   "license": "AGPL-3.0-or-later",
   "scripts": {
     "start": "zotero-plugin serve",
@@ -30,12 +30,15 @@
     "update-deps": "npm update --save"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
     "zotero-plugin-toolkit": "^5.1.0-beta.13"
   },
   "devDependencies": {
     "@types/chai": "^5.2.3",
+    "@types/express": "^5.0.6",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^24.10.0",
+    "@types/node": "^24.12.4",
     "@zotero-plugin/eslint-config": "^0.6.7",
     "chai": "^6.2.1",
     "eslint": "^9.39.2",

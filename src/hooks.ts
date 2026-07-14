@@ -1,46 +1,269 @@
-import {
-  BasicExampleFactory,
-  HelperExampleFactory,
-  KeyExampleFactory,
-  PromptExampleFactory,
-  UIExampleFactory,
-} from "./modules/examples";
-import { getString, initLocale } from "./utils/locale";
-import { registerPrefsScripts } from "./modules/preferenceScript";
+import { initLocale } from "./utils/locale";
 import { createZToolkit } from "./utils/ztoolkit";
+import { embeddingStorage, getEmbeddingModel } from "./modules/savesystem";
+import { PdfIndexer, INDEXED_TAG } from "./modules/pdfIndexer";
+import { search } from "./modules/searchService";
+import { ask } from "./modules/ragService";
+import { getServerUrl } from "./modules/serverConfig";
+import { getPref, setPref } from "./utils/prefs";
+import { autoAttachPdf } from "./modules/autoAttach";
+import {
+  initSkillsFolder,
+  loadSkills,
+  openSkillsFolder,
+} from "./modules/skillsLoader";
+
+let notifierID: string | undefined;
 
 async function onStartup() {
-  await Promise.all([
-    Zotero.initializationPromise,
-    Zotero.unlockPromise,
-    Zotero.uiReadyPromise,
-  ]);
+  await Promise.all([Zotero.initializationPromise, Zotero.unlockPromise]);
 
   initLocale();
 
-  BasicExampleFactory.registerPrefs();
+  await embeddingStorage.init();
+  await initSkillsFolder();
 
-  BasicExampleFactory.registerNotifier();
+  addon.api = {
+    search,
+    ask,
+    getPref: (key: string) => getPref(key as any),
+    setPref: (key: string, value: any) => setPref(key as any, value),
+    getTags: async (): Promise<string[]> => {
+      const libID = Zotero.Libraries.userLibraryID;
+      try {
+        const tags = await (Zotero.Tags.getAll as any)(libID);
+        return ((tags as any[]) ?? [])
+          .filter((t: any) => (t.type ?? 0) === 0)
+          .map((t: any) => (t.name ?? t.tag ?? "") as string)
+          .filter(Boolean)
+          .sort() as string[];
+      } catch {
+        return [];
+      }
+    },
+    serverReachable: async (): Promise<{ reachable: boolean }> => {
+      let reachable = false;
+      try {
+        const timeout = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("timeout")), 5000),
+        );
+        await Promise.race([fetch(`${getServerUrl()}/health`), timeout]);
+        reachable = true;
+      } catch {
+        reachable = false;
+      }
+      return { reachable };
+    },
+    healthCheck: async (): Promise<{
+      embedder: boolean;
+      hasIndex: boolean;
+    }> => {
+      let embedder = false;
+      try {
+        const timeout = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("timeout")), 5000),
+        );
+        await Promise.race([fetch(`${getServerUrl()}/health`), timeout]);
+        embedder = true;
+      } catch {
+        embedder = false;
+      }
+      const hasIndex = embedder ? await embeddingStorage.hasAny() : false;
+      return { embedder, hasIndex };
+    },
+    getActiveEmbeddingModel: () => getEmbeddingModel(),
+    clearIndex: () => embeddingStorage.removeAll(),
+    getSkills: () => loadSkills(),
+    openSkillsFolder: () => openSkillsFolder(),
+    openItem: (itemId: number): void => {
+      Zotero.getMainWindow()?.ZoteroPane?.selectItem(itemId);
+    },
+    getCollections: (): { id: number; name: string }[] => {
+      const result: { id: number; name: string }[] = [];
+      const libraries = (Zotero.Libraries.getAll() as any[]).filter(
+        (lib: any) => lib.libraryType !== "feeds",
+      );
 
-  KeyExampleFactory.registerShortcuts();
+      const collectRecursive = (col: any, prefix: string) => {
+        const name = prefix ? `${prefix} / ${col.name as string}` : (col.name as string);
+        result.push({ id: col.id as number, name });
+        for (const child of col.getChildCollections() as any[]) {
+          collectRecursive(child, name);
+        }
+      };
 
-  await UIExampleFactory.registerExtraColumn();
+      for (const lib of libraries) {
+        const isGroup = lib.libraryType === "group";
+        const libPrefix = isGroup ? (lib.name as string) : "";
+        const topLevel = (Zotero.Collections.getByLibrary(lib.libraryID) as any[])
+          .filter((c: any) => !c.parentID);
+        for (const c of topLevel) {
+          collectRecursive(c, libPrefix);
+        }
+      }
+      return result.sort((a, b) => a.name.localeCompare(b.name));
+    },
+    getIndexStats: () => embeddingStorage.getStats(),
+    reindexAll: async (
+      onProgress?: (done: number, total: number, title: string, totalChunks: number, sizeBytes: number) => void,
+    ): Promise<void> => {
+      const libraries = (Zotero.Libraries.getAll() as any[]).filter(
+        (lib: any) => lib.libraryType !== "feeds",
+      );
+      const allIds: number[] = [];
+      for (const lib of libraries) {
+        const s = new Zotero.Search();
+        s.addCondition("libraryID", "is", String(lib.libraryID as number));
+        s.addCondition("itemType", "is", "attachment");
+        allIds.push(...((await s.search()) as number[]));
+      }
+      const pdfs = allIds
+        .map((id) => Zotero.Items.get(id) as Zotero.Item | false)
+        .filter(
+          (item): item is Zotero.Item =>
+            !!item &&
+            (item as any).isAttachment() &&
+            (item as any).attachmentContentType === "application/pdf",
+        );
+      const uniquePdfs: Zotero.Item[] = [];
+      const coveredParentIds = new Set<number>();
+      for (const pdf of pdfs) {
+        if (!(await hasSizeSibling(pdf))) {
+          uniquePdfs.push(pdf);
+          const parent = (pdf as any).parentItem;
+          if (parent) coveredParentIds.add(parent.id as number);
+        }
+      }
+      const abstractOnly: Zotero.Item[] = [];
+      for (const lib of libraries) {
+        const s = new Zotero.Search();
+        s.addCondition("libraryID", "is", String(lib.libraryID as number));
+        s.addCondition("itemType", "isNot", "attachment");
+        s.addCondition("itemType", "isNot", "note");
+        const regularIds = (await s.search()) as number[];
+        for (const id of regularIds) {
+          if (coveredParentIds.has(id)) continue;
+          const item = Zotero.Items.get(id) as Zotero.Item | false;
+          if (
+            item &&
+            (item as any).isRegularItem() &&
+            !!((item.getField("abstractNote") as string) || "").trim()
+          ) {
+            abstractOnly.push(item);
+          }
+        }
+      }
+      const total = uniquePdfs.length + abstractOnly.length;
+      let done = 0;
+      let totalChunks = 0;
+      for (const pdf of uniquePdfs) {
+        const parent = (pdf as any).parentItem ?? pdf;
+        const title = (parent.getField("title") as string) || "Untitled";
+        totalChunks += await PdfIndexer.process(pdf);
+        done++;
+        onProgress?.(done, total, title, totalChunks, await embeddingStorage.getUsedBytes());
+      }
+      for (const item of abstractOnly) {
+        const title = (item.getField("title") as string) || "Untitled";
+        totalChunks += await PdfIndexer.processMetadataOnly(item);
+        done++;
+        onProgress?.(done, total, title, totalChunks, await embeddingStorage.getUsedBytes());
+      }
+    },
+    reindexCollection: async (
+      collectionId: number,
+      onProgress?: (done: number, total: number, title: string, totalChunks: number, sizeBytes: number) => void,
+    ): Promise<void> => {
+      const col = Zotero.Collections.get(collectionId) as any;
+      const items: Zotero.Item[] = col?.getChildItems(false) ?? [];
+      const pdfs: Zotero.Item[] = [];
+      const coveredParentIds = new Set<number>();
+      for (const item of items) {
+        if (
+          (item as any).isAttachment() &&
+          (item as any).attachmentContentType === "application/pdf"
+        ) {
+          pdfs.push(item);
+          const parent = (item as any).parentItem;
+          if (parent) coveredParentIds.add(parent.id as number);
+        } else {
+          for (const attId of (item.getAttachments() as number[])) {
+            const att = Zotero.Items.get(attId) as Zotero.Item | false;
+            if (
+              att &&
+              (att as any).isAttachment() &&
+              (att as any).attachmentContentType === "application/pdf"
+            ) {
+              pdfs.push(att);
+              coveredParentIds.add(item.id);
+            }
+          }
+        }
+      }
+      const uniquePdfs: Zotero.Item[] = [];
+      for (const pdf of pdfs) {
+        if (!(await hasSizeSibling(pdf))) uniquePdfs.push(pdf);
+      }
+      const abstractOnly = items.filter(
+        (item) =>
+          (item as any).isRegularItem() &&
+          !coveredParentIds.has(item.id) &&
+          !!((item.getField("abstractNote") as string) || "").trim(),
+      );
+      const total = uniquePdfs.length + abstractOnly.length;
+      let done = 0;
+      let totalChunks = 0;
+      for (const pdf of uniquePdfs) {
+        const parent = (pdf as any).parentItem ?? pdf;
+        const title = (parent.getField("title") as string) || "Untitled";
+        totalChunks += await PdfIndexer.process(pdf);
+        done++;
+        onProgress?.(done, total, title, totalChunks, await embeddingStorage.getUsedBytes());
+      }
+      for (const item of abstractOnly) {
+        const title = (item.getField("title") as string) || "Untitled";
+        totalChunks += await PdfIndexer.processMetadataOnly(item);
+        done++;
+        onProgress?.(done, total, title, totalChunks, await embeddingStorage.getUsedBytes());
+      }
+    },
+    deleteIndex: async (collectionId?: number): Promise<void> => {
+      if (collectionId == null) {
+        await embeddingStorage.removeAll();
+      } else {
+        const col = Zotero.Collections.get(collectionId) as any;
+        const items: Zotero.Item[] = col?.getChildItems(false) ?? [];
+        for (const item of items) {
+          if ((item as any).isAttachment()) {
+            await embeddingStorage.remove(item.id);
+          } else {
+            for (const attId of item.getAttachments() as number[]) {
+              await embeddingStorage.remove(attId);
+            }
+          }
+        }
+      }
+    },
+  };
+  addon.data.initialized = true;
 
-  await UIExampleFactory.registerExtraColumnWithCustomCell();
+  notifierID = Zotero.Notifier.registerObserver({ notify: onNotify }, ["item"]);
 
-  UIExampleFactory.registerItemPaneCustomInfoRow();
+  // UI-dependent setup: wait for the main window before touching the DOM
+  await Zotero.uiReadyPromise;
 
-  UIExampleFactory.registerItemPaneSection();
+  registerIndexColumn();
 
-  UIExampleFactory.registerReaderItemPaneSection();
+  Zotero.PreferencePanes.register({
+    pluginID: addon.data.config.addonID,
+    src: `chrome://${addon.data.config.addonRef}/content/preferences.xhtml`,
+    label: "sentAI",
+    image: `chrome://${addon.data.config.addonRef}/content/icons/favicon@0.5x.png`,
+  });
 
   await Promise.all(
     Zotero.getMainWindows().map((win) => onMainWindowLoad(win)),
   );
-
-  // Mark initialized as true to confirm plugin loading status
-  // outside of the plugin (e.g. scaffold testing process)
-  addon.data.initialized = true;
 }
 
 async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
@@ -51,46 +274,126 @@ async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
     `${addon.data.config.addonRef}-mainWindow.ftl`,
   );
 
-  const popupWin = new ztoolkit.ProgressWindow(addon.data.config.addonName, {
-    closeOnClick: true,
-    closeTime: -1,
-  })
-    .createLine({
-      text: getString("startup-begin"),
-      type: "default",
-      progress: 0,
-    })
-    .show();
+  registerToolbarButton(win);
+}
 
-  await Zotero.Promise.delay(1000);
-  popupWin.changeLine({
-    progress: 30,
-    text: `[30%] ${getString("startup-begin")}`,
+function registerIndexColumn() {
+  const iconUrl = `chrome://${addon.data.config.addonRef}/content/icons/favicon@0.5x.png`;
+  Zotero.ItemTreeManager.registerColumn({
+    dataKey: "sentai-indexed",
+    label: "sentAI",
+    pluginID: addon.data.config.addonID,
+    fixedWidth: true,
+    width: "26",
+    iconPath: iconUrl,
+    showInColumnPicker: true,
+    columnPickerSubMenu: true,
+    dataProvider: (item: Zotero.Item) => {
+      const tags = item.getTags() as Array<{ tag: string }>;
+      return tags.some((t) => t.tag === INDEXED_TAG) ? "1" : "";
+    },
+    renderCell: (_index, data, column, _isFirstColumn, doc) => {
+      const cell = doc.createElement("span");
+      cell.className = `cell ${column.className}`;
+      cell.style.cssText = "display:flex;align-items:center;justify-content:center;";
+      if (data === "1") {
+        const img = doc.createElement("img");
+        img.src = iconUrl;
+        img.setAttribute("title", "Indexed by sentAI");
+        img.style.cssText = "width:12px;height:12px;opacity:0.75;pointer-events:none;";
+        cell.appendChild(img);
+      }
+      return cell;
+    },
   });
+}
 
-  UIExampleFactory.registerStyleSheet(win);
+async function hasSizeSibling(pdf: Zotero.Item): Promise<boolean> {
+  const parent = (pdf as any).parentItem as Zotero.Item | undefined;
+  if (!parent) return false;
 
-  UIExampleFactory.registerRightClickMenuItem();
+  const path = (await pdf.getFilePathAsync()) as string | false;
+  if (!path) return false;
 
-  UIExampleFactory.registerRightClickMenuPopup(win);
+  let size: number;
+  try {
+    const info = await (globalThis as any).IOUtils.stat(path);
+    size = info.size as number;
+  } catch {
+    return false;
+  }
+  if (size === 0) return false;
 
-  UIExampleFactory.registerWindowMenuWithSeparator();
+  for (const sibId of parent.getAttachments() as number[]) {
+    if (sibId >= pdf.id) continue;
+    const sib = Zotero.Items.get(sibId) as Zotero.Item | false;
+    if (
+      !sib ||
+      !(sib as any).isAttachment() ||
+      (sib as any).attachmentContentType !== "application/pdf"
+    )
+      continue;
+    const sibPath = (await sib.getFilePathAsync()) as string | false;
+    if (!sibPath) continue;
+    try {
+      const sibInfo = await (globalThis as any).IOUtils.stat(sibPath);
+      if ((sibInfo.size as number) === size) return true;
+    } catch {
+      continue;
+    }
+  }
+  return false;
+}
 
-  PromptExampleFactory.registerNormalCommandExample();
+function registerToolbarButton(win: _ZoteroTypes.MainWindow) {
+  const doc = win.document;
+  if (doc.getElementById("sentai-toolbar-button")) return;
 
-  PromptExampleFactory.registerAnonymousCommandExample(win);
+  const toolbar = doc.querySelector("#zotero-items-toolbar");
+  if (!toolbar) return;
 
-  PromptExampleFactory.registerConditionalCommandExample();
+  const iconUrl = `chrome://${addon.data.config.addonRef}/content/icons/favicon@0.5x.png`;
 
-  await Zotero.Promise.delay(1000);
+  let button: Element;
+  const lookupNode = toolbar.querySelector("#zotero-tb-lookup");
+  if (lookupNode) {
+    button = lookupNode.cloneNode(true) as Element;
+    button.setAttribute("command", "");
+    button.setAttribute("oncommand", "");
+    button.setAttribute("mousedown", "");
+    button.setAttribute("onmousedown", "");
+  } else {
+    button = doc.createXULElement("toolbarbutton");
+    button.setAttribute("class", "zotero-tb-button");
+  }
 
-  popupWin.changeLine({
-    progress: 100,
-    text: `[100%] ${getString("startup-finish")}`,
-  });
-  popupWin.startCloseTimer(5000);
+  button.setAttribute("id", "sentai-toolbar-button");
+  button.setAttribute("label", "sentAI");
+  button.setAttribute("tooltiptext", "sentAI Chat");
+  (button as HTMLElement).style.listStyleImage = `url("${iconUrl}")`;
+  button.addEventListener("click", () => openChatPanel(win));
 
-  addon.hooks.onDialogEvents("dialogExample");
+  const searchBox = toolbar.querySelector("#zotero-tb-search");
+  const separator = doc.createXULElement("toolbarseparator");
+  separator.setAttribute("id", "sentai-toolbar-separator");
+
+  if (searchBox) {
+    toolbar.insertBefore(separator, searchBox);
+    toolbar.insertBefore(button, separator);
+  } else {
+    toolbar.appendChild(button);
+    toolbar.appendChild(separator);
+  }
+}
+
+function openChatPanel(win: Window) {
+  const url = `chrome://${addon.data.config.addonRef}/content/chatPanel.xhtml`;
+  win.openDialog(
+    url,
+    "sentai-chat-panel",
+    "chrome,resizable,centerscreen,width=480,height=640",
+    addon.api,
+  );
 }
 
 async function onMainWindowUnload(win: Window): Promise<void> {
@@ -99,8 +402,10 @@ async function onMainWindowUnload(win: Window): Promise<void> {
 }
 
 function onShutdown(): void {
+  if (notifierID) Zotero.Notifier.unregisterObserver(notifierID);
   ztoolkit.unregisterAll();
   addon.data.dialog?.window?.close();
+  embeddingStorage.close();
   // Remove addon object
   addon.data.alive = false;
   // @ts-expect-error - Plugin instance is not typed
@@ -117,16 +422,53 @@ async function onNotify(
   ids: Array<string | number>,
   extraData: { [key: string]: any },
 ) {
-  // You can add your code to the corresponding notify type
-  ztoolkit.log("notify", event, type, ids, extraData);
-  if (
-    event == "select" &&
-    type == "tab" &&
-    extraData[ids[0]].type == "reader"
-  ) {
-    BasicExampleFactory.exampleNotifierCallback();
-  } else {
-    return;
+  if (event === "add" && type === "item") {
+    for (const id of ids as number[]) {
+      const item = Zotero.Items.get(id);
+      if (!item) continue;
+      if (
+        item.isAttachment() &&
+        item.attachmentContentType === "application/pdf"
+      ) {
+        if (await embeddingStorage.isIndexed(item.id)) continue;
+        if (await hasSizeSibling(item)) continue;
+        await PdfIndexer.process(item);
+      } else {
+        await autoAttachPdf(item);
+      }
+    }
+  }
+
+  if ((event === "delete" || event === "trash") && type === "item") {
+    for (const id of ids as number[]) {
+      Zotero.log(`sentAI: ${event} fired for item ${id}`);
+      await embeddingStorage.remove(id);
+
+      if (event === "trash") {
+        const item = Zotero.Items.get(id);
+        if (item?.isAttachment()) {
+          const parent = item.parentItem;
+          if (parent) {
+            const siblings = parent.getAttachments().filter((attId) => attId !== id);
+            const anyIndexed = (
+              await Promise.all(siblings.map((attId) => embeddingStorage.isIndexed(attId)))
+            ).some(Boolean);
+            if (!anyIndexed) {
+              parent.removeTag(INDEXED_TAG);
+              await parent.saveTx();
+            }
+          }
+        } else if (item) {
+          const attachments = item.getAttachments() ?? [];
+          Zotero.log(`sentAI: child attachments: [${attachments.join(", ")}]`);
+          for (const attId of attachments) {
+            await embeddingStorage.remove(attId);
+          }
+          item.removeTag(INDEXED_TAG);
+          await item.saveTx();
+        }
+      }
+    }
   }
 }
 
@@ -137,48 +479,15 @@ async function onNotify(
  * @param data event data
  */
 async function onPrefsEvent(type: string, data: { [key: string]: any }) {
-  switch (type) {
-    case "load":
-      registerPrefsScripts(data.window);
-      break;
-    default:
-      return;
-  }
+  // No preferences registered
 }
 
 function onShortcuts(type: string) {
-  switch (type) {
-    case "larger":
-      KeyExampleFactory.exampleShortcutLargerCallback();
-      break;
-    case "smaller":
-      KeyExampleFactory.exampleShortcutSmallerCallback();
-      break;
-    default:
-      break;
-  }
+  // No shortcuts registered
 }
 
 function onDialogEvents(type: string) {
-  switch (type) {
-    case "dialogExample":
-      HelperExampleFactory.dialogExample();
-      break;
-    case "clipboardExample":
-      HelperExampleFactory.clipboardExample();
-      break;
-    case "filePickerExample":
-      HelperExampleFactory.filePickerExample();
-      break;
-    case "progressWindowExample":
-      HelperExampleFactory.progressWindowExample();
-      break;
-    case "vtableExample":
-      HelperExampleFactory.vtableExample();
-      break;
-    default:
-      break;
-  }
+  // No dialog events registered
 }
 
 // Add your hooks here. For element click, etc.

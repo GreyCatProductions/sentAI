@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <title>sentAI Chat</title>
+  <link rel="stylesheet" href="zoteroPane.css" />
+</head>
+
+<body>
+  <div id="sentai-panel">
+    <!-- Header -->
+    <div id="sentai-header">
+      <span id="sentai-header-title">sentAI</span>
+      <span id="sentai-header-sub">Literature Assistant</span>
+      <button id="sentai-settings-toggle" title="Settings">&#x2699;</button>
+    </div>
+
+    <!-- Settings drawer -->
+    <div id="sentai-settings">
+
+      <div id="sentai-settings-tabs">
+        <button class="sentai-settings-tab active" data-panel="settings-panel">Settings</button>
+        <button class="sentai-settings-tab" data-panel="info-panel">Info</button>
+      </div>
+
+      <div id="settings-panel">
+        <div class="sentai-settings-row">
+          <label for="sentai-chunk-size">Max Chunk Size (tokens)</label>
+          <input type="number" id="sentai-chunk-size" min="100" max="2000" step="50" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-top-k">Top-K Results</label>
+          <input type="number" id="sentai-top-k" min="1" max="50" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-rag-top-papers">Chat: Papers per Answer</label>
+          <input type="number" id="sentai-rag-top-papers" min="1" max="20" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-rag-chunks-per-paper">Chat: Excerpts per Paper</label>
+          <input type="number" id="sentai-rag-chunks-per-paper" min="1" max="10" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-auto-attach-pdf" style="flex: 1">Auto-download PDF (DOI/ISBN)</label>
+          <input type="checkbox" id="sentai-auto-attach-pdf" />
+        </div>
+        <div class="sentai-settings-row">
+
+
+          <label for="sentai-min-similarity">Min. Similarity (%)</label>
+          <input type="number" id="sentai-min-similarity" min="0" max="100" step="5" />
+        </div>
+        <div class="sentai-settings-divider"></div>
+        <div class="sentai-settings-row">
+          <label for="sentai-llm-api-key">LLM API Key</label>
+          <input type="password" id="sentai-llm-api-key" style="flex: 1" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-llm-endpoint">LLM Endpoint</label>
+          <input type="text" id="sentai-llm-endpoint" placeholder="Leave blank for default server" style="flex: 1" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-llm-model">Model</label>
+          <input type="text" id="sentai-llm-model" placeholder="e.g. claude-sonnet-4-6, gpt-4o" style="flex: 1" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-use-local-ollama" style="flex: 1">Use local Ollama (embeddings + chat)</label>
+          <button id="sentai-ollama-help-toggle" class="sentai-info-button" type="button"
+            title="Show Ollama setup steps" aria-expanded="false" aria-controls="sentai-ollama-help">i</button>
+          <input type="checkbox" id="sentai-use-local-ollama" />
+        </div>
+        <div id="sentai-ollama-help" class="sentai-ollama-help" hidden="hidden">
+          <div class="sentai-ollama-help-title">Local Ollama setup</div>
+          <ol>
+            <li>Install Ollama from ollama.com, or run <code>brew install ollama</code>.</li>
+            <li>Start it with <code>brew services start ollama</code> or <code>ollama serve</code>.</li>
+            <li>Pull models: <code>ollama pull nomic-embed-text</code> and <code>ollama pull llama3.1:8b</code>.</li>
+            <li>Enable this checkbox, save, then reindex your PDFs.</li>
+          </ol>
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-local-embedding-model">Local Embedding Model</label>
+          <input type="text" id="sentai-local-embedding-model" placeholder="nomic-embed-text" style="flex: 1" />
+        </div>
+        <div class="sentai-settings-row">
+          <label for="sentai-local-chat-model">Local Chat Model</label>
+          <input type="text" id="sentai-local-chat-model" placeholder="llama3.1:8b" style="flex: 1" />
+        </div>
+        <p class="sentai-settings-hint">
+          Requires Ollama running locally (ollama serve). Overrides the LLM Endpoint/Model fields above while enabled, and clears your entire search index on toggle — indexed PDFs will need to be re-added to search again.
+        </p>
+        <button id="sentai-settings-save" type="button">Save</button>
+      </div><!-- /settings-panel -->
+
+      <div id="info-panel" hidden="hidden">
+        <div class="sentai-info-row">
+          <span class="sentai-info-label">Indexed papers</span>
+          <span id="sentai-info-count" class="sentai-info-value">—</span>
+        </div>
+        <div class="sentai-info-row">
+          <span class="sentai-info-label">Total chunks</span>
+          <span id="sentai-info-chunks" class="sentai-info-value">—</span>
+        </div>
+        <div class="sentai-info-row">
+          <span class="sentai-info-label">Index size</span>
+          <span id="sentai-info-size" class="sentai-info-value">—</span>
+        </div>
+        <div class="sentai-settings-divider"></div>
+        <div id="sentai-reindex-collection-bar">
+          <button id="sentai-reindex-collection-btn" type="button">
+            <span id="sentai-reindex-collection-label">All Collections</span>
+            <span class="s-col-arrow">&#x25BE;</span>
+          </button>
+          <div id="sentai-reindex-collection-dropdown"></div>
+        </div>
+        <div id="sentai-reindex-status"></div>
+        <div class="sentai-reindex-actions">
+          <button id="sentai-reindex-collection-run" type="button">Index Collection</button>
+          <button id="sentai-reindex-all" type="button">Index All</button>
+          <button id="sentai-delete-index" type="button">Delete Index</button>
+        </div>
+      </div><!-- /info-panel -->
+    </div>
+
+    <!-- Tab bar -->
+    <div id="sentai-tabs">
+      <button class="sentai-tab active" data-tab="search">Search</button>
+      <button class="sentai-tab" data-tab="chat">Chat</button>
+    </div>
+
+    <!-- Status overlay (shown when embedder unreachable) -->
+    <div id="sentai-status-overlay" class="sentai-view active">
+      <div id="sentai-status-content">
+        <div id="sentai-status-icon">⚠</div>
+        <div id="sentai-status-message">Checking connection…</div>
+        <button id="sentai-retry-btn" type="button">Retry</button>
+      </div>
+    </div>
+
+    <!-- Search panel -->
+    <div id="sentai-search-panel" class="sentai-view">
+      <div id="sentai-search-bar">
+        <input type="text" id="sentai-search-input" placeholder="Search your library..." />
+        <button id="sentai-search-btn">&#x27A4;</button>
+      </div>
+      <div id="sentai-collection-bar">
+        <button id="sentai-collection-btn" type="button">
+          <span id="sentai-collection-label">All Collections</span>
+          <span class="s-col-arrow">&#x25BE;</span>
+        </button>
+        <div id="sentai-collection-dropdown"></div>
+      </div>
+      <div id="sentai-filter-bar">
+        <button id="sentai-filter-toggle" type="button">
+          <span>Filters</span>
+          <span id="sentai-filter-count" class="s-filter-count" hidden="hidden">0</span>
+          <span class="s-col-arrow" style="margin-left: auto">&#x25BE;</span>
+        </button>
+        <div id="sentai-filter-panel">
+          <div class="s-filter-section">
+            <label class="s-filter-label">Tags</label>
+            <div id="sentai-tag-chips" class="s-tag-chips"></div>
+            <input type="text" id="sentai-tag-input" list="sentai-tag-datalist"
+              placeholder="Type a tag and press Enter…" autocomplete="off" />
+            <datalist id="sentai-tag-datalist"></datalist>
+          </div>
+          <div class="s-filter-section s-filter-row">
+            <label class="s-filter-label">Year</label>
+            <div class="s-filter-year-inputs">
+              <input type="number" id="sentai-year-from" placeholder="From" min="1900" max="2100" />
+              <span class="s-filter-sep">–</span>
+              <input type="number" id="sentai-year-to" placeholder="To" min="1900" max="2100" />
+            </div>
+          </div>
+          <div class="s-filter-section s-filter-row s-type-wrap">
+            <label class="s-filter-label">Type</label>
+            <button id="sentai-item-type-btn" type="button" class="s-type-btn">
+              <span id="sentai-item-type-label">Any</span>
+              <span class="s-col-arrow">&#x25BE;</span>
+            </button>
+            <div id="sentai-item-type-dropdown"></div>
+          </div>
+        </div>
+      </div>
+      <div id="sentai-search-results">
+        <div class="s-empty">Type a query to search your indexed papers.</div>
+      </div>
+    </div>
+
+    <!-- Chat panel -->
+    <div id="sentai-chat-panel" class="sentai-view">
+      <div id="sentai-nachrichten">
+        <div class="sender">sentAI</div>
+        <div class="message sentAI">Hello! Ask me anything about your library. I will find arguments, counterarguments,
+          and evidence from your papers.</div>
+      </div>
+
+      <!-- Skills bar: prompt chips + folder link -->
+      <div id="sentai-skills-bar">
+        <div id="sentai-skills-chips"></div>
+        <button id="sentai-skills-open" type="button">Open skills folder &#x2197;</button>
+      </div>
+
+      <div id="sentai-chat-collection-bar">
+        <button id="sentai-chat-collection-btn" type="button">
+          <span id="sentai-chat-collection-label">All Collections</span>
+          <span class="s-col-arrow">&#x25BE;</span>
+        </button>
+        <div id="sentai-chat-collection-dropdown"></div>
+      </div>
+
+      <div id="sentai-eingabe">
+        <div id="sentai-eingabe-zeile">
+          <textarea id="sentai-eingabe-text" placeholder="Ask a question..."></textarea>
+          <button id="sentai-senden-button">&#x27A4;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="scripts/chatPanel.js"></script>
+</body>
+
+</html>
