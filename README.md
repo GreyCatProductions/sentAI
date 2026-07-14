@@ -14,7 +14,7 @@ _Stop ctrl+F-ing through papers. Ask your library what it knows._
 
 ---
 
-sentAI is a Zotero 9 plugin that indexes your PDFs as semantic vectors and lets you search them by **meaning**, not keywords. Powered by Azure AI embeddings and cosine similarity — all stored locally.
+sentAI is a Zotero 9 plugin that indexes your PDFs as semantic vectors and lets you search them by **meaning** using cosine similarity. Powered by our server as default or a provider of your choice. All data is stored locally and is not saved anywhere outside of your device.
 
 ## How it works
 
@@ -22,8 +22,7 @@ sentAI is a Zotero 9 plugin that indexes your PDFs as semantic vectors and lets 
 flowchart TB
   %% sentAI architecture
   pdf["PDF added to Zotero"]:::event
-  item["Zotero item without PDF"]:::event
-  auto["Auto-attach PDF\nDOI / ISBN lookup"]:::process
+  item["Zotero item (A paper for example)"]:::event
 
   extract["Text extraction\nZotero PDF worker"]:::process
   clean["Clean + normalize text\nremove ligatures, boilerplate, refs"]:::process
@@ -107,51 +106,15 @@ sequenceDiagram
 ## Requirements
 
 - [Zotero 9](https://www.zotero.org)
-- [Node.js LTS](https://nodejs.org/en/)
-- Either:
-  - An Azure AI / Cognitive Services API key with a `text-embedding-3-small` deployment, plus a Google Gemini API key (for RAG answer generation) — the cloud path, or
-  - [Ollama](https://ollama.com) running locally — no API keys needed, see [Local mode (Ollama)](#local-mode-ollama) below
 
-## Setup
-
-**1. Clone and install**
-
-```sh
-git clone https://github.com/GreyCatProductions/sentAI.git
-cd sentAI
-npm install
-cp .env.example .env
-```
-
-**2. Configure `.env`**
-
-| Variable                        | Description                                              |
-| ------------------------------- | -------------------------------------------------------- |
-| `ZOTERO_PLUGIN_ZOTERO_BIN_PATH` | Path to your Zotero binary                               |
-| `ZOTERO_PLUGIN_PROFILE_PATH`    | Path to your Zotero dev profile                          |
-| `AZURE_EMBEDDING_ENDPOINT`      | Full Azure endpoint URL (incl. deployment + api-version) |
-| `AZURE_API_KEY`                 | Azure Cognitive Services API key                         |
-| `GEMINI_API_KEY`                | Google Gemini API key (used by the RAG answer step)      |
-
-**3. Start the embedding server**
-
-```sh
-cd server && npm install && npm run dev
-```
-
-**4. Launch Zotero with the plugin**
-
-```sh
-npm start
-```
-
-Builds the plugin, launches Zotero, and watches `src/` for hot reload.
 
 ## Usage
 
-1. Add a PDF to Zotero — indexing runs automatically in the background
-2. Open **Tools → sentAI Chat**
-3. Type a natural-language query and click **Search**
+1. Download the latest deployment (file ending with .xpi)
+2. Add it to Zotero (https://www.zotero.org/support/plugins)
+3. Enable it in Zotero Plugin Settings
+4. Open sentAI window by clicking its icon next to the default search field
+5. Use "Search" tab to use semantic search directly or "Chat" tab if you want a more interactive session
 
 Each result shows the paper title, a similarity score, and the matching passage.
 
@@ -165,7 +128,7 @@ Run embeddings and/or chat entirely on your own machine instead of Azure/Gemini 
 brew install ollama
 ```
 
-**2. Start it as a background service** (auto-starts on login, no need to run `ollama serve` yourself)
+**2. Start it as a background service**
 
 ```sh
 brew services start ollama
@@ -181,53 +144,4 @@ ollama pull llama3.1:8b        # chat / RAG answers
 **4. Enable it in sentAI**
 
 Open the Chat panel → ⚙️ Settings → check **"Use local Ollama (embeddings + chat)"** → Save.
-
-Confirm the dialog that appears — switching embedding models clears your search index (old and new embeddings live in incompatible vector spaces and can't be compared), so already-indexed PDFs need to be removed and re-added to be searchable again under the new model.
-
-Different Ollama models? Just change the "Local Embedding Model" / "Local Chat Model" fields to whatever you've pulled (`ollama list` shows what's available) before saving.
-
-**Useful commands**
-
-```sh
-brew services list | grep ollama    # check it's running
-brew services stop ollama           # stop the background service
-ollama list                         # see pulled models
-```
-
-## Dev commands
-
-```sh
-npm start          # Dev server with hot reload
-npm run build      # Production build → .scaffold/build/
-npm run lint:check # Prettier + ESLint check
-npm run lint:fix   # Prettier + ESLint auto-fix
-npm test           # Run tests inside Zotero (requires npm start)
-npm run release    # Bump version, commit, tag, push → GitHub Actions release
-```
-
-## Status
-
-| Feature                                                |           |
-| ------------------------------------------------------ | --------- |
-| PDF detection on upload                                | `done`    |
-| Auto-attach PDF for items without an attachment        | `done`    |
-| Text extraction                                        | `done`    |
-| References / bibliography section filtering            | `done`    |
-| Paragraph-aware chunking                               | `done`    |
-| Embedding via Azure `text-embedding-3-small`           | `done`    |
-| Local vector storage (SQLite)                          | `done`    |
-| Cosine similarity search                               | `done`    |
-| Two-tab UI (Search + Chat)                             | `done`    |
-| Scored result cards with metadata chips                | `done`    |
-| Collection filter for scoped search                    | `done`    |
-| Keyword extraction pre-pass (Gemini Flash Lite)        | `done`    |
-| Similarity threshold filter                            | `done`    |
-| RAG answers via Gemini 2.5 Flash with inline citations | `done`    |
-| Local mode via Ollama (embeddings + chat, no API keys) | `done`    |
-| Hybrid search (semantic + keyword via RRF)             | `planned` |
-| Conversation history (multi-turn follow-ups)           | `planned` |
-| Streaming responses                                    | `planned` |
-
----
-
-See [`notes/`](./notes/) for architecture decisions, vision, and work history.
+Since it is a different model, you will need to reindex articles.

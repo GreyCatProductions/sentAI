@@ -1,11 +1,11 @@
 {
   "name": "sentai",
   "type": "module",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "",
   "config": {
     "addonName": "sentAI",
-    "addonID": "sendaiUP",
+    "addonID": "sentai@greycat.productions",
     "addonRef": "sentai",
     "addonInstance": "SentAI",
     "prefsPrefix": "extensions.zotero.${addonRef}"
@@ -14,7 +14,7 @@
     "type": "git",
     "url": "https://github.com/GreyCatProductions/sentAI.git"
   },
-  "author": "TODO",
+  "author": "Bobocs, GreyCatProductions",
   "bugs": {
     "url": "https://github.com/GreyCatProductions/sentAI/issues"
   },
